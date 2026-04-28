@@ -266,6 +266,30 @@ h1, h2, h3 { font-family: 'Fredoka', sans-serif; }
   100% { transform: scale(0) rotate(360deg); opacity: 0; }
 }
 
+/* Correct/wrong flash */
+.flash-message {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  font-family: 'Fredoka', sans-serif; font-size: 1.6rem; font-weight: 700;
+  padding: 0.5rem 1.5rem; border-radius: 1rem; z-index: 11;
+  animation: flash-pop 0.8s ease forwards; pointer-events: none;
+}
+.flash-correct { background: var(--success); color: white; }
+.flash-wrong { background: var(--danger); color: white; }
+@keyframes flash-pop {
+  0% { transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
+  50% { transform: translate(-50%,-50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%,-70%) scale(1); opacity: 0; }
+}
+
+/* Word problem styling */
+.word-problem {
+  font-size: 1.15rem; line-height: 1.6; text-align: left;
+  background: linear-gradient(135deg, #fefae0, #fff8e1);
+  padding: 1rem 1.5rem; border-radius: 1rem;
+  border-left: 4px solid var(--sun); max-width: 100%;
+  font-family: 'Nunito', sans-serif; color: var(--text);
+}
+
 /* ==================== LEVEL COMPLETE ==================== */
 .level-complete-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -961,6 +985,64 @@ function generateQuest(levelCfg) {
 }
 
 // ================================================================
+// SOUND EFFECTS (Web Audio API — no files needed)
+// ================================================================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playCorrectSound() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(523, audioCtx.currentTime); // C5
+    o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1); // E5
+    o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2); // G5
+    g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+    o.start(audioCtx.currentTime);
+    o.stop(audioCtx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+function playWrongSound() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'square';
+    o.frequency.setValueAtTime(200, audioCtx.currentTime);
+    o.frequency.setValueAtTime(180, audioCtx.currentTime + 0.15);
+    g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    o.start(audioCtx.currentTime);
+    o.stop(audioCtx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+function playRescueSound() {
+  try {
+    ensureAudio();
+    const notes = [523, 587, 659, 784, 880];
+    notes.forEach((freq, i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
+      g.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.2);
+      o.start(audioCtx.currentTime + i * 0.1);
+      o.stop(audioCtx.currentTime + i * 0.1 + 0.2);
+    });
+  } catch(e) {}
+}
+
+// ================================================================
 // NATURE BACKGROUND
 // ================================================================
 function initNature() {
@@ -1018,6 +1100,11 @@ function showSparkles(container) {
     s.style.animationDelay = (Math.random() * 0.3) + 's';
     sparkleEl.appendChild(s);
   }
+  // Flash message
+  const flash = document.createElement('div');
+  flash.className = 'flash-message flash-correct';
+  flash.textContent = t('correct');
+  sparkleEl.appendChild(flash);
   setTimeout(() => sparkleEl.innerHTML = '', 1200);
 }
 
@@ -1085,25 +1172,19 @@ function renderMap() {
   document.getElementById('dogs-saved').textContent = savedCount;
   document.getElementById('dogs-total').textContent = gameState.dogs.length;
 
-  // Nature decorations in the map
-  const decos = ['🌳', '🌲', '🌻', '🌺', '🍄', '🦋', '🐻', '🌸', '🐿️', '🦔'];
-  for (let i = 0; i < 3; i++) {
-    const deco = document.createElement('div');
-    deco.style.cssText = `text-align:center;font-size:2rem;padding:0.5rem;opacity:0.5;align-self:center;`;
-    deco.textContent = pick(decos) + ' ' + pick(decos);
+  // Nature decorations interspersed with dogs
+  const decos = ['🌳', '🌲', '🌻', '🌺', '🍄', '🦋', '🐻', '🌸', '🐿️', '🦔', '🍃', '🌼'];
 
-    // Intersperse decorations
-    if (i < gameState.dogs.length) {
-      const dogEl = createDogSpot(gameState.dogs[i], i);
-      container.appendChild(dogEl);
-      if (i === 0 || i === 2) container.appendChild(deco);
+  gameState.dogs.forEach((dog, i) => {
+    container.appendChild(createDogSpot(dog, i));
+    // Add nature deco after every 2nd dog
+    if (i % 2 === 1 && i < gameState.dogs.length - 1) {
+      const deco = document.createElement('div');
+      deco.style.cssText = `text-align:center;font-size:2rem;padding:0.5rem;opacity:0.4;align-self:center;user-select:none;`;
+      deco.textContent = pick(decos) + ' ' + pick(decos);
+      container.appendChild(deco);
     }
-  }
-
-  // Add remaining dogs
-  for (let i = 3; i < gameState.dogs.length; i++) {
-    container.appendChild(createDogSpot(gameState.dogs[i], i));
-  }
+  });
 }
 
 function createDogSpot(dog, idx) {
@@ -1173,13 +1254,10 @@ function renderQuest() {
   // Question
   const questionEl = document.getElementById('quest-question');
   if (quest.isWord) {
-    questionEl.innerHTML = quest.question;
+    questionEl.innerHTML = `<div class="word-problem">${quest.question}</div>`;
   } else {
-    // Replace __ with styled blanks
-    questionEl.innerHTML = quest.question.replace(/__/g, '<span class="blank">?</span>');
-    if (quest.hint && !quest.isWord) {
-      questionEl.innerHTML = `<div style="font-size:0.9rem;color:var(--text-light);margin-bottom:0.3rem;">${quest.hint}</div>` + questionEl.innerHTML;
-    }
+    const hintHtml = quest.hint && quest.hint !== '🐶' ? `<div style="font-size:0.9rem;color:var(--text-light);margin-bottom:0.3rem;">${quest.hint}</div>` : '';
+    questionEl.innerHTML = hintHtml + quest.question.replace(/__/g, '<span class="blank">?</span>');
   }
 
   // Answer area
@@ -1235,9 +1313,11 @@ function checkAnswer() {
   if (val === quest.answer) {
     input.classList.add('correct');
     showSparkles();
+    playCorrectSound();
     onCorrectAnswer();
   } else {
     input.classList.add('wrong');
+    playWrongSound();
     gameState.mistakes++;
     // Mark current dot as wrong
     const dots = document.querySelectorAll('.quest-dot');
@@ -1257,10 +1337,12 @@ function checkChoiceAnswer(btn, choice, quest) {
   if (choice === quest.answer) {
     btn.classList.add('correct');
     showSparkles();
+    playCorrectSound();
     btns.forEach(b => b.style.pointerEvents = 'none');
     onCorrectAnswer();
   } else {
     btn.classList.add('wrong');
+    playWrongSound();
     gameState.mistakes++;
     setTimeout(() => btn.classList.remove('wrong'), 600);
   }
@@ -1282,6 +1364,7 @@ function onCorrectAnswer() {
   if (gameState.currentQuestIdx >= gameState.quests.length) {
     // Dog rescued!
     dog.rescued = true;
+    playRescueSound();
     setTimeout(() => {
       // Check if all dogs in level are rescued
       if (gameState.dogs.every(d => d.rescued)) {
