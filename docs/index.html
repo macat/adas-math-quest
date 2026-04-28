@@ -375,79 +375,115 @@ function t(key,...args){let s=(I18N[LANG]||I18N.en)[key]||(I18N.en)[key]||key;
 function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
   const map=[];
   const rng=seedRng(seed);
-  // Fill with trees/rocks based on biome
   const wall=biome==='mountain'||biome==='castle'?T.ROCK:T.TREE;
   const bgTile=biome==='forest'||biome==='castle'?T.DGRASS:T.GRASS;
   for(let y=0;y<h;y++){map[y]=[];for(let x=0;x<w;x++){
     if(y===0||y===h-1||x===0||x===w-1)map[y][x]=wall;
     else map[y][x]=bgTile;
   }}
-  // Carve zones — split map into numGates+1 zones with vertical or horizontal barriers
-  const zones=[];const gatePositions=[];
+  
+  // Create zone separator walls with gates
+  const gatePositions=[];
   const zoneW=Math.floor((w-2)/(numGates+1));
   for(let g=0;g<numGates;g++){
     const gx=2+zoneW*(g+1);
-    // Build a wall from top to bottom with a gap for the gate
-    const gateY=3+Math.floor(rng()*(h-6));
+    const gateY=3+Math.floor(rng()*(h-8))+1;
     for(let y=1;y<h-1;y++){
       if(Math.abs(y-gateY)>0){map[y][gx]=wall;if(gx+1<w-1)map[y][gx+1]=wall;}
     }
     map[gateY][gx]=T.GATE;
     if(gx+1<w-1)map[gateY][gx+1]=T.PATH;
     gatePositions.push({x:gx,y:gateY});
-    zones.push({left:g===0?1:2+zoneW*g+2,right:gx-1,gateX:gx});
   }
-  zones.push({left:zones.length?zones[zones.length-1].right+3:1,right:w-2});
   
-  // Carve paths connecting start to first gate, gates to each other, last gate to exit
+  // Build zones list
+  const zones=[];
+  for(let g=0;g<=numGates;g++){
+    const left=g===0?1:(2+zoneW*g+2);
+    const right=g===numGates?(w-2):(2+zoneW*(g+1)-1);
+    zones.push({left:Math.max(1,left),right:Math.min(w-2,right)});
+  }
+  
   const startX=2,startY=2;
   const exitX=w-3,exitY=h-3;
   map[startY][startX]=T.START;
   map[exitY][exitX]=T.EXIT;
   
-  // Carve path from start through all gates to exit
-  let curX=startX,curY=startY;
-  for(const gp of gatePositions){
-    carvePath(map,curX,curY,gp.x-1,gp.y,bgTile,rng);
-    curX=gp.x+2;curY=gp.y;
-  }
-  carvePath(map,curX,curY,exitX,exitY,bgTile,rng);
-  
-  // Carve some wandering paths in each zone for exploration
+  // Add terrain features WITHIN zones for visual interest
   for(let z=0;z<zones.length;z++){
-    const zone=zones[z]||{left:1,right:w-2};
-    for(let p=0;p<3;p++){
-      const fx=zone.left+Math.floor(rng()*(Math.min(zone.right,w-2)-zone.left));
-      const fy=2+Math.floor(rng()*(h-4));
-      const tx=zone.left+Math.floor(rng()*(Math.min(zone.right,w-2)-zone.left));
-      const ty=2+Math.floor(rng()*(h-4));
-      carvePath(map,fx,fy,tx,ty,bgTile,rng);
+    const zone=zones[z];
+    const zw=zone.right-zone.left;
+    // Scatter some tree clusters
+    const numClusters=2+Math.floor(rng()*3);
+    for(let c=0;c<numClusters;c++){
+      const cx=zone.left+2+Math.floor(rng()*(zw-4));
+      const cy=3+Math.floor(rng()*(h-6));
+      const csize=1+Math.floor(rng()*2);
+      for(let dy=-csize;dy<=csize;dy++)for(let dx=-csize;dx<=csize;dx++){
+        if(rng()<0.6){
+          const tx=cx+dx,ty=cy+dy;
+          if(tx>zone.left&&tx<zone.right&&ty>1&&ty<h-2)
+            map[ty][tx]=wall;
+        }
+      }
+    }
+    // Small water patches in some zones
+    if(rng()<0.3||(biome==='lake'&&z>0)){
+      const wx=zone.left+3+Math.floor(rng()*(zw-6));
+      const wy=4+Math.floor(rng()*(h-8));
+      for(let dy=-1;dy<=1;dy++)for(let dx=-2;dx<=2;dx++){
+        if(Math.abs(dx)+Math.abs(dy)<3&&rng()<0.8){
+          const tx=wx+dx,ty=wy+dy;
+          if(tx>zone.left&&tx<zone.right&&ty>1&&ty<h-2)
+            map[ty][tx]=T.WATER;
+        }
+      }
     }
   }
   
-  // Place dogs — one per zone (first N zones)
+  // Carve main paths connecting start → gates → exit
+  let curX=startX,curY=startY;
+  for(const gp of gatePositions){
+    carvePath(map,curX,curY,gp.x-1,gp.y,bgTile,rng,wall);
+    curX=gp.x+2;curY=gp.y;
+  }
+  carvePath(map,curX,curY,exitX,exitY,bgTile,rng,wall);
+  
+  // Carve wandering side paths in each zone for exploration
+  for(let z=0;z<zones.length;z++){
+    const zone=zones[z];const zw=zone.right-zone.left;
+    for(let p=0;p<4;p++){
+      const fx=zone.left+1+Math.floor(rng()*Math.max(1,zw-2));
+      const fy=2+Math.floor(rng()*(h-4));
+      const tx=zone.left+1+Math.floor(rng()*Math.max(1,zw-2));
+      const ty=2+Math.floor(rng()*(h-4));
+      carvePath(map,fx,fy,tx,ty,bgTile,rng,wall);
+    }
+  }
+  
+  // Place dogs — distribute across zones
   const dogKeys=Object.keys(DOGS);
   const dogNames=['Buddy','Muffin','Spot','Frost','Princess','Ziggy','Charlie','Pepper','Cookie','Biscuit','Shadow','Diamond','Thunder','Storm','Sunny','Splash','Rocky','Belle'];
-  const dogs=[];
-  const usedNames=new Set();
+  const dogs=[];const usedNames=new Set();
   for(let i=0;i<numDogs;i++){
     const zIdx=Math.min(i,zones.length-1);
-    const zone=zones[zIdx]||{left:2,right:w-3};
+    const zone=zones[zIdx];const zw=Math.max(1,zone.right-zone.left-2);
     let dx,dy,attempts=0;
     do{
-      dx=zone.left+1+Math.floor(rng()*(Math.min(zone.right,w-3)-zone.left-1));
+      dx=zone.left+1+Math.floor(rng()*zw);
       dy=3+Math.floor(rng()*(h-6));
       attempts++;
-    }while((map[dy][dx]===wall||map[dy][dx]===T.GATE||map[dy][dx]===T.WATER||map[dy][dx]===T.EXIT||map[dy][dx]===T.START)&&attempts<50);
-    map[dy][dx]=T.DOG;
-    // Ensure path to dog
-    const nearPath=findNearestWalkable(map,dx,dy);
-    if(nearPath)carvePath(map,nearPath.x,nearPath.y,dx,dy,bgTile,rng);
-    const dk=dogKeys[i%dogKeys.length];
-    let name=dogNames[i%dogNames.length];
-    while(usedNames.has(name))name=dogNames[Math.floor(rng()*dogNames.length)];
-    usedNames.add(name);
-    dogs.push({key:dk,x:dx,y:dy,name});
+    }while((map[dy][dx]===wall||map[dy][dx]===T.GATE||map[dy][dx]===T.WATER||
+            map[dy][dx]===T.EXIT||map[dy][dx]===T.START)&&attempts<80);
+    if(attempts<80){
+      map[dy][dx]=T.DOG;
+      carvePath(map,dx,dy,zone.left+Math.floor(zw/2),Math.floor(h/2),bgTile,rng,wall);
+      const dk=dogKeys[i%dogKeys.length];
+      let name=dogNames[i%dogNames.length];
+      while(usedNames.has(name)){name=dogNames[Math.floor(rng()*dogNames.length)]}
+      usedNames.add(name);
+      dogs.push({key:dk,x:dx,y:dy,name});
+    }
   }
   
   // Place NPCs
@@ -459,26 +495,29 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
       nx=2+Math.floor(rng()*(w-4));
       ny=2+Math.floor(rng()*(h-4));
       attempts++;
-    }while((map[ny][nx]!==bgTile&&map[ny][nx]!==T.GRASS)&&attempts<50);
-    const npcType=npcTypes[i%npcTypes.length];
-    map[ny][nx]=npcType;
-    npcs.push({type:npcType,x:nx,y:ny});
+    }while((map[ny][nx]!==bgTile&&map[ny][nx]!==T.GRASS&&map[ny][nx]!==T.DGRASS)&&attempts<60);
+    if(attempts<60){
+      const npcType=npcTypes[i%npcTypes.length];
+      map[ny][nx]=npcType;
+      npcs.push({type:npcType,x:nx,y:ny});
+    }
   }
   
   // Scatter decorations
   for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
-    if(map[y][x]===bgTile&&rng()<0.06)map[y][x]=T.FLOWER;
-    else if(map[y][x]===bgTile&&rng()<0.03)map[y][x]=T.TGRASS;
-    else if(map[y][x]===bgTile&&biome==='forest'&&rng()<0.02)map[y][x]=T.MUSH;
-    else if(map[y][x]===bgTile&&rng()<0.04)map[y][x]=T.BUSH;
+    if((map[y][x]===bgTile||map[y][x]===T.GRASS)&&rng()<0.08)map[y][x]=T.FLOWER;
+    else if((map[y][x]===bgTile||map[y][x]===T.GRASS)&&rng()<0.04)map[y][x]=T.TGRASS;
+    else if((map[y][x]===bgTile||map[y][x]===T.GRASS)&&biome==='forest'&&rng()<0.03)map[y][x]=T.MUSH;
   }
   
-  // Add water features
+  // Add water features for lake biome
   if(biome==='lake'){
-    const lx=Math.floor(w*0.4),ly=Math.floor(h*0.3);
-    for(let dy=-3;dy<=3;dy++)for(let dx=-4;dx<=4;dx++){
-      if(dx*dx+dy*dy<16&&ly+dy>0&&ly+dy<h-1&&lx+dx>0&&lx+dx<w-1){
-        if(map[ly+dy][lx+dx]!==T.GATE&&map[ly+dy][lx+dx]!==T.DOG&&map[ly+dy][lx+dx]!==T.EXIT&&map[ly+dy][lx+dx]!==T.START)
+    const lx=Math.floor(w*0.5),ly=Math.floor(h*0.5);
+    for(let dy=-4;dy<=4;dy++)for(let dx=-5;dx<=5;dx++){
+      if(dx*dx+dy*dy<20&&ly+dy>1&&ly+dy<h-2&&lx+dx>1&&lx+dx<w-2){
+        if(map[ly+dy][lx+dx]!==T.GATE&&map[ly+dy][lx+dx]!==T.DOG&&
+           map[ly+dy][lx+dx]!==T.EXIT&&map[ly+dy][lx+dx]!==T.START&&
+           map[ly+dy][lx+dx]!==T.PATH)
           map[ly+dy][lx+dx]=T.WATER;
       }
     }
@@ -486,21 +525,25 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
   
   // Ensure gates have clear approach paths (critical for playability)
   for(const gp of gatePositions){
-    // Clear tiles adjacent to gate on both sides
     for(let dy=-1;dy<=1;dy++){
       const cy=gp.y+dy;
       if(cy>0&&cy<h-1){
-        if(gp.x-1>0&&map[cy][gp.x-1]===wall)map[cy][gp.x-1]=bgTile;
-        if(gp.x+2<w-1&&map[cy][gp.x+2]===wall)map[cy][gp.x+2]=bgTile;
+        if(gp.x-1>0&&(map[cy][gp.x-1]===wall||map[cy][gp.x-1]===T.WATER))map[cy][gp.x-1]=bgTile;
+        if(gp.x+2<w-1&&(map[cy][gp.x+2]===wall||map[cy][gp.x+2]===T.WATER))map[cy][gp.x+2]=bgTile;
       }
     }
+    // Place path tiles leading to gate
+    if(gp.x-2>0)map[gp.y][gp.x-2]=T.PATH;
+    if(gp.x-1>0)map[gp.y][gp.x-1]=T.PATH;
+    if(gp.x+2<w-1)map[gp.y][gp.x+2]=T.PATH;
+    if(gp.x+3<w-1)map[gp.y][gp.x+3]=T.PATH;
   }
   // Ensure exit and start are reachable
   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
     const ey=exitY+dy,ex=exitX+dx;
-    if(ey>0&&ey<h-1&&ex>0&&ex<w-1&&map[ey][ex]===wall)map[ey][ex]=bgTile;
+    if(ey>0&&ey<h-1&&ex>0&&ex<w-1&&(map[ey][ex]===wall||map[ey][ex]===T.WATER))map[ey][ex]=bgTile;
     const sy=startY+dy,sx2=startX+dx;
-    if(sy>0&&sy<h-1&&sx2>0&&sx2<w-1&&map[sy][sx2]===wall)map[sy][sx2]=bgTile;
+    if(sy>0&&sy<h-1&&sx2>0&&sx2<w-1&&(map[sy][sx2]===wall||map[sy][sx2]===T.WATER))map[sy][sx2]=bgTile;
   }
   
   return{map,dogs,gates:gatePositions,npcs,start:{x:startX,y:startY},exit:{x:exitX,y:exitY}};
@@ -508,19 +551,28 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
 
 function seedRng(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;}}
 
-function carvePath(map,x1,y1,x2,y2,bgTile,rng){
-  let x=x1,y=y1;let maxSteps=200;
+function carvePath(map,x1,y1,x2,y2,bgTile,rng,wall){
+  let x=x1,y=y1;let maxSteps=300;
+  const protect=new Set([T.GATE,T.DOG,T.EXIT,T.START,T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD]);
   while((x!==x2||y!==y2)&&maxSteps-->0){
     if(x>0&&x<map[0].length-1&&y>0&&y<map.length-1){
-      if(map[y][x]!==T.GATE&&map[y][x]!==T.DOG&&map[y][x]!==T.EXIT&&map[y][x]!==T.START&&
-         map[y][x]!==T.NPC_BUT&&map[y][x]!==T.NPC_SQU&&map[y][x]!==T.NPC_BEAR&&map[y][x]!==T.NPC_BIRD){
-        map[y][x]=rng()<0.3?T.PATH:bgTile;
+      if(!protect.has(map[y][x])){
+        map[y][x]=(map[y][x]===wall)?bgTile:(rng()<0.35?T.PATH:bgTile);
       }
     }
-    if(rng()<0.6){x+=(x2>x?1:x2<x?-1:0)}else{y+=(y2>y?1:y2<y?-1:0)}
-    // Add some randomness
-    if(rng()<0.15){x+=rng()<0.5?1:-1;x=Math.max(1,Math.min(map[0].length-2,x))}
-    if(rng()<0.15){y+=rng()<0.5?1:-1;y=Math.max(1,Math.min(map.length-2,y))}
+    // Move toward target with some randomness
+    const distToTarget=Math.abs(x2-x)+Math.abs(y2-y);
+    const directness=distToTarget<10?0.85:0.65;
+    if(rng()<directness){
+      if(rng()<0.5&&x!==x2)x+=(x2>x?1:-1);
+      else if(y!==y2)y+=(y2>y?1:-1);
+      else x+=(x2>x?1:-1);
+    }else{
+      // Random wander for organic paths
+      if(rng()<0.5){x+=rng()<0.5?1:-1}else{y+=rng()<0.5?1:-1}
+    }
+    x=Math.max(1,Math.min(map[0].length-2,x));
+    y=Math.max(1,Math.min(map.length-2,y));
   }
 }
 
