@@ -63,7 +63,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 .speech-bubble .npc-name{font-weight:800;color:#4CAF50;margin-bottom:4px;font-size:0.8rem}
 @keyframes bubblePop{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
 
-.quest-overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);animation:fadeIn 0.3s}
+.quest-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);animation:fadeIn 0.3s}
 .quest-overlay.active{display:flex}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .quest-panel{background:#fff;border-radius:20px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.3);border:4px solid #333;animation:slideUp 0.35s ease-out}
@@ -204,8 +204,9 @@ beagle:{name:'Ziggy',color:'#eb984e',sprite:[_,_,_,C.Br,C.Br,_,_,_,_,C.Br,C.Br,_
 // ===== TILE SYSTEM — MUCH SMALLER TILES =====
 const T={GRASS:0,PATH:1,TREE:2,ROCK:3,WATER:4,FLOWER:5,GATE:6,BRIDGE:7,DOG:8,
 NPC_BUT:9,NPC_SQU:10,NPC_BEAR:11,NPC_BIRD:12,BUSH:13,DGRASS:14,TGRASS:15,
-MUSH:16,EXIT:17,START:18,FENCE:19,HOUSE:20,SIGN:21};
-const TS=24; // TILE SIZE — much smaller!
+MUSH:16,EXIT:17,START:18,FENCE:19,HOUSE:20,SIGN:21,DOG_GATE:22};
+const TS=24; // internal tile size for sprite art
+const RENDER_SCALE=0.5; // display tiles at half size for bigger world feel
 const WALKABLE=new Set([T.GRASS,T.PATH,T.FLOWER,T.DGRASS,T.TGRASS,T.MUSH,T.EXIT,T.START,T.BRIDGE,T.BUSH]);
 const INTERACT=new Set([T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD,T.SIGN]);
 const tileCache={};
@@ -279,6 +280,16 @@ function renderTile(type,v=0){
     case T.SIGN:{x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
       x.fillStyle='#6d4c41';x.fillRect(10,12,4,10);
       x.fillStyle='#a1887f';x.fillRect(4,4,16,10);break}
+    case T.DOG_GATE:{
+      const dg=0.4+Math.sin(globalFC*0.08)*0.25;
+      x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#8d6e63';x.fillRect(2,3,20,18);
+      x.fillStyle='#6d4c41';x.fillRect(0,5,TS,3);x.fillRect(0,14,TS,3);
+      x.fillStyle='#5d4037';x.fillRect(4,2,3,20);x.fillRect(17,2,3,20);
+      x.fillStyle='#fdd835';x.fillRect(10,9,4,4);
+      x.fillStyle=`rgba(255,183,77,${dg})`;x.fillRect(0,0,TS,TS);
+      x.strokeStyle=`rgba(255,152,0,${dg+0.15})`;x.lineWidth=2;x.strokeRect(1,1,TS-2,TS-2);
+      break}
     case T.EXIT:{x.fillStyle='#d4a574';x.fillRect(0,0,TS,TS);
       const eg=0.4+Math.sin(globalFC*0.05)*0.3;
       x.fillStyle=`rgba(76,175,80,${eg})`;x.fillRect(4,3,16,18);
@@ -479,12 +490,33 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
             map[dy][dx]===T.EXIT||map[dy][dx]===T.START)&&attempts<80);
     if(attempts<80){
       map[dy][dx]=T.DOG;
-      carvePath(map,dx,dy,zone.left+Math.floor(zw/2),Math.floor(h/2),bgTile,rng,wall);
+      // Build a small cage around the dog
+      const cageOffsets=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+      let gateDir=null;
+      for(const [cdx,cdy] of cageOffsets){
+        const cx2=dx+cdx,cy2=dy+cdy;
+        if(cx2>0&&cx2<w-1&&cy2>0&&cy2<h-1&&map[cy2][cx2]!==T.GATE&&map[cy2][cx2]!==T.DOG&&map[cy2][cx2]!==T.EXIT&&map[cy2][cx2]!==T.START){
+          if(!gateDir&&(cdx===0||cdy===0)&&!(cdx===0&&cdy===0)){
+            map[cy2][cx2]=T.DOG_GATE;gateDir={x:cx2,y:cy2};
+          }else{map[cy2][cx2]=T.FENCE;}
+        }
+      }
+      // Ensure path to cage gate
+      if(gateDir){
+        const gpx=gateDir.x+(gateDir.x>dx?1:gateDir.x<dx?-1:0);
+        const gpy=gateDir.y+(gateDir.y>dy?1:gateDir.y<dy?-1:0);
+        if(gpx>0&&gpx<w-1&&gpy>0&&gpy<h-1&&map[gpy][gpx]!==T.GATE&&map[gpy][gpx]!==T.DOG){
+          map[gpy][gpx]=bgTile;
+        }
+        carvePath(map,gateDir.x,gateDir.y,zone.left+Math.floor(zw/2),Math.floor(h/2),bgTile,rng,wall);
+      }else{
+        carvePath(map,dx,dy,zone.left+Math.floor(zw/2),Math.floor(h/2),bgTile,rng,wall);
+      }
       const dk=dogKeys[i%dogKeys.length];
       let name=dogNames[i%dogNames.length];
       while(usedNames.has(name)){name=dogNames[Math.floor(rng()*dogNames.length)]}
       usedNames.add(name);
-      dogs.push({key:dk,x:dx,y:dy,name});
+      dogs.push({key:dk,x:dx,y:dy,name,cageGate:gateDir||null});
     }
   }
   
@@ -554,8 +586,8 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
 function seedRng(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;}}
 
 function carvePath(map,x1,y1,x2,y2,bgTile,rng,wall){
-  let x=x1,y=y1;let maxSteps=300;
-  const protect=new Set([T.GATE,T.DOG,T.EXIT,T.START,T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD]);
+  let x=x1,y=y1;let maxSteps=600;
+  const protect=new Set([T.GATE,T.DOG,T.DOG_GATE,T.FENCE,T.EXIT,T.START,T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD]);
   while((x!==x2||y!==y2)&&maxSteps-->0){
     if(x>0&&x<map[0].length-1&&y>0&&y<map.length-1){
       if(!protect.has(map[y][x])){
@@ -590,12 +622,12 @@ function findNearestWalkable(map,tx,ty){
 
 // ===== LEVEL DEFINITIONS =====
 const LEVEL_DEFS=[
-  {id:1,nameKey:'level1',diff:1,bgColor:'#87CEEB',biome:'meadow',w:32,h:24,gates:3,dogs:3,npcs:4,seed:42},
-  {id:2,nameKey:'level2',diff:2,bgColor:'#5a8a3c',biome:'forest',w:36,h:26,gates:3,dogs:3,npcs:4,seed:137},
-  {id:3,nameKey:'level3',diff:3,bgColor:'#2e5016',biome:'forest',w:40,h:28,gates:4,dogs:4,npcs:5,seed:256},
-  {id:4,nameKey:'level4',diff:4,bgColor:'#607d8b',biome:'mountain',w:44,h:30,gates:4,dogs:4,npcs:5,seed:512},
-  {id:5,nameKey:'level5',diff:5,bgColor:'#0277bd',biome:'lake',w:48,h:32,gates:5,dogs:5,npcs:6,seed:789},
-  {id:6,nameKey:'level6',diff:6,bgColor:'#3e2723',biome:'castle',w:52,h:34,gates:5,dogs:5,npcs:6,seed:1024}
+  {id:1,nameKey:'level1',diff:1,bgColor:'#87CEEB',biome:'meadow',w:50,h:38,gates:3,dogs:3,npcs:6,seed:42},
+  {id:2,nameKey:'level2',diff:2,bgColor:'#5a8a3c',biome:'forest',w:56,h:42,gates:4,dogs:4,npcs:7,seed:137},
+  {id:3,nameKey:'level3',diff:3,bgColor:'#2e5016',biome:'forest',w:64,h:48,gates:4,dogs:4,npcs:8,seed:256},
+  {id:4,nameKey:'level4',diff:4,bgColor:'#607d8b',biome:'mountain',w:72,h:52,gates:5,dogs:5,npcs:8,seed:512},
+  {id:5,nameKey:'level5',diff:5,bgColor:'#0277bd',biome:'lake',w:80,h:56,gates:5,dogs:5,npcs:9,seed:789},
+  {id:6,nameKey:'level6',diff:6,bgColor:'#3e2723',biome:'castle',w:90,h:60,gates:6,dogs:6,npcs:10,seed:1024}
 ];
 
 // Generate all levels
@@ -718,7 +750,7 @@ class Game{
     this.moveDir=null;this.moveHeld=false;this.moveCD=0;
     this.gateOpenEffect=null;
     // Initialize floating ambient particles
-    for(let i=0;i<15;i++){
+    for(let i=0;i<30;i++){
       this.floatingParts.push({
         x:Math.random()*this.mw*TS,y:Math.random()*this.mh*TS,
         vx:(Math.random()-0.5)*0.3,vy:-Math.random()*0.2-0.1,
@@ -732,14 +764,14 @@ class Game{
   updateCam(instant=false){
     const cv=document.getElementById('game-canvas');
     const mapW=this.mw*TS,mapH=this.mh*TS;
-    const tx=this.p.px-cv.width/2+TS/2,ty=this.p.py-cv.height/2+TS/2;
+    const vw=cv.width/RENDER_SCALE,vh=cv.height/RENDER_SCALE;
+    const tx=this.p.px-vw/2+TS/2,ty=this.p.py-vh/2+TS/2;
     if(instant){this.cam.x=tx;this.cam.y=ty}
     else{this.cam.x+=(tx-this.cam.x)*0.08;this.cam.y+=(ty-this.cam.y)*0.08}
-    // Center the map if it's smaller than the viewport
-    if(mapW<=cv.width){this.cam.x=(mapW-cv.width)/2}
-    else{this.cam.x=Math.max(0,Math.min(mapW-cv.width,this.cam.x))}
-    if(mapH<=cv.height){this.cam.y=(mapH-cv.height)/2}
-    else{this.cam.y=Math.max(0,Math.min(mapH-cv.height,this.cam.y))}
+    if(mapW<=vw){this.cam.x=(mapW-vw)/2}
+    else{this.cam.x=Math.max(0,Math.min(mapW-vw,this.cam.x))}
+    if(mapH<=vh){this.cam.y=(mapH-vh)/2}
+    else{this.cam.y=Math.max(0,Math.min(mapH-vh,this.cam.y))}
   }
 
   tryMove(dir){
@@ -763,6 +795,24 @@ class Game{
         return;
       }
       return;
+    }
+
+    // DOG_GATE — cage gate, solve puzzle to free dog
+    if(tile===T.DOG_GATE){
+      // Find which dog this cage gate belongs to
+      const nearDog=this.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===nx&&d.cageGate.y===ny);
+      if(nearDog&&!nearDog.cageOpen){
+        // Open quest for this dog cage
+        if(!nearDog.quests)nearDog.quests=genQuests(3,this.ld.diff);
+        this.activeQuest={type:'dogCage',dog:nearDog,x:nx,y:ny};
+        this.questList=nearDog.quests;this.questIdx=0;
+        this.addBurst(nx*TS+TS/2,ny*TS+TS/2,8,'#FF9800');
+        showQuestUI(this.questList,0,nearDog.quests.length);
+        return;
+      }
+      if(nearDog&&nearDog.cageOpen){this.doMove(nx,ny);return}
+      // If no matching dog found, just treat as walkable
+      this.doMove(nx,ny);return;
     }
 
     // Dog rescue — walk onto dog tile
@@ -818,8 +868,8 @@ class Game{
     const isHintNpc=Math.random()>0.4;
     const text=isHintNpc?t('npc_hint'):t('npc_hello');
     const names={[T.NPC_BUT]:'🦋 Butterfly',[T.NPC_SQU]:'🐿️ Squirrel',[T.NPC_BEAR]:'🐻 Bear',[T.NPC_BIRD]:'🐦 Bird'};
-    const screenX=x*TS-this.cam.x+TS/2;
-    const screenY=y*TS-this.cam.y;
+    const screenX=(x*TS-this.cam.x+TS/2)*RENDER_SCALE;
+    const screenY=(y*TS-this.cam.y)*RENDER_SCALE;
     showSpeechBubble(names[tile]||'?',text,screenX,screenY);
   }
 
@@ -835,6 +885,25 @@ class Game{
     if(!correct){this.mistakes++;return false}
     this.questIdx++;
     if(this.questIdx>=this.questList.length){
+      if(this.activeQuest.type==='dogCage'){
+        // Dog cage solved!
+        const dog=this.activeQuest.dog;
+        const gx=this.activeQuest.x,gy=this.activeQuest.y;
+        dog.cageOpen=true;
+        this.map[gy][gx]=T.GRASS; // remove cage gate
+        // Remove surrounding fences too
+        for(let fdy=-1;fdy<=1;fdy++)for(let fdx=-1;fdx<=1;fdx++){
+          const fy2=dog.y+fdy,fx2=dog.x+fdx;
+          if(fy2>=0&&fy2<this.mh&&fx2>=0&&fx2<this.mw&&this.map[fy2][fx2]===T.FENCE)
+            this.map[fy2][fx2]=T.GRASS;
+        }
+        this.activeQuest=null;this.questList=null;
+        sfxGateOpen();hideQuestUI();
+        this.addBurst(gx*TS+TS/2,gy*TS+TS/2,25,'#FF9800');
+        this.addBurst(dog.x*TS+TS/2,dog.y*TS+TS/2,20,'#FFD700');
+        showFlash('🔓 '+dog.name+' is free! Go get them!','#FF9800');
+        return true;
+      }
       // Gate solved!
       const gx=this.activeQuest.x,gy=this.activeQuest.y;
       this.activeQuest.open=true;
@@ -853,7 +922,7 @@ class Game{
   update(){
     this.fc++;globalFC=this.fc;animF=Math.floor(this.fc/15);
     // Clear tile cache for animated tiles
-    if(this.fc%8===0)for(const k in tileCache)if(k.startsWith('4_')||k.startsWith('6_')||k.startsWith('17_'))delete tileCache[k];
+    if(this.fc%8===0)for(const k in tileCache)if(k.startsWith('4_')||k.startsWith('6_')||k.startsWith('17_')||k.startsWith('22_'))delete tileCache[k];
 
     // Player movement
     if(this.p.moving){
@@ -965,6 +1034,21 @@ class Game{
           }
         }
       }
+      // Proximity dog cage hints
+      if(tile===T.DOG_GATE){
+        const nearDog=this.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===c&&d.cageGate.y===r&&!d.cageOpen);
+        if(nearDog){
+          const pdx=Math.abs(this.p.x-c),pdy=Math.abs(this.p.y-r);
+          if(pdx+pdy<=2){
+            const hintBounce=Math.sin(this.fc*0.06)*2;
+            cx.fillStyle='rgba(0,0,0,0.7)';
+            const hw=TS*3.5,hh=14;
+            cx.fillRect(sx+TS/2-hw/2,sy-18+hintBounce,hw,hh);
+            cx.fillStyle='#FF9800';cx.font=`bold ${Math.max(8,TS*0.35)}px sans-serif`;cx.textAlign='center';
+            cx.fillText('🐕 '+nearDog.name+' — Solve!',sx+TS/2,sy-8+hintBounce);
+          }
+        }
+      }
     }
 
     // Rescued dogs following player
@@ -1020,6 +1104,7 @@ class Game{
     document.getElementById('hud-timer').textContent=Math.floor(el/60)+':'+(el%60).toString().padStart(2,'0');
     document.getElementById('hud-dogs').textContent=this.rescued.length+'/'+this.totalDogs;
 
+    ctx.restore(); // end world scale
     // Minimap
     const mmS=2,mmW=this.mw*mmS,mmH=this.mh*mmS;
     const mmX=cv.width-mmW-10,mmY=cv.height-mmH-10;
@@ -1028,7 +1113,7 @@ class Game{
       const tile=this.map[r][c];
       cx.fillStyle=tile===T.TREE||tile===T.BUSH?'#2e7d32':tile===T.WATER?'#1976d2':
         tile===T.PATH||tile===T.BRIDGE?'#c49563':tile===T.ROCK?'#78909c':
-        tile===T.GATE?'#fdd835':tile===T.DOG?'#FFD700':tile===T.EXIT?'#FF5722':'#7cb342';
+        tile===T.GATE?'#fdd835':tile===T.DOG_GATE?'#FF9800':tile===T.DOG?'#FFD700':tile===T.EXIT?'#FF5722':'#7cb342';
       cx.fillRect(mmX+c*mmS,mmY+r*mmS,mmS,mmS);
     }
     // Player on minimap
@@ -1262,11 +1347,12 @@ document.addEventListener('keydown',e=>{
       if(fx>=0&&fy>=0&&fx<game.mw&&fy<game.mh){
         const tile=game.map[fy][fx];
         if(tile===T.GATE){const g=game.gates.find(g=>g.x===fx&&g.y===fy);if(g&&!g.open)game.openGateQuest(g)}
+        else if(tile===T.DOG_GATE){const nd=game.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===fx&&d.cageGate.y===fy);if(nd&&!nd.cageOpen){if(!nd.quests)nd.quests=genQuests(3,game.ld.diff);game.activeQuest={type:'dogCage',dog:nd,x:fx,y:fy};game.questList=nd.quests;game.questIdx=0;game.addBurst(fx*TS+TS/2,fy*TS+TS/2,8,'#FF9800');showQuestUI(game.questList,0,nd.quests.length)}}
         else if(INTERACT.has(tile))game.interactWith(fx,fy,tile)
       }
     }
   }
-  if(e.key==='Escape'){if(game&&game.activeQuest){hideQuestUI();game.activeQuest=null;game.questList=null}
+  if(e.key==='Escape'){if(game&&game.activeQuest){hideQuestUI();game.activeQuest=null;game.questList=null;game.questIdx=0}
     else if(game){game=null;if(rafId)cancelAnimationFrame(rafId);showLevelSelect()}}
 });
 document.addEventListener('keyup',e=>{
@@ -1286,6 +1372,7 @@ document.querySelector('.dpad-center').addEventListener('touchstart',e=>{e.preve
   const fx=game.p.x+d[0],fy=game.p.y+d[1];
   if(fx>=0&&fy>=0&&fx<game.mw&&fy<game.mh){const tile=game.map[fy][fx];
     if(tile===T.GATE){const g=game.gates.find(g=>g.x===fx&&g.y===fy);if(g&&!g.open)game.openGateQuest(g)}
+    else if(tile===T.DOG_GATE){const nd=game.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===fx&&d.cageGate.y===fy);if(nd&&!nd.cageOpen){if(!nd.quests)nd.quests=genQuests(3,game.ld.diff);game.activeQuest={type:'dogCage',dog:nd,x:fx,y:fy};game.questList=nd.quests;game.questIdx=0;game.addBurst(fx*TS+TS/2,fy*TS+TS/2,8,'#FF9800');showQuestUI(game.questList,0,nd.quests.length)}}
     else if(INTERACT.has(tile))game.interactWith(fx,fy,tile)}
 },{passive:false});
 
