@@ -1383,7 +1383,8 @@ function initLevel(idx){
   renderPlayer();
   renderDogs();
   updateHUD();
-  centerCamera();
+  // Delay camera centering to ensure layout is complete
+  requestAnimationFrame(()=>requestAnimationFrame(()=>centerCamera()));
 }
 
 // ========== RENDER MAP ==========
@@ -1498,11 +1499,10 @@ function getTileSize(){
 }
 
 function centerCamera(){
-  const viewport=document.getElementById('game-viewport');
   const mapEl=document.getElementById('game-map');
   const tile=getTileSize();
-  const vw=viewport.offsetWidth||viewport.clientWidth||window.innerWidth;
-  const vh=viewport.offsetHeight||viewport.clientHeight||(window.innerHeight-50);
+  const vw=window.innerWidth;
+  const vh=window.innerHeight-50; // Account for HUD
   const px=game.playerPos.c*tile+tile/2;
   const py=game.playerPos.r*tile+tile/2;
   const tx=Math.round(vw/2-px);
@@ -1582,13 +1582,14 @@ document.querySelectorAll('.dpad-btn').forEach(btn=>{
   const dir=btn.dataset.dir;
   const handler=(e)=>{
     e.preventDefault();
+    e.stopPropagation();
     if(dir==='up')movePlayer(-1,0);
     else if(dir==='down')movePlayer(1,0);
     else if(dir==='left')movePlayer(0,-1);
     else if(dir==='right')movePlayer(0,1);
   };
+  btn.addEventListener('click',handler);
   btn.addEventListener('touchstart',handler,{passive:false});
-  btn.addEventListener('mousedown',handler);
 });
 
 // Touch swipe
