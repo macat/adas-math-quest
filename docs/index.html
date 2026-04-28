@@ -2,2260 +2,1185 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Ada's Math Quest 🐕</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<title>Ada's Math Quest</title>
 <style>
-/* ========== RESET & BASE ========== */
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#1a1a2e}
-button{font-family:inherit;cursor:pointer;border:none;outline:none}
-input{font-family:inherit;outline:none}
-
-/* ========== CSS VARIABLES ========== */
-:root{
-  --tile:48px;
-  --primary:#4CAF50;
-  --primary-dark:#388E3C;
-  --accent:#FF9800;
-  --accent-dark:#F57C00;
-  --danger:#f44336;
-  --sky:#87CEEB;
-  --meadow:#7cb342;
-  --forest:#2e7d32;
-  --mountain:#78909c;
-  --lake:#0288d1;
-  --castle:#6d4c41;
-  --text:#333;
-  --text-light:#666;
-  --bg:#fafafa;
-  --card:#fff;
-  --shadow:0 4px 20px rgba(0,0,0,0.15);
-  --radius:16px;
-}
-
-/* ========== SCREENS ========== */
-.screen{display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;touch-action:none}
+body{font-family:'Segoe UI',system-ui,sans-serif}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;z-index:100}
 .screen.active{display:flex}
 
-/* ========== TITLE SCREEN ========== */
-#title-screen{
-  background:linear-gradient(180deg,#87CEEB 0%,#c8e6c9 50%,#81c784 100%);
-  gap:16px;
-  padding:20px;
-  text-align:center;
-  overflow-y:auto;
-}
-.title-logo{font-size:clamp(2rem,6vw,3.5rem);font-weight:900;color:#2e7d32;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(0,0,0,0.1);margin-top:20px}
-.title-sub{font-size:clamp(0.9rem,2.5vw,1.2rem);color:#4a7c59;font-weight:600;margin-bottom:8px}
-.title-dogs{font-size:2.5rem;letter-spacing:8px;animation:bounce-dogs 2s ease-in-out infinite}
-@keyframes bounce-dogs{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#title-screen{background:linear-gradient(180deg,#5eb3d9 0%,#8ecf65 55%,#6ab04c 100%);gap:14px;padding:20px;text-align:center;overflow-y:auto}
+.title-art{width:200px;height:120px;margin:10px auto 0;image-rendering:pixelated}
+.title-logo{font-size:clamp(2rem,7vw,3.2rem);font-weight:900;color:#2d5016;text-shadow:2px 2px 0 rgba(255,255,255,0.6);font-family:'Courier New',monospace;letter-spacing:2px}
+.title-sub{font-size:clamp(0.85rem,2.5vw,1.1rem);color:#3d6b21;font-weight:600}
+.char-select{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+.char-option{width:80px;height:100px;border-radius:12px;background:#fff;border:3px solid #ccc;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.char-option canvas{width:48px;height:48px;image-rendering:pixelated}
+.char-option span{font-size:0.7rem;font-weight:700;color:#555}
+.char-option:hover,.char-option.selected{border-color:#4CAF50;background:#e8f5e9;transform:scale(1.05)}
+.name-input{padding:10px 20px;border-radius:12px;border:2px solid #c8e6c9;font-size:1.1rem;text-align:center;width:200px;background:#fff;color:#333}
+.name-input:focus{border-color:#4CAF50;outline:none}
+.lang-row{display:flex;gap:8px}
+.lang-btn{padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:700;background:#fff;color:#333;border:2px solid #ddd;transition:all .15s;cursor:pointer}
+.lang-btn:hover,.lang-btn.active{background:#4CAF50;color:#fff;border-color:#4CAF50}
+.play-btn{padding:14px 44px;border-radius:28px;font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,#4CAF50,#388E3C);color:#fff;letter-spacing:1px;box-shadow:0 4px 16px rgba(76,175,80,0.4);transition:all .2s;margin:6px 0;font-family:'Courier New',monospace;cursor:pointer;border:none}
+.play-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(76,175,80,0.5)}
 
-.char-select{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:8px 0}
-.char-btn{
-  width:72px;height:72px;border-radius:16px;font-size:2.2rem;
-  background:#fff;border:3px solid #ddd;transition:all .2s;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
-.char-btn:hover,.char-btn.selected{border-color:var(--primary);background:#e8f5e9;transform:scale(1.1);box-shadow:0 4px 16px rgba(76,175,80,0.3)}
+#level-screen{background:linear-gradient(180deg,#5eb3d9 0%,#8ecf65 60%,#6ab04c 100%);padding:20px;gap:14px;overflow-y:auto}
+.level-title{font-size:1.5rem;font-weight:800;color:#2d5016;font-family:'Courier New',monospace}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;max-width:480px;width:100%;padding:0 10px}
+.level-card{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.1);transition:all .2s;cursor:pointer;border:3px solid transparent;position:relative}
+.level-card:hover:not(.locked){transform:translateY(-3px);box-shadow:0 5px 20px rgba(0,0,0,0.15)}
+.level-card.locked{opacity:0.45;cursor:not-allowed;filter:grayscale(0.4)}
+.level-card.completed{border-color:#4CAF50}
+.level-card canvas{width:100%;height:60px;image-rendering:pixelated;border-radius:8px;margin-bottom:6px}
+.level-card h3{font-size:0.95rem;color:#333;margin-bottom:2px}
+.level-card p{font-size:0.75rem;color:#777}
+.level-stars{color:#FF9800;font-size:1.1rem;margin-top:4px}
+.level-back{padding:8px 24px;border-radius:20px;background:rgba(255,255,255,0.3);color:#2d5016;font-weight:700;font-size:0.9rem;backdrop-filter:blur(4px);border:2px solid rgba(255,255,255,0.4);cursor:pointer}
 
-.name-input{
-  padding:10px 20px;border-radius:12px;border:2px solid #c8e6c9;
-  font-size:1.1rem;text-align:center;width:220px;
-  background:#fff;color:var(--text);
-}
-.name-input:focus{border-color:var(--primary)}
+#game-screen{background:#000}
+#game-canvas{position:absolute;inset:0}
+.hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:8px 14px;z-index:20;pointer-events:none}
+.hud>*{pointer-events:auto}
+.hud-left,.hud-right{display:flex;gap:8px;align-items:center}
+.hud-pill{background:rgba(0,0,0,0.55);color:#fff;padding:5px 12px;border-radius:20px;font-size:0.8rem;font-weight:700;backdrop-filter:blur(4px);display:flex;align-items:center;gap:5px}
+.hud-pill.dogs{background:rgba(76,175,80,0.7)}
+.hud-btn{width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);cursor:pointer;border:none}
 
-.lang-row{display:flex;gap:8px;margin:4px 0}
-.lang-btn{
-  padding:6px 16px;border-radius:20px;font-size:0.85rem;font-weight:600;
-  background:#fff;color:var(--text);border:2px solid #ddd;transition:all .2s;
-}
-.lang-btn:hover,.lang-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.dpad{position:fixed;bottom:20px;left:20px;z-index:20;display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px 48px;gap:3px}
+.dpad-btn{width:48px;height:48px;border-radius:10px;background:rgba(0,0,0,0.45);color:#fff;font-size:1.3rem;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);border:2px solid rgba(255,255,255,0.15);-webkit-user-select:none;user-select:none;cursor:pointer}
+.dpad-btn:active{background:rgba(255,255,255,0.3)}
+.dpad-up{grid-column:2;grid-row:1}.dpad-left{grid-column:1;grid-row:2}
+.dpad-center{grid-column:2;grid-row:2;font-size:0.7rem;font-weight:700;background:rgba(76,175,80,0.5)}
+.dpad-right{grid-column:3;grid-row:2}.dpad-down{grid-column:2;grid-row:3}
 
-.play-btn{
-  padding:14px 48px;border-radius:30px;font-size:1.3rem;font-weight:800;
-  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;letter-spacing:1px;
-  box-shadow:0 4px 20px rgba(76,175,80,0.4);transition:all .2s;
-  margin:8px 0;
-}
-.play-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(76,175,80,0.5)}
+.speech-bubble{position:fixed;z-index:30;max-width:300px;padding:12px 16px;background:#fff;border-radius:16px;border:3px solid #333;font-size:0.9rem;color:#333;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;animation:bubblePop 0.3s ease-out}
+.speech-bubble::after{content:'';position:absolute;bottom:-12px;left:30px;border:8px solid transparent;border-top-color:#333}
+.speech-bubble .npc-name{font-weight:800;color:#4CAF50;margin-bottom:4px;font-size:0.85rem}
+@keyframes bubblePop{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
 
-/* ========== LEVEL SELECT ========== */
-#level-screen{
-  background:linear-gradient(180deg,#87CEEB 0%,#c8e6c9 60%,#a5d6a7 100%);
-  padding:20px;gap:16px;overflow-y:auto;
-}
-.level-title{font-size:1.6rem;font-weight:800;color:#2e7d32;text-align:center}
-.level-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;max-width:500px;width:100%;padding:0 10px}
-.level-card{
-  background:#fff;border-radius:16px;padding:16px 12px;text-align:center;
-  box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:all .2s;cursor:pointer;
-  border:3px solid transparent;position:relative;overflow:hidden;
-}
-.level-card:hover:not(.locked){transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,0.15)}
-.level-card.locked{opacity:0.5;cursor:not-allowed;filter:grayscale(0.5)}
-.level-card.locked::after{content:'🔒';position:absolute;top:8px;right:8px;font-size:1.2rem}
-.level-card.completed{border-color:var(--primary)}
-.level-card .level-icon{font-size:2rem;margin-bottom:4px}
-.level-card .level-name{font-size:0.95rem;font-weight:700;color:var(--text)}
-.level-card .level-info{font-size:0.75rem;color:var(--text-light);margin-top:4px}
-.level-card .stars{color:#FFD700;font-size:1rem;margin-top:4px}
-.level-card .best-time{font-size:0.7rem;color:var(--text-light)}
-.back-btn{
-  padding:8px 24px;border-radius:20px;font-size:0.9rem;font-weight:600;
-  background:#fff;color:var(--text);border:2px solid #ddd;
-}
-
-/* ========== STORY / CUTSCENE ========== */
-#story-screen{
-  background:#000;padding:30px;gap:20px;
-  text-align:center;
-}
-.story-text{
-  color:#fff;font-size:clamp(1rem,3vw,1.3rem);line-height:1.7;
-  max-width:600px;opacity:0;animation:fade-in 1.5s forwards;
-}
-@keyframes fade-in{to{opacity:1}}
-.story-emoji{font-size:3rem;margin-bottom:10px;animation:fade-in 1s forwards}
-.story-continue{
-  padding:10px 30px;border-radius:20px;font-size:1rem;font-weight:600;
-  background:var(--primary);color:#fff;opacity:0;animation:fade-in 2s 1.5s forwards;
-}
-
-/* ========== GAME SCREEN ========== */
-#game-screen{
-  flex-direction:column;width:100%;height:100%;
-}
-.game-hud{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:6px 12px;background:rgba(0,0,0,0.7);color:#fff;
-  font-size:0.8rem;font-weight:600;width:100%;z-index:10;
-  min-height:42px;gap:8px;flex-shrink:0;
-}
-.hud-left,.hud-right{display:flex;align-items:center;gap:10px}
-.hud-dogs{color:#FFD700}
-.hud-timer{font-variant-numeric:tabular-nums}
-.hud-level{color:#a5d6a7;font-size:0.75rem}
-.hud-btn{
-  padding:4px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;
-  background:rgba(255,255,255,0.15);color:#fff;
-}
-
-.game-viewport{
-  flex:1;position:relative;overflow:hidden;
-  min-height:0;width:100%;
-}
-.game-map{
-  display:grid;
-  position:absolute;
-  transition:transform 0.15s ease-out;
-}
-.tile{
-  width:var(--tile);height:var(--tile);
-  display:flex;align-items:center;justify-content:center;
-  font-size:calc(var(--tile) * 0.6);
-  position:relative;
-  transition:background 0.3s;
-  outline:1px solid rgba(0,0,0,0.06);
-}
-
-/* Tile types - Meadow (default) */
-.tile-wall{background:#5d4037}
-.tile-path{background:#e8f5e9;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.04)}
-.tile-grass{background:#a5d6a7}
-.tile-tree{background:#66bb6a}
-.tile-water{background:#4fc3f7;animation:water-shimmer 3s ease-in-out infinite}
-@keyframes water-shimmer{0%,100%{opacity:1}50%{opacity:0.85}}
-.tile-bridge{background:#d7ccc8;box-shadow:inset 0 0 0 2px #a1887f}
-.tile-gate{background:#fff9c4;border:2px solid #f9a825;border-radius:4px}
-.tile-gate.solved{background:#c8e6c9;border-color:#66bb6a}
-.tile-start{background:#e8f5e9}
-.tile-end{background:#fff9c4;border:2px dashed #fbc02d;border-radius:4px;animation:end-glow 2s ease-in-out infinite}
-@keyframes end-glow{0%,100%{box-shadow:inset 0 0 8px rgba(255,193,7,0.3)}50%{box-shadow:inset 0 0 16px rgba(255,193,7,0.6)}}
-@keyframes exit-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.tile-rock{background:#90a4ae}
-.tile-flower{background:#c8e6c9}
-.tile-dark-tree{background:#388e3c}
-.tile-mountain{background:#78909c}
-.tile-snow{background:#eceff1}
-.tile-lava{background:#e65100}
-.tile-castle-wall{background:#4e342e}
-.tile-castle-floor{background:#d7ccc8;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06)}
-
-/* Player */
-.player-sprite{
-  position:absolute;z-index:5;
-  font-size:calc(var(--tile) * 0.75);
-  transition:left 0.15s ease-out,top 0.15s ease-out;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-  animation:player-bob 2s ease-in-out infinite;
-}
-@keyframes player-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-
-/* Dog followers */
-.dog-follower{
-  position:absolute;z-index:4;
-  font-size:calc(var(--tile) * 0.55);
-  transition:left 0.3s ease-out,top 0.3s ease-out;
-  filter:drop-shadow(0 1px 3px rgba(0,0,0,0.2));
-  animation:follower-wag 1.5s ease-in-out infinite;
-}
-@keyframes follower-wag{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
-
-/* Gate markers */
-.gate-marker{
-  position:absolute;font-size:calc(var(--tile) * 0.5);
-  z-index:3;pointer-events:none;
-  animation:gate-pulse 2s ease-in-out infinite;
-}
-@keyframes gate-pulse{0%,100%{transform:scale(1);opacity:0.9}50%{transform:scale(1.15);opacity:1}}
-.gate-marker.solved{animation:none;opacity:0.5}
-
-/* Dog markers on map */
-.dog-marker{
-  position:absolute;z-index:3;
-  font-size:calc(var(--tile) * 0.65);
-  animation:dog-wiggle 3s ease-in-out infinite;
-  filter:drop-shadow(0 1px 3px rgba(0,0,0,0.2));
-}
-@keyframes dog-wiggle{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
-.dog-marker.rescued{animation:none;display:none}
-
-/* D-Pad for mobile */
-.dpad{
-  position:absolute;bottom:16px;left:16px;z-index:20;
-  display:grid;grid-template-columns:52px 52px 52px;grid-template-rows:52px 52px 52px;gap:2px;
-  opacity:0.7;
-}
-.dpad-btn{
-  width:52px;height:52px;border-radius:10px;
-  background:rgba(255,255,255,0.25);color:#fff;
-  font-size:1.3rem;display:flex;align-items:center;justify-content:center;
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-  border:1px solid rgba(255,255,255,0.15);
-}
-.dpad-btn:active{background:rgba(255,255,255,0.5)}
-.dpad-empty{visibility:hidden}
-
-/* ========== QUEST MODAL ========== */
-.quest-overlay{
-  display:none;position:fixed;inset:0;z-index:100;
-  background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);
-  align-items:center;justify-content:center;padding:16px;
-}
+.quest-overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
 .quest-overlay.active{display:flex}
-.quest-box{
-  background:#fff;border-radius:20px;padding:20px 24px;
-  max-width:520px;width:100%;max-height:90vh;overflow-y:auto;
-  box-shadow:0 8px 40px rgba(0,0,0,0.3);
-  animation:quest-pop 0.3s ease-out;
-}
-@keyframes quest-pop{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+.quest-panel{background:#fff;border-radius:20px;max-width:500px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.3);border:4px solid #333}
+.quest-header{background:linear-gradient(135deg,#4CAF50,#66BB6A);padding:14px 18px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center}
+.quest-header h2{color:#fff;font-size:1.1rem;font-family:'Courier New',monospace}
+.quest-progress{color:rgba(255,255,255,0.9);font-size:0.8rem;font-weight:700}
+.quest-body{padding:18px}
 
-.quest-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.quest-icon{font-size:2rem}
-.quest-title{font-size:1.1rem;font-weight:800;color:var(--text)}
-.quest-progress{
-  display:flex;gap:4px;margin-bottom:16px;
-}
-.quest-dot{
-  width:28px;height:6px;border-radius:3px;background:#e0e0e0;
-  transition:background 0.3s;
-}
-.quest-dot.done{background:var(--primary)}
-.quest-dot.current{background:var(--accent);animation:dot-pulse 1s ease-in-out infinite}
-@keyframes dot-pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-.quest-dot.wrong{background:var(--danger)}
+.pattern-series{display:flex;flex-direction:column;gap:10px}
+.pattern-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:#f5f5f5;transition:all .3s;flex-wrap:wrap}
+.pattern-row.current{background:#e8f5e9;border:2px solid #4CAF50}
+.pattern-row.solved{background:#c8e6c9;opacity:0.85}
+.pattern-row.solved .pattern-answer{color:#2e7d32;font-weight:800}
+.pattern-eq{font-size:1.15rem;font-weight:700;color:#333;font-family:'Courier New',monospace}
+.pattern-input{width:60px;padding:6px;border-radius:8px;border:2px solid #4CAF50;font-size:1.15rem;text-align:center;font-family:'Courier New',monospace;font-weight:700}
+.pattern-input:focus{outline:none;border-color:#2e7d32;box-shadow:0 0 0 3px rgba(76,175,80,0.2)}
 
-.quest-story{
-  font-size:0.85rem;color:var(--text-light);
-  background:#f5f5f5;border-radius:12px;padding:10px 14px;
-  margin-bottom:16px;line-height:1.5;
-  border-left:3px solid var(--accent);
-}
+.mc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.mc-btn{padding:12px;border-radius:12px;font-size:1.1rem;font-weight:700;background:#f0f0f0;color:#333;border:3px solid #ddd;transition:all .15s;font-family:'Courier New',monospace;cursor:pointer}
+.mc-btn:hover{background:#e8f5e9;border-color:#4CAF50}
+.mc-btn.correct{background:#c8e6c9;border-color:#4CAF50;color:#2e7d32}
+.mc-btn.wrong{background:#ffcdd2;border-color:#f44336;color:#c62828}
 
-.quest-question{
-  font-size:1.15rem;font-weight:700;color:var(--text);
-  text-align:center;margin-bottom:16px;line-height:1.4;
-}
+.tf-row{display:flex;gap:10px;margin-top:12px;justify-content:center}
+.tf-btn{padding:12px 28px;border-radius:12px;font-size:1rem;font-weight:700;border:3px solid #ddd;transition:all .15s;cursor:pointer;background:#f5f5f5}
+.tf-btn.yes{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7}
+.tf-btn.no{background:#ffebee;color:#c62828;border-color:#ef9a9a}
 
-/* Quest answer types */
-.quest-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.choice-btn{
-  padding:12px;border-radius:12px;font-size:1.05rem;font-weight:700;
-  background:#f5f5f5;color:var(--text);border:2px solid #e0e0e0;
-  transition:all .15s;
-}
-.choice-btn:hover{background:#e8f5e9;border-color:var(--primary)}
-.choice-btn.correct{background:#c8e6c9;border-color:var(--primary);color:var(--primary-dark)}
-.choice-btn.wrong{background:#ffcdd2;border-color:var(--danger);color:var(--danger)}
+.num-input-row{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.num-eq{font-size:1.3rem;font-weight:700;font-family:'Courier New',monospace}
+.num-input{width:80px;padding:10px;border-radius:10px;border:3px solid #4CAF50;font-size:1.3rem;text-align:center;font-family:'Courier New',monospace;font-weight:700}
+.num-submit{padding:10px 20px;border-radius:10px;background:#4CAF50;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;border:none}
 
-.quest-input-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
-.quest-number-input{
-  width:100px;padding:10px;border-radius:12px;border:2px solid #e0e0e0;
-  font-size:1.3rem;font-weight:700;text-align:center;
-}
-.quest-number-input:focus{border-color:var(--primary)}
-.quest-submit-btn{
-  padding:10px 24px;border-radius:12px;font-size:1rem;font-weight:700;
-  background:var(--primary);color:#fff;
-}
-
-.quest-tf-row{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
-.tf-btn{
-  padding:12px 32px;border-radius:12px;font-size:1.1rem;font-weight:700;
-  border:2px solid #e0e0e0;background:#f5f5f5;color:var(--text);
-  transition:all .15s;min-width:100px;
-}
-.tf-btn:hover{background:#e8f5e9;border-color:var(--primary)}
-.tf-btn.correct{background:#c8e6c9;border-color:var(--primary);color:var(--primary-dark)}
-.tf-btn.wrong{background:#ffcdd2;border-color:var(--danger);color:var(--danger)}
-
-/* Pattern / sequence display */
-.pattern-display{
-  display:flex;gap:8px;justify-content:center;align-items:center;
-  margin-bottom:16px;flex-wrap:wrap;
-}
-.pattern-item{
-  width:48px;height:48px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.2rem;font-weight:800;
-}
-.pattern-num{background:#e3f2fd;color:#1565c0;border:2px solid #90caf9}
-.pattern-blank{background:#fff3e0;color:var(--accent);border:2px dashed var(--accent);font-size:1.5rem}
-
-/* Match pairs */
-.match-container{display:flex;gap:16px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
-.match-col{display:flex;flex-direction:column;gap:6px}
-.match-item{
-  padding:8px 14px;border-radius:10px;font-size:0.95rem;font-weight:700;
-  border:2px solid #e0e0e0;background:#f5f5f5;color:var(--text);
-  cursor:pointer;transition:all .15s;text-align:center;min-width:80px;
-}
-.match-item:hover{border-color:var(--primary);background:#e8f5e9}
-.match-item.selected{border-color:var(--accent);background:#fff3e0;color:var(--accent-dark)}
-.match-item.matched{border-color:var(--primary);background:#c8e6c9;color:var(--primary-dark);cursor:default}
-.match-item.wrong-match{border-color:var(--danger);background:#ffcdd2;animation:shake 0.4s}
-
-/* Number order */
-.order-slot{
-  min-width:50px;min-height:40px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
-  background:#f5f5f5;border:2px dashed #e0e0e0;
-  font-weight:700;font-size:1rem;color:var(--primary-dark);
-}
-
-/* Visual counting */
-.visual-grid{
-  display:flex;gap:6px;justify-content:center;flex-wrap:wrap;
-  margin-bottom:16px;
-}
-.visual-group{
-  display:flex;gap:3px;flex-wrap:wrap;justify-content:center;
-  background:#f5f5f5;border-radius:12px;padding:10px;
-  border:2px solid #e0e0e0;max-width:180px;
-}
-.visual-item{font-size:1.4rem}
-
-/* Comparison */
-.compare-row{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:12px}
-.compare-expr{
-  padding:12px 16px;border-radius:12px;font-size:1.05rem;font-weight:700;
-  background:#f5f5f5;border:2px solid #e0e0e0;color:var(--text);
-  cursor:pointer;transition:all .15s;min-width:100px;text-align:center;
-}
-.compare-expr:hover{border-color:var(--primary);background:#e8f5e9}
-.compare-expr.correct{background:#c8e6c9;border-color:var(--primary)}
-.compare-expr.wrong{background:#ffcdd2;border-color:var(--danger)}
-.compare-vs{font-size:1.2rem;font-weight:800;color:var(--text-light)}
-
-/* Feedback */
-.quest-feedback{
-  text-align:center;padding:8px;border-radius:10px;
-  font-weight:700;font-size:0.95rem;margin-bottom:8px;
-  display:none;
-}
-.quest-feedback.show{display:block;animation:fade-in 0.3s}
-.quest-feedback.correct-fb{background:#c8e6c9;color:#2e7d32}
-.quest-feedback.wrong-fb{background:#ffcdd2;color:#c62828}
-
-/* Shake animation */
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-
-/* ========== LEVEL COMPLETE ========== */
-#complete-screen{
-  background:linear-gradient(180deg,#87CEEB 0%,#c8e6c9 60%,#81c784 100%);
-  padding:20px;gap:12px;text-align:center;overflow-y:auto;
-}
-.complete-title{font-size:1.8rem;font-weight:900;color:#2e7d32}
-.complete-stars{font-size:2.5rem;letter-spacing:6px}
-.complete-time{font-size:1rem;color:var(--text-light)}
-.complete-record{font-size:0.85rem;color:#f57c00;font-weight:600}
-.complete-dogs{
-  display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
-  margin:8px 0;
-}
-.complete-dog{
-  background:#fff;border-radius:16px;padding:10px;text-align:center;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);min-width:80px;
-  animation:pop-in 0.5s ease-out backwards;
-}
-.complete-dog .dog-emoji{font-size:2rem}
-.complete-dog .dog-name{font-size:0.75rem;font-weight:600;color:var(--text)}
-
-/* ========== VICTORY SCREEN ========== */
-#victory-screen{
-  background:linear-gradient(180deg,#FFD54F 0%,#81c784 40%,#4caf50 100%);
-  padding:20px;gap:16px;text-align:center;overflow-y:auto;
-}
-.victory-title{font-size:2rem;font-weight:900;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,0.2)}
-.victory-message{font-size:1.1rem;color:#fff;max-width:500px;line-height:1.5}
-.victory-dogs{
-  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
-  max-width:600px;
-}
-.victory-dog{
-  background:rgba(255,255,255,0.9);border-radius:16px;padding:12px;
-  text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);
-  animation:pop-in 0.5s ease-out backwards;
-}
-.victory-dog .dog-emoji{font-size:2.5rem}
-.victory-dog .dog-name{font-size:0.8rem;font-weight:700;color:var(--text)}
-.victory-dog .dog-thanks{font-size:0.7rem;color:var(--primary-dark)}
-@keyframes pop-in{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
-
-.victory-btn{
-  padding:12px 36px;border-radius:24px;font-size:1.1rem;font-weight:700;
-  background:#fff;color:var(--primary-dark);box-shadow:var(--shadow);
-}
-
-/* ========== SPARKLE ========== */
-.sparkle{
-  position:fixed;pointer-events:none;z-index:200;
-  font-size:1.5rem;
-  animation:sparkle-fly 1s ease-out forwards;
-}
-@keyframes sparkle-fly{
-  0%{opacity:1;transform:translateY(0) scale(1)}
-  100%{opacity:0;transform:translateY(-60px) scale(0.3)}
-}
-
-/* ========== RESPONSIVE ========== */
-@media(max-width:480px){
-  :root{--tile:40px}
-  .quest-box{padding:16px}
-  .quest-question{font-size:1rem}
-  .dpad{bottom:10px;left:10px}
-  .dpad-btn{width:46px;height:46px;font-size:1.1rem}
-}
-@media(min-width:768px){
-  :root{--tile:52px}
-  .dpad{opacity:0.4}
-}
-@media(min-width:1024px){
-  :root{--tile:60px}
-}
+#victory-screen{background:linear-gradient(180deg,#FFD54F 0%,#FFB74D 40%,#FF9800 100%);gap:14px;padding:20px;text-align:center;overflow-y:auto}
+.victory-title{font-size:clamp(1.8rem,6vw,2.8rem);font-weight:900;color:#e65100;font-family:'Courier New',monospace;text-shadow:2px 2px 0 rgba(255,255,255,0.5)}
+.victory-dogs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:500px}
+.victory-dog{background:#fff;border-radius:14px;padding:10px;text-align:center;width:90px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+.victory-dog canvas{width:48px;height:48px;image-rendering:pixelated}
+.victory-dog p{font-size:0.7rem;font-weight:700;color:#555;margin-top:4px}
+.victory-stats{background:rgba(255,255,255,0.4);border-radius:14px;padding:14px 20px;max-width:300px;width:100%}
+.victory-stats p{font-size:0.9rem;color:#5d4037;margin:4px 0;font-weight:600}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media(min-width:768px){.dpad{display:none}}
 </style>
 </head>
 <body>
-
-<!-- ===== TITLE SCREEN ===== -->
 <div id="title-screen" class="screen active">
-  <div class="title-dogs">🐕 🐩 🦮 🐾 🐶</div>
-  <div class="title-logo" data-i18n="title">Ada's Math Quest</div>
-  <div class="title-sub" data-i18n="subtitle">Save the lost dogs!</div>
-
-  <div style="font-size:0.85rem;font-weight:600;color:#4a7c59;margin-top:8px" data-i18n="pick_char">Pick your character:</div>
+  <canvas class="title-art" id="title-art-canvas" width="200" height="120"></canvas>
+  <div class="title-logo">Ada's Math Quest</div>
+  <div class="title-sub" data-i18n="title_sub">Rescue the lost puppies!</div>
   <div class="char-select" id="char-select"></div>
-
-  <input class="name-input" id="player-name" value="Ada" placeholder="Your name" maxlength="20">
-
-  <div class="lang-row" id="lang-row"></div>
-
-  <button class="play-btn" id="play-btn" data-i18n="play">Play!</button>
+  <input class="name-input" id="player-name" value="Ada" maxlength="12">
+  <div class="lang-row">
+    <button class="lang-btn active" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="de">Deutsch</button>
+    <button class="lang-btn" data-lang="hu">Magyar</button>
+  </div>
+  <button class="play-btn" id="play-btn" data-i18n="play">&#9654; PLAY</button>
 </div>
-
-<!-- ===== LEVEL SELECT ===== -->
 <div id="level-screen" class="screen">
-  <button class="back-btn" id="back-title" data-i18n="back">← Back</button>
   <div class="level-title" data-i18n="choose_level">Choose a Level</div>
   <div class="level-grid" id="level-grid"></div>
+  <button class="level-back" id="level-back" data-i18n="back">&larr; Back</button>
 </div>
-
-<!-- ===== STORY CUTSCENE ===== -->
-<div id="story-screen" class="screen">
-  <div class="story-emoji" id="story-emoji"></div>
-  <div class="story-text" id="story-text"></div>
-  <button class="story-continue" id="story-continue" data-i18n="continue">Continue →</button>
-</div>
-
-<!-- ===== GAME SCREEN ===== -->
 <div id="game-screen" class="screen">
-  <div class="game-hud">
+  <canvas id="game-canvas"></canvas>
+  <div class="hud">
     <div class="hud-left">
-      <span class="hud-level" id="hud-level"></span>
-      <span class="hud-dogs" id="hud-dogs">🐕 0/0</span>
+      <div class="hud-pill dogs"><span id="hud-dogs">0/3</span> &#128021;</div>
+      <div class="hud-pill"><span id="hud-timer">0:00</span></div>
     </div>
-    <div class="hud-right">
-      <span class="hud-timer" id="hud-timer">⏱ 0:00</span>
-      <button class="hud-btn" id="hud-pause" data-i18n="pause">⏸</button>
-    </div>
+    <div class="hud-right"><button class="hud-btn" id="hud-menu">&#9776;</button></div>
   </div>
-  <div class="game-viewport" id="game-viewport">
-    <div class="game-map" id="game-map"></div>
-  </div>
-  <!-- D-Pad for mobile -->
   <div class="dpad" id="dpad">
-    <div class="dpad-empty"></div>
-    <button class="dpad-btn" data-dir="up">▲</button>
-    <div class="dpad-empty"></div>
-    <button class="dpad-btn" data-dir="left">◀</button>
-    <div class="dpad-empty"></div>
-    <button class="dpad-btn" data-dir="right">▶</button>
-    <div class="dpad-empty"></div>
-    <button class="dpad-btn" data-dir="down">▼</button>
-    <div class="dpad-empty"></div>
+    <button class="dpad-btn dpad-up" data-dir="up">&#9650;</button>
+    <button class="dpad-btn dpad-left" data-dir="left">&#9664;</button>
+    <button class="dpad-btn dpad-center">Talk</button>
+    <button class="dpad-btn dpad-right" data-dir="right">&#9654;</button>
+    <button class="dpad-btn dpad-down" data-dir="down">&#9660;</button>
+  </div>
+  <div class="speech-bubble" id="speech-bubble">
+    <div class="npc-name" id="speech-name"></div>
+    <div id="speech-text"></div>
   </div>
 </div>
-
-<!-- ===== QUEST OVERLAY ===== -->
 <div class="quest-overlay" id="quest-overlay">
-  <div class="quest-box" id="quest-box">
+  <div class="quest-panel">
     <div class="quest-header">
-      <span class="quest-icon" id="quest-icon">🔒</span>
-      <span class="quest-title" id="quest-title"></span>
+      <h2 id="quest-title">Math Challenge!</h2>
+      <span class="quest-progress" id="quest-progress">1/3</span>
     </div>
-    <div class="quest-progress" id="quest-progress"></div>
-    <div class="quest-story" id="quest-story"></div>
-    <div class="quest-question" id="quest-question"></div>
-    <div id="quest-answer-area"></div>
-    <div class="quest-feedback" id="quest-feedback"></div>
+    <div class="quest-body" id="quest-body"></div>
   </div>
 </div>
-
-<!-- ===== LEVEL COMPLETE ===== -->
-<div id="complete-screen" class="screen">
-  <div class="complete-title" id="complete-title" data-i18n="level_complete">Level Complete!</div>
-  <div class="complete-stars" id="complete-stars"></div>
-  <div class="complete-time" id="complete-time"></div>
-  <div class="complete-record" id="complete-record"></div>
-  <div class="complete-dogs" id="complete-dogs"></div>
-  <button class="play-btn" id="next-level-btn" data-i18n="next_level">Next Level →</button>
-  <button class="back-btn" id="complete-back" data-i18n="back_to_levels">Back to Levels</button>
-</div>
-
-<!-- ===== VICTORY SCREEN ===== -->
 <div id="victory-screen" class="screen">
-  <div class="victory-title" id="victory-title"></div>
-  <div class="victory-message" id="victory-message"></div>
+  <div class="victory-title" data-i18n="all_saved">All Dogs Saved!</div>
   <div class="victory-dogs" id="victory-dogs"></div>
+  <div class="victory-stats" id="victory-stats"></div>
+  <button class="play-btn" id="victory-next" data-i18n="continue">Continue &rarr;</button>
+  <button class="level-back" id="victory-menu" data-i18n="main_menu">Main Menu</button>
+</div>
 <script>
-// ================================================
-// ADA'S MATH QUEST — Grid Labyrinth Adventure
-// ================================================
+"use strict";
 
-// ========== i18n ==========
-const I18N = {
-  en: {
-    title: "Ada's Math Quest",
-    subtitle: "Save the lost dogs!",
-    pick_char: "Pick your character:",
-    play: "Play! 🎮",
-    back: "← Back",
-    choose_level: "Choose a Level",
-    continue: "Continue →",
-    pause: "⏸",
-    level_complete: "Level Complete! 🎉",
-    next_level: "Next Level →",
-    back_to_levels: "Back to Levels",
-    play_again: "Play Again! 🐾",
-    correct: ["Great job! ✨", "Awesome! 🌟", "Perfect! 💫", "You got it! 🎉", "Brilliant! ⭐"],
-    wrong: ["Try again! 💪", "Almost! 🤔", "Not quite! 🌈", "Keep trying! 💫"],
-    quest_gate: "Solve to open!",
-    quest_bridge: "Fix the bridge!",
-    quest_bear: "Wake the bear!",
-    quest_river: "Cross the river!",
-    quest_rock: "Move the rock!",
-    task_of: "Task {n} of {total}",
-    dogs_saved: "dogs saved",
-    time: "Time",
-    best: "Best",
-    new_record: "🏆 New Record!",
-    stars3: "Perfect! No mistakes!",
-    stars2: "Great job!",
-    stars1: "Good effort!",
-    victory_title: "🎉 All Dogs Saved! 🎉",
-    victory_msg: "Thank you, {name}! You saved all the dogs! They are so happy!",
-    thank_you: "Thank you, {name}! 🐾",
-    true_btn: "True ✓",
-    false_btn: "False ✗",
-    submit: "Check →",
-    equal_btn: "Equal =",
-    stories: {
-      1: {emoji:"🌸", text:"The dogs got lost in the sunny meadow! Butterflies told you where to find them. Solve puzzles at each gate to rescue them!"},
-      2: {emoji:"🌲", text:"Deep in the whispering woods, more dogs need your help! The wise owl showed you a secret path. Watch out for tricky puzzles!"},
-      3: {emoji:"🦋", text:"The deep forest is dark and mysterious. Bears guard the bridges! Solve their riddles to pass through and save the dogs!"},
-      4: {emoji:"🏔️", text:"High up on the mountain trail, brave dogs are waiting for rescue. The path is long but you can do it!"},
-      5: {emoji:"🌊", text:"At the crystal lake, dogs are stranded on islands. Build bridges with your math skills to reach them all!"},
-      6: {emoji:"🏰", text:"The Dragon's Den! The last dogs are trapped inside. This is the hardest challenge yet — but you're ready!"}
-    },
-    obstacles: {
-      gate: "A magical gate blocks the path! 🔮",
-      bridge: "The bridge is broken! Fix it with math! 🌉",
-      bear: "A friendly bear is sleeping on the path! 🐻",
-      river: "A river blocks the way! 🌊",
-      rock: "A big rock is in the way! 🪨"
-    },
-    word_templates: [
-      "{name} found {a} puppies in the park. Then {b} more ran over. How many puppies in total?",
-      "There were {total} dogs playing. {b} went home. How many are left?",
-      "{name} has {a} treats. She gives {b} to the puppies. How many treats does she have left?",
-      "There are {a} big dogs and {b} small dogs. How many dogs altogether?",
-      "{total} butterflies were in the garden. {b} flew away. How many stayed?"
-    ]
-  },
-  de: {
-    title: "Adas Mathe-Abenteuer",
-    subtitle: "Rette die verlorenen Hunde!",
-    pick_char: "Wähle deinen Charakter:",
-    play: "Spielen! 🎮",
-    back: "← Zurück",
-    choose_level: "Wähle ein Level",
-    continue: "Weiter →",
-    pause: "⏸",
-    level_complete: "Level geschafft! 🎉",
-    next_level: "Nächstes Level →",
-    back_to_levels: "Zurück zur Levelauswahl",
-    play_again: "Nochmal spielen! 🐾",
-    correct: ["Super! ✨", "Toll! 🌟", "Perfekt! 💫", "Richtig! 🎉", "Klasse! ⭐"],
-    wrong: ["Versuch es nochmal! 💪", "Fast! 🤔", "Nicht ganz! 🌈", "Weiter versuchen! 💫"],
-    quest_gate: "Löse die Aufgabe!",
-    quest_bridge: "Repariere die Brücke!",
-    quest_bear: "Wecke den Bären!",
-    quest_river: "Überquere den Fluss!",
-    quest_rock: "Bewege den Felsen!",
-    task_of: "Aufgabe {n} von {total}",
-    dogs_saved: "Hunde gerettet",
-    time: "Zeit",
-    best: "Beste",
-    new_record: "🏆 Neuer Rekord!",
-    stars3: "Perfekt! Keine Fehler!",
-    stars2: "Toll gemacht!",
-    stars1: "Gut gemacht!",
-    victory_title: "🎉 Alle Hunde gerettet! 🎉",
-    victory_msg: "Danke, {name}! Du hast alle Hunde gerettet! Sie sind so glücklich!",
-    thank_you: "Danke, {name}! 🐾",
-    true_btn: "Richtig ✓",
-    false_btn: "Falsch ✗",
-    submit: "Prüfen →",
-    equal_btn: "Gleich =",
-    stories: {
-      1: {emoji:"🌸", text:"Die Hunde haben sich auf der sonnigen Wiese verlaufen! Schmetterlinge zeigen dir den Weg. Löse die Rätsel an jedem Tor!"},
-      2: {emoji:"🌲", text:"Tief im flüsternden Wald brauchen noch mehr Hunde deine Hilfe! Die weise Eule zeigt dir einen Geheimweg!"},
-      3: {emoji:"🦋", text:"Der tiefe Wald ist dunkel und geheimnisvoll. Bären bewachen die Brücken! Löse ihre Rätsel!"},
-      4: {emoji:"🏔️", text:"Hoch oben auf dem Bergpfad warten mutige Hunde auf Rettung. Der Weg ist lang, aber du schaffst das!"},
-      5: {emoji:"🌊", text:"Am Kristallsee sind Hunde auf Inseln gestrandet. Baue Brücken mit deinen Mathe-Fähigkeiten!"},
-      6: {emoji:"🏰", text:"Die Drachenhöhle! Die letzten Hunde sind gefangen. Das ist die schwerste Herausforderung!"}
-    },
-    obstacles: {
-      gate: "Ein magisches Tor versperrt den Weg! 🔮",
-      bridge: "Die Brücke ist kaputt! Repariere sie mit Mathe! 🌉",
-      bear: "Ein freundlicher Bär schläft auf dem Weg! 🐻",
-      river: "Ein Fluss versperrt den Weg! 🌊",
-      rock: "Ein großer Felsen ist im Weg! 🪨"
-    },
-    word_templates: [
-      "{name} hat {a} Welpen im Park gefunden. Dann kamen {b} dazu. Wie viele Welpen sind es insgesamt?",
-      "Es spielten {total} Hunde. {b} gingen nach Hause. Wie viele sind noch da?",
-      "{name} hat {a} Leckerlis. Sie gibt {b} an die Welpen. Wie viele Leckerlis hat sie noch?",
-      "Es gibt {a} große Hunde und {b} kleine Hunde. Wie viele Hunde insgesamt?",
-      "{total} Schmetterlinge waren im Garten. {b} flogen weg. Wie viele blieben?"
-    ]
-  },
-  hu: {
-    title: "Ada Matek Kalandja",
-    subtitle: "Mentsd meg az elveszett kutyákat!",
-    pick_char: "Válaszd ki a karaktered:",
-    play: "Játék! 🎮",
-    back: "← Vissza",
-    choose_level: "Válassz pályát",
-    continue: "Tovább →",
-    pause: "⏸",
-    level_complete: "Pálya teljesítve! 🎉",
-    next_level: "Következő pálya →",
-    back_to_levels: "Vissza a pályákhoz",
-    play_again: "Újra játszom! 🐾",
-    correct: ["Szuper! ✨", "Ügyes! 🌟", "Tökéletes! 💫", "Helyes! 🎉", "Klassz! ⭐"],
-    wrong: ["Próbáld újra! 💪", "Majdnem! 🤔", "Nem egészen! 🌈", "Próbáld tovább! 💫"],
-    quest_gate: "Oldd meg a feladatot!",
-    quest_bridge: "Javítsd meg a hidat!",
-    quest_bear: "Ébreszd fel a medvét!",
-    quest_river: "Kelj át a folyón!",
-    quest_rock: "Mozdítsd el a sziklát!",
-    task_of: "{n}. feladat a {total}-ból",
-    dogs_saved: "kutya megmentve",
-    time: "Idő",
-    best: "Legjobb",
-    new_record: "🏆 Új rekord!",
-    stars3: "Tökéletes! Hiba nélkül!",
-    stars2: "Szép munka!",
-    stars1: "Jó próbálkozás!",
-    victory_title: "🎉 Minden kutya megmentve! 🎉",
-    victory_msg: "Köszönjük, {name}! Megmentetted az összes kutyát! Nagyon boldogok!",
-    thank_you: "Köszönöm, {name}! 🐾",
-    true_btn: "Igaz ✓",
-    false_btn: "Hamis ✗",
-    submit: "Ellenőrzés →",
-    equal_btn: "Egyenlő =",
-    stories: {
-      1: {emoji:"🌸", text:"A kutyák eltévedtek a napos réten! A pillangók megmutatják az utat. Oldd meg a rejtvényeket!"},
-      2: {emoji:"🌲", text:"Mélyen a suttogó erdőben még több kutyának van szüksége a segítségedre! A bölcs bagoly mutatja a titkos utat!"},
-      3: {emoji:"🦋", text:"A mély erdő sötét és titokzatos. Medvék őrzik a hidakat! Oldd meg a rejtvényeiket!"},
-      4: {emoji:"🏔️", text:"Fent a hegyi ösvényen bátor kutyák várják a megmentést. Az út hosszú, de te meg tudod csinálni!"},
-      5: {emoji:"🌊", text:"A kristálytónál kutyák rekedtek a szigeteken. Építs hidakat a matek tudásoddal!"},
-      6: {emoji:"🏰", text:"A sárkány barlangja! Az utolsó kutyák csapdába estek. Ez a legnehezebb kihívás!"}
-    },
-    obstacles: {
-      gate: "Egy varázslatos kapu zárja el az utat! 🔮",
-      bridge: "A híd elromlott! Javítsd meg matekkal! 🌉",
-      bear: "Egy barátságos medve alszik az úton! 🐻",
-      river: "Egy folyó zárja el az utat! 🌊",
-      rock: "Egy nagy szikla van az útban! 🪨"
-    },
-    word_templates: [
-      "{name} talált {a} kiskutyát a parkban. Aztán még {b} odaszaladt. Hány kiskutya van összesen?",
-      "{total} kutya játszott. {b} hazament. Hány maradt?",
-      "{name}-nak van {a} jutalomfalatja. {b}-t odaadja a kiskutyáknak. Hány jutalomfalatja maradt?",
-      "Van {a} nagy kutya és {b} kis kutya. Hány kutya van összesen?",
-      "{total} pillangó volt a kertben. {b} elrepült. Hány maradt?"
-    ]
-  }
+// ===== PIXEL ART SPRITE SYSTEM =====
+const SPR={draw(ctx,data,w,h,x,y,s=1){for(let py=0;py<h;py++)for(let px=0;px<w;px++){const c=data[py*w+px];if(c){ctx.fillStyle=c;ctx.fillRect(x+px*s,y+py*s,s,s)}}},
+toCanvas(data,w,h,s=2){const c=document.createElement('canvas');c.width=w*s;c.height=h*s;const cx=c.getContext('2d');this.draw(cx,data,w,h,0,0,s);return c}};
+
+// Color palette
+const _='';
+const C={K:'#1a1a2e',W:'#fff',R:'#e74c3c',G:'#27ae60',B:'#3498db',Y:'#f1c40f',O:'#e67e22',
+P:'#9b59b6',Br:'#8B5E3C',br:'#6d4930',Sk:'#FDBCB4',sk:'#E8A598',Gy:'#95a5a6',
+Lg:'#82e049',Dg:'#2d5016',Lb:'#85c1e9',Tn:'#d4a574',tn:'#c49563'};
+
+// ===== CHARACTERS (16x16) =====
+const CHARS={
+ranger:{name:{en:'Ranger Ada',de:'Rangerin Ada',hu:'Vadőr Ada'},color:'#4CAF50',
+down:[
+_,_,_,_,_,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,_,_,_,_,
+_,_,_,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,
+_,_,_,C.Sk,C.K,C.K,C.Sk,C.Sk,C.Sk,C.K,C.K,C.Sk,_,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,_,
+_,_,_,_,C.Sk,C.Sk,C.R,C.R,C.R,C.Sk,C.Sk,_,_,_,_,_,
+_,_,_,_,_,C.G,C.G,C.G,C.G,C.G,C.G,_,_,_,_,_,
+_,_,_,_,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.G,_,_,_,_,
+_,_,_,C.Sk,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.Sk,_,_,_,
+_,_,_,C.Sk,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.Sk,_,_,_,
+_,_,_,_,_,C.G,C.G,C.G,C.G,C.G,C.G,_,_,_,_,_,
+_,_,_,_,_,C.Br,C.Br,_,_,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,_,C.Br,C.Br,_,_,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,C.Br,C.Br,_,_,_,_,C.Br,C.Br,_,_,_,_,
+_,_,_,_,C.K,C.K,_,_,_,_,C.K,C.K,_,_,_,_],
+walk:[
+_,_,_,_,_,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,_,_,_,_,
+_,_,_,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,
+_,_,_,C.Sk,C.K,C.K,C.Sk,C.Sk,C.Sk,C.K,C.K,C.Sk,_,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,_,
+_,_,_,_,C.Sk,C.Sk,C.R,C.R,C.R,C.Sk,C.Sk,_,_,_,_,_,
+_,_,_,_,_,C.G,C.G,C.G,C.G,C.G,C.G,_,_,_,_,_,
+_,_,_,_,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.G,_,_,_,_,
+_,_,_,C.Sk,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.Sk,_,_,_,
+_,_,_,C.Sk,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.G,C.Sk,_,_,_,
+_,_,_,_,_,C.G,C.G,C.G,C.G,C.G,C.G,_,_,_,_,_,
+_,_,_,_,C.Br,C.Br,_,_,_,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,C.Br,C.Br,_,_,_,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,_,C.Br,C.Br,_,C.Br,C.Br,_,_,_,_,_,_,
+_,_,_,_,_,C.K,C.K,_,C.K,C.K,_,_,_,_,_,_]},
+
+explorer:{name:{en:'Explorer Max',de:'Entdecker Max',hu:'Felfedező Max'},color:'#2196F3',
+down:[
+_,_,_,_,_,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,_,_,_,_,_,
+_,_,_,_,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,_,_,_,_,
+_,_,_,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,
+_,_,_,C.Sk,C.K,C.K,C.Sk,C.Sk,C.Sk,C.K,C.K,C.Sk,_,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,_,
+_,_,_,_,C.Sk,C.Sk,C.Sk,C.R,C.Sk,C.Sk,C.Sk,_,_,_,_,_,
+_,_,_,_,_,C.B,C.B,C.B,C.B,C.B,C.B,_,_,_,_,_,
+_,_,_,_,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.B,_,_,_,_,
+_,_,_,C.Sk,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.Sk,_,_,_,
+_,_,_,C.Sk,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.Sk,_,_,_,
+_,_,_,_,_,C.B,C.B,C.B,C.B,C.B,C.B,_,_,_,_,_,
+_,_,_,_,_,C.Br,C.Br,_,_,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,_,C.Br,C.Br,_,_,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,C.Br,C.Br,_,_,_,_,C.Br,C.Br,_,_,_,_,
+_,_,_,_,C.K,C.K,_,_,_,_,C.K,C.K,_,_,_,_],
+walk:[
+_,_,_,_,_,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,_,_,_,_,_,
+_,_,_,_,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,_,_,_,_,
+_,_,_,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,C.Y,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,
+_,_,_,C.Sk,C.K,C.K,C.Sk,C.Sk,C.Sk,C.K,C.K,C.Sk,_,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,_,
+_,_,_,_,C.Sk,C.Sk,C.Sk,C.R,C.Sk,C.Sk,C.Sk,_,_,_,_,_,
+_,_,_,_,_,C.B,C.B,C.B,C.B,C.B,C.B,_,_,_,_,_,
+_,_,_,_,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.B,_,_,_,_,
+_,_,_,C.Sk,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.Sk,_,_,_,
+_,_,_,C.Sk,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.B,C.Sk,_,_,_,
+_,_,_,_,_,C.B,C.B,C.B,C.B,C.B,C.B,_,_,_,_,_,
+_,_,_,_,C.Br,C.Br,_,_,_,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,C.Br,C.Br,_,_,_,C.Br,C.Br,_,_,_,_,_,
+_,_,_,_,_,C.Br,C.Br,_,C.Br,C.Br,_,_,_,_,_,_,
+_,_,_,_,_,C.K,C.K,_,C.K,C.K,_,_,_,_,_,_]},
+
+scientist:{name:{en:'Dr. Luna',de:'Dr. Luna',hu:'Dr. Luna'},color:'#9C27B0',
+down:[
+_,_,_,_,_,C.K,C.K,C.K,C.K,C.K,C.K,_,_,_,_,_,
+_,_,_,_,C.K,C.K,C.K,C.K,C.K,C.K,C.K,C.K,_,_,_,_,
+_,_,_,C.K,C.K,C.K,C.K,C.K,C.K,C.K,C.K,C.K,C.K,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,
+_,_,_,C.Sk,C.Lb,C.Lb,C.Sk,C.Sk,C.Sk,C.Lb,C.Lb,C.Sk,_,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,_,
+_,_,_,_,C.Sk,C.Sk,C.R,C.R,C.R,C.Sk,C.Sk,_,_,_,_,_,
+_,_,_,_,_,C.W,C.W,C.W,C.W,C.W,C.W,_,_,_,_,_,
+_,_,_,_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,_,_,_,
+_,_,_,C.Sk,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.Sk,_,_,_,
+_,_,_,C.Sk,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.Sk,_,_,_,
+_,_,_,_,_,C.P,C.P,C.P,C.P,C.P,C.P,_,_,_,_,_,
+_,_,_,_,_,C.P,C.P,_,_,C.P,C.P,_,_,_,_,_,
+_,_,_,_,_,C.P,C.P,_,_,C.P,C.P,_,_,_,_,_,
+_,_,_,_,C.K,C.K,_,_,_,_,C.K,C.K,_,_,_,_,
+_,_,_,_,C.K,C.K,_,_,_,_,C.K,C.K,_,_,_,_],
+walk:[
+_,_,_,_,_,C.K,C.K,C.K,C.K,C.K,C.K,_,_,_,_,_,
+_,_,_,_,C.K,C.K,C.K,C.K,C.K,C.K,C.K,C.K,_,_,_,_,
+_,_,_,C.K,C.K,C.K,C.K,C.K,C.K,C.K,C.K,C.K,C.K,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,
+_,_,_,C.Sk,C.Lb,C.Lb,C.Sk,C.Sk,C.Sk,C.Lb,C.Lb,C.Sk,_,_,_,_,
+_,_,_,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,C.Sk,_,_,_,_,
+_,_,_,_,C.Sk,C.Sk,C.R,C.R,C.R,C.Sk,C.Sk,_,_,_,_,_,
+_,_,_,_,_,C.W,C.W,C.W,C.W,C.W,C.W,_,_,_,_,_,
+_,_,_,_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,_,_,_,
+_,_,_,C.Sk,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.Sk,_,_,_,
+_,_,_,C.Sk,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.Sk,_,_,_,
+_,_,_,_,_,C.P,C.P,C.P,C.P,C.P,C.P,_,_,_,_,_,
+_,_,_,_,C.P,C.P,_,_,_,C.P,C.P,_,_,_,_,_,
+_,_,_,_,C.P,C.P,_,_,_,C.P,C.P,_,_,_,_,_,
+_,_,_,_,_,C.K,C.K,_,C.K,C.K,_,_,_,_,_,_,
+_,_,_,_,_,C.K,C.K,_,C.K,C.K,_,_,_,_,_,_]}
 };
 
-let lang = localStorage.getItem('amq-lang') || 'en';
-function t(key) { return I18N[lang]?.[key] || I18N.en[key] || key; }
-function tRand(key) { const arr = t(key); return Array.isArray(arr) ? arr[Math.floor(Math.random()*arr.length)] : arr; }
+// ===== DOG SPRITES (12x12) =====
+const DOGS={
+golden:{name:'Buddy',color:'#D4A030',sprite:[
+_,_,_,C.Tn,C.Tn,_,_,_,_,C.Tn,C.Tn,_,
+_,_,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,_,
+_,_,C.Tn,C.K,_,C.Tn,C.Tn,C.Tn,_,C.K,C.Tn,_,
+_,_,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,_,
+_,_,_,C.Tn,C.Tn,C.K,C.K,C.K,C.Tn,C.Tn,_,_,
+_,_,_,_,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,_,_,_,
+_,_,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,_,_,
+_,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,_,
+_,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,C.Tn,_,
+_,_,C.Tn,_,_,C.Tn,C.Tn,_,_,C.Tn,_,_,
+_,_,C.Tn,_,_,C.Tn,C.Tn,_,_,C.Tn,_,_,
+_,_,C.K,_,_,_,_,_,_,C.K,_,_]},
+dalmatian:{name:'Spot',color:'#ecf0f1',sprite:[
+_,_,_,C.W,C.W,_,_,_,_,C.W,C.W,_,
+_,_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,
+_,_,C.W,C.K,_,C.W,C.W,C.W,_,C.K,C.W,_,
+_,_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,
+_,_,_,C.W,C.W,C.K,C.K,C.K,C.W,C.W,_,_,
+_,_,_,_,C.W,C.W,C.W,C.W,C.W,_,_,_,
+_,_,C.W,C.K,C.W,C.W,C.W,C.K,C.W,C.W,_,_,
+_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,
+_,C.W,C.K,C.W,C.W,C.W,C.W,C.W,C.K,C.W,C.W,_,
+_,_,C.W,_,_,C.W,C.W,_,_,C.W,_,_,
+_,_,C.W,_,_,C.W,C.W,_,_,C.W,_,_,
+_,_,C.K,_,_,_,_,_,_,C.K,_,_]},
+husky:{name:'Frost',color:'#85c1e9',sprite:[
+_,_,_,C.Gy,C.Gy,_,_,_,_,C.Gy,C.Gy,_,
+_,_,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,_,
+_,_,C.Gy,C.Lb,_,C.W,C.W,C.W,_,C.Lb,C.Gy,_,
+_,_,C.Gy,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.Gy,_,
+_,_,_,C.W,C.W,C.K,C.K,C.K,C.W,C.W,_,_,
+_,_,_,_,C.W,C.W,C.W,C.W,C.W,_,_,_,
+_,_,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,C.Gy,_,_,
+_,C.Gy,C.Gy,C.W,C.W,C.W,C.W,C.W,C.W,C.Gy,C.Gy,_,
+_,C.Gy,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.Gy,_,
+_,_,C.Gy,_,_,C.W,C.W,_,_,C.Gy,_,_,
+_,_,C.Gy,_,_,C.W,C.W,_,_,C.Gy,_,_,
+_,_,C.K,_,_,_,_,_,_,C.K,_,_]},
+corgi:{name:'Muffin',color:'#f0b27a',sprite:[
+_,_,_,C.O,C.O,_,_,_,_,C.O,C.O,_,
+_,_,C.O,C.O,C.O,C.O,C.O,C.O,C.O,C.O,C.O,_,
+_,_,C.O,C.K,_,C.W,C.W,C.W,_,C.K,C.O,_,
+_,_,C.O,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.O,_,
+_,_,_,C.W,C.W,C.K,C.R,C.K,C.W,C.W,_,_,
+_,_,_,_,C.W,C.W,C.W,C.W,C.W,_,_,_,
+_,_,C.O,C.O,C.O,C.O,C.O,C.O,C.O,C.O,_,_,
+_,C.O,C.O,C.W,C.W,C.W,C.W,C.W,C.W,C.O,C.O,_,
+_,C.O,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.O,_,
+_,_,C.O,_,_,C.W,C.W,_,_,C.O,_,_,
+_,_,C.O,_,_,_,_,_,_,C.O,_,_,
+_,_,C.K,_,_,_,_,_,_,C.K,_,_]},
+poodle:{name:'Princess',color:'#d7bde2',sprite:[
+_,_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,_,
+_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,
+_,C.W,C.W,C.K,_,C.W,C.W,C.W,_,C.K,C.W,_,
+_,_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,_,
+_,_,_,C.W,C.W,C.K,C.R,C.K,C.W,C.W,_,_,
+_,_,_,_,C.W,C.W,C.W,C.W,C.W,_,_,_,
+_,_,_,C.W,C.W,C.W,C.W,C.W,C.W,_,_,_,
+_,_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,_,
+_,_,_,C.W,C.W,C.W,C.W,C.W,C.W,_,_,_,
+_,_,_,C.W,_,_,_,_,C.W,_,_,_,
+_,_,C.W,C.W,_,_,_,_,C.W,C.W,_,_,
+_,_,C.K,C.K,_,_,_,_,C.K,C.K,_,_]},
+beagle:{name:'Ziggy',color:'#eb984e',sprite:[
+_,_,_,C.Br,C.Br,_,_,_,_,C.Br,C.Br,_,
+_,_,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,C.Br,_,
+_,_,C.Br,C.K,_,C.W,C.W,C.W,_,C.K,C.Br,_,
+_,_,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,_,
+_,_,_,C.W,C.W,C.K,C.K,C.K,C.W,C.W,_,_,
+_,_,_,_,C.W,C.W,C.W,C.W,C.W,_,_,_,
+_,_,C.Br,C.Br,C.W,C.W,C.W,C.W,C.Br,C.Br,_,_,
+_,C.Br,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.Br,_,
+_,C.K,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.W,C.K,_,
+_,_,C.K,_,_,C.W,C.W,_,_,C.K,_,_,
+_,_,C.Br,_,_,_,_,_,_,C.Br,_,_,
+_,_,C.K,_,_,_,_,_,_,C.K,_,_]}
+};
 
-// ========== CHARACTERS ==========
-const CHARACTERS = [
-  {id:'girl', emoji:'👧', name:'Girl'},
-  {id:'boy', emoji:'👦', name:'Boy'},
-  {id:'dog', emoji:'🐕', name:'Dog'},
-  {id:'cat', emoji:'🐱', name:'Cat'},
-  {id:'bunny', emoji:'🐰', name:'Bunny'},
-  {id:'fox', emoji:'🦊', name:'Fox'},
+// ===== TILE SYSTEM =====
+const T={GRASS:0,PATH:1,TREE:2,ROCK:3,WATER:4,FLOWER:5,GATE:6,BRIDGE:7,DOG:8,
+NPC_BUT:9,NPC_SQU:10,NPC_BEAR:11,NPC_BIRD:12,BUSH:13,DGRASS:14,TGRASS:15,
+MUSH:16,EXIT:17,START:18,FENCE:19,HOUSE:20,SIGN:21};
+const TILE=32,SCALE=2,TS=TILE*SCALE;
+const WALKABLE=new Set([T.GRASS,T.PATH,T.FLOWER,T.DGRASS,T.TGRASS,T.MUSH,T.EXIT,T.START,T.BRIDGE]);
+const INTERACT=new Set([T.GATE,T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD,T.DOG,T.SIGN]);
+const tileCache={};
+let animF=0;
+
+function renderTile(type,v=0){
+  const k=`${type}_${v}_${animF%4}`;
+  if(tileCache[k])return tileCache[k];
+  const c=document.createElement('canvas');c.width=TS;c.height=TS;
+  const x=c.getContext('2d');x.imageSmoothingEnabled=false;
+  const S=SCALE;
+  switch(type){
+    case T.GRASS:x.fillStyle=['#7cb342','#8bc34a','#689f38','#9ccc65'][v%4];x.fillRect(0,0,TS,TS);
+      x.fillStyle='rgba(255,255,255,0.06)';for(let i=0;i<3;i++){x.fillRect(((v*37+i*23)%28)*S,((v*13+i*41)%28)*S,S,S*3)}break;
+    case T.DGRASS:x.fillStyle=['#558b2f','#4a7c28','#33691e','#507d24'][v%4];x.fillRect(0,0,TS,TS);break;
+    case T.TGRASS:x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);x.fillStyle='#9ccc65';
+      for(let i=0;i<5;i++){const gx=((v*19+i*11)%26)*S+2;x.fillRect(gx,14*S,S,10*S);x.fillRect(gx+S,12*S,S,12*S)}break;
+    case T.PATH:x.fillStyle=['#d4a574','#c49563','#b8885a','#dbb88c'][v%4];x.fillRect(0,0,TS,TS);
+      x.fillStyle='rgba(0,0,0,0.05)';for(let i=0;i<4;i++){x.fillRect(((v*31+i*19)%28)*S,((v*17+i*29)%28)*S,S*2,S)}break;
+    case T.TREE:x.fillStyle='#689f38';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#5c3d26';x.fillRect(12*S,18*S,8*S,14*S);
+      x.fillStyle='#6d4930';x.fillRect(14*S,20*S,2*S,12*S);
+      x.fillStyle='#2e7d32';x.fillRect(4*S,4*S,24*S,16*S);
+      x.fillStyle='#388e3c';x.fillRect(6*S,2*S,20*S,12*S);
+      x.fillStyle='#43a047';x.fillRect(8*S,0,16*S,8*S);
+      x.fillStyle='rgba(255,255,255,0.1)';x.fillRect(8*S,3*S,6*S,4*S);break;
+    case T.BUSH:x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#2e7d32';x.fillRect(4*S,8*S,24*S,18*S);
+      x.fillStyle='#388e3c';x.fillRect(6*S,6*S,20*S,14*S);
+      x.fillStyle='#43a047';x.fillRect(8*S,4*S,16*S,10*S);break;
+    case T.ROCK:x.fillStyle='#689f38';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#78909c';x.fillRect(4*S,8*S,24*S,20*S);
+      x.fillStyle='#90a4ae';x.fillRect(6*S,6*S,20*S,16*S);
+      x.fillStyle='#b0bec5';x.fillRect(8*S,8*S,12*S,8*S);break;
+    case T.WATER:x.fillStyle='#1976d2';x.fillRect(0,0,TS,TS);
+      const wf=animF%4;x.fillStyle='rgba(255,255,255,0.15)';
+      for(let i=0;i<3;i++){x.fillRect(((i*10+wf*4)%28)*S,(8+i*8)*S,8*S,S)}break;
+    case T.FLOWER:x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
+      const fc=['#e74c3c','#f1c40f','#e91e63','#ff9800','#9c27b0'][v%5];x.fillStyle=fc;
+      const fx=(12+((v*7)%8))*S,fy=(12+((v*11)%8))*S;
+      x.fillRect(fx,fy,4*S,4*S);x.fillRect(fx-2*S,fy+S,2*S,2*S);x.fillRect(fx+4*S,fy+S,2*S,2*S);
+      x.fillStyle='#ffeb3b';x.fillRect(fx+S,fy+S,2*S,2*S);break;
+    case T.MUSH:x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#f5f5f5';x.fillRect(14*S,18*S,4*S,10*S);
+      x.fillStyle='#e74c3c';x.fillRect(10*S,12*S,12*S,8*S);
+      x.fillStyle='#c62828';x.fillRect(12*S,10*S,8*S,4*S);
+      x.fillStyle='#fff';x.fillRect(12*S,13*S,2*S,2*S);x.fillRect(18*S,14*S,2*S,2*S);break;
+    case T.GATE:x.fillStyle='#d4a574';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#5d4037';x.fillRect(2*S,4*S,6*S,26*S);x.fillRect(24*S,4*S,6*S,26*S);
+      x.fillStyle='#6d4c41';x.fillRect(2*S,4*S,28*S,4*S);
+      x.fillStyle='#8d6e63';for(let i=0;i<3;i++)x.fillRect((10+i*4)*S,8*S,2*S,22*S);
+      x.fillStyle='#fdd835';x.fillRect(14*S,16*S,4*S,4*S);break;
+    case T.BRIDGE:x.fillStyle='#1976d2';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#8d6e63';x.fillRect(2*S,4*S,28*S,24*S);
+      x.fillStyle='#6d4c41';x.fillRect(4*S,6*S,24*S,20*S);
+      x.fillStyle='#a1887f';for(let i=0;i<4;i++)x.fillRect(6*S,(8+i*5)*S,20*S,3*S);break;
+    case T.FENCE:x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#8d6e63';x.fillRect(0,10*S,TS,4*S);x.fillRect(0,20*S,TS,4*S);
+      x.fillStyle='#6d4c41';x.fillRect(4*S,6*S,4*S,22*S);x.fillRect(24*S,6*S,4*S,22*S);break;
+    case T.HOUSE:x.fillStyle='#689f38';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#e8d5b7';x.fillRect(4*S,12*S,24*S,18*S);
+      x.fillStyle='#c62828';x.fillRect(2*S,6*S,28*S,8*S);x.fillStyle='#b71c1c';x.fillRect(6*S,2*S,20*S,6*S);
+      x.fillStyle='#5d4037';x.fillRect(12*S,18*S,8*S,12*S);
+      x.fillStyle='#81d4fa';x.fillRect(6*S,16*S,4*S,4*S);x.fillRect(22*S,16*S,4*S,4*S);break;
+    case T.SIGN:x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#6d4c41';x.fillRect(14*S,14*S,4*S,16*S);
+      x.fillStyle='#a1887f';x.fillRect(6*S,6*S,20*S,12*S);break;
+    case T.EXIT:x.fillStyle='#d4a574';x.fillRect(0,0,TS,TS);
+      x.fillStyle='rgba(76,175,80,'+(0.5+(animF%2)*0.3)+')';
+      x.fillRect(8*S,6*S,16*S,20*S);
+      x.fillStyle='#fff';x.fillRect(14*S,10*S,4*S,8*S);x.fillRect(12*S,14*S,8*S,4*S);break;
+    case T.START:x.fillStyle='#d4a574';x.fillRect(0,0,TS,TS);
+      x.fillStyle='rgba(33,150,243,0.25)';x.fillRect(4*S,4*S,24*S,24*S);break;
+    default:x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
+  }
+  tileCache[k]=c;return c;
+}
+
+// NPC drawing
+function drawButterfly(cx,x,y,f){const s=SCALE;const w=Math.sin(f*0.15)*4*s;
+  cx.fillStyle='#e91e63';cx.fillRect(x+6*s,y+10*s+w,8*s,6*s);cx.fillRect(x+18*s,y+10*s-w,8*s,6*s);
+  cx.fillStyle='#f48fb1';cx.fillRect(x+8*s,y+11*s+w,4*s,4*s);cx.fillRect(x+20*s,y+11*s-w,4*s,4*s);
+  cx.fillStyle='#4a148c';cx.fillRect(x+14*s,y+8*s,4*s,14*s);
+  cx.fillStyle='#333';cx.fillRect(x+13*s,y+4*s,2*s,6*s);cx.fillRect(x+17*s,y+4*s,2*s,6*s);
+  cx.fillStyle='#ff9800';cx.fillRect(x+12*s,y+2*s,2*s,2*s);cx.fillRect(x+18*s,y+2*s,2*s,2*s);}
+function drawSquirrel(cx,x,y,f){const s=SCALE;const t=Math.sin(f*0.1)*2*s;
+  cx.fillStyle='#a0522d';cx.fillRect(x+8*s,y+12*s,16*s,14*s);
+  cx.fillStyle='#b8733e';cx.fillRect(x+10*s,y+6*s,12*s,10*s);
+  cx.fillStyle='#000';cx.fillRect(x+12*s,y+8*s,2*s,2*s);cx.fillRect(x+18*s,y+8*s,2*s,2*s);
+  cx.fillStyle='#a0522d';cx.fillRect(x+10*s,y+4*s,3*s,4*s);cx.fillRect(x+19*s,y+4*s,3*s,4*s);
+  cx.fillStyle='#c17840';cx.fillRect(x+22*s,y+6*s+t,6*s,8*s);cx.fillRect(x+24*s,y+4*s+t,4*s,4*s);
+  cx.fillStyle='#8b4513';cx.fillRect(x+10*s,y+26*s,4*s,4*s);cx.fillRect(x+18*s,y+26*s,4*s,4*s);}
+function drawBear(cx,x,y,f){const s=SCALE;
+  cx.fillStyle='#6d4c41';cx.fillRect(x+6*s,y+12*s,20*s,16*s);
+  cx.fillStyle='#795548';cx.fillRect(x+8*s,y+4*s,16*s,12*s);
+  cx.fillStyle='#5d4037';cx.fillRect(x+8*s,y+2*s,4*s,4*s);cx.fillRect(x+20*s,y+2*s,4*s,4*s);
+  cx.fillStyle='#a1887f';cx.fillRect(x+9*s,y+3*s,2*s,2*s);cx.fillRect(x+21*s,y+3*s,2*s,2*s);
+  cx.fillStyle='#000';cx.fillRect(x+12*s,y+8*s,2*s,2*s);cx.fillRect(x+18*s,y+8*s,2*s,2*s);
+  cx.fillStyle='#3e2723';cx.fillRect(x+14*s,y+11*s,4*s,3*s);
+  cx.fillStyle='#5d4037';cx.fillRect(x+8*s,y+26*s,5*s,4*s);cx.fillRect(x+19*s,y+26*s,5*s,4*s);}
+function drawBird(cx,x,y,f){const s=SCALE;const w=Math.sin(f*0.2)*3*s;
+  cx.fillStyle='#ff7043';cx.fillRect(x+10*s,y+14*s,12*s,10*s);
+  cx.fillStyle='#ff8a65';cx.fillRect(x+12*s,y+8*s,8*s,8*s);
+  cx.fillStyle='#000';cx.fillRect(x+16*s,y+10*s,2*s,2*s);
+  cx.fillStyle='#ffa000';cx.fillRect(x+20*s,y+12*s,4*s,3*s);
+  cx.fillStyle='#e64a19';cx.fillRect(x+6*s,y+14*s+w,6*s,6*s);
+  cx.fillStyle='#ffa000';cx.fillRect(x+12*s,y+24*s,3*s,4*s);cx.fillRect(x+17*s,y+24*s,3*s,4*s);}
+function drawDogSprite(cx,key,x,y,f){const dog=DOGS[key];if(!dog)return;
+  const s=Math.floor(SCALE*1.3);const ox=x+(TS-12*s)/2;const oy=y+(TS-12*s)/2+Math.sin(f*0.08)*2;
+  SPR.draw(cx,dog.sprite,12,12,ox,oy,s);}
+const NPCD={[T.NPC_BUT]:drawButterfly,[T.NPC_SQU]:drawSquirrel,[T.NPC_BEAR]:drawBear,[T.NPC_BIRD]:drawBird};
+
+// ===== i18n =====
+const I18N={
+en:{title_sub:'Rescue the lost puppies!',play:'\u25b6 PLAY',choose_level:'Choose a Level',back:'\u2190 Back',
+talk:'Talk',math_challenge:'Math Challenge!',continue:'Continue \u2192',main_menu:'Main Menu',
+all_saved:'All Dogs Saved!',correct:'Correct! \u2728',wrong:'Try again!',hint:'The answer is ',
+dog_rescued:' rescued!',true_btn:'TRUE',false_btn:'FALSE',submit:'OK',
+pattern_title:'Find the Pattern!',time:'Time',mistakes:'Mistakes',best_time:'Best',
+level_complete:'Level Complete!',dogs_saved:'Dogs saved',task_of:'Task {0} of {1}',
+level1:'Sunny Meadow',level2:'Whispering Woods',level3:'Deep Forest',
+level4:'Mountain Trail',level5:'Crystal Lake',level6:"Dragon's Den",
+npc_hint:'I saw a puppy near the {0}!',
+npc_hello:['Hello, adventurer!','What a beautiful day!','Keep going!','Did you hear barking?'],
+npc_gate:['Solve the puzzle to pass!','Only the clever may enter!'],
+gate_east:'gate to the east',gate_south:'gate to the south',bridge:'old bridge',barrier:'magical barrier',
+thank_you:'Thank you, {0}!',quest_pattern:'Solve the pattern:',quest_solve:'Solve:',quest_truefalse:'True or False?'},
+de:{title_sub:'Rette die verlorenen Welpen!',play:'\u25b6 SPIELEN',choose_level:'W\u00e4hle ein Level',back:'\u2190 Zur\u00fcck',
+talk:'Reden',math_challenge:'Mathe-Aufgabe!',continue:'Weiter \u2192',main_menu:'Hauptmen\u00fc',
+all_saved:'Alle Hunde gerettet!',correct:'Richtig! \u2728',wrong:'Nochmal!',hint:'Die Antwort ist ',
+dog_rescued:' gerettet!',true_btn:'RICHTIG',false_btn:'FALSCH',submit:'OK',
+pattern_title:'Finde das Muster!',time:'Zeit',mistakes:'Fehler',best_time:'Bestzeit',
+level_complete:'Level geschafft!',dogs_saved:'Hunde gerettet',task_of:'Aufgabe {0} von {1}',
+level1:'Sonnige Wiese',level2:'Fl\u00fcsterwald',level3:'Tiefer Wald',
+level4:'Bergpfad',level5:'Kristallsee',level6:'Drachenh\u00f6hle',
+npc_hint:'Ich sah einen Welpen bei {0}!',
+npc_hello:['Hallo!','Was f\u00fcr ein Tag!','Weiter so!','H\u00f6rst du Bellen?'],
+npc_gate:['L\u00f6se das R\u00e4tsel!','Nur die Klugen d\u00fcrfen rein!'],
+gate_east:'Tor im Osten',gate_south:'Tor im S\u00fcden',bridge:'Br\u00fccke',barrier:'Barriere',
+thank_you:'Danke, {0}!',quest_pattern:'L\u00f6se die Reihe:',quest_solve:'L\u00f6se:',quest_truefalse:'Richtig oder Falsch?'},
+hu:{title_sub:'Mentsd meg a kiskuty\u00e1kat!',play:'\u25b6 J\u00c1T\u00c9K',choose_level:'V\u00e1lassz p\u00e1ly\u00e1t',back:'\u2190 Vissza',
+talk:'Besz\u00e9l',math_challenge:'Matek feladat!',continue:'Tov\u00e1bb \u2192',main_menu:'F\u0151men\u00fc',
+all_saved:'Minden kutya megmentve!',correct:'Helyes! \u2728',wrong:'Pr\u00f3b\u00e1ld \u00fajra!',hint:'A v\u00e1lasz: ',
+dog_rescued:' megmentve!',true_btn:'IGAZ',false_btn:'HAMIS',submit:'OK',
+pattern_title:'Tal\u00e1ld meg a mint\u00e1t!',time:'Id\u0151',mistakes:'Hib\u00e1k',best_time:'Legjobb',
+level_complete:'P\u00e1lya teljes\u00edtve!',dogs_saved:'Kuty\u00e1k megmentve',task_of:'{0}. feladat / {1}',
+level1:'Napos r\u00e9t',level2:'Suttog\u00f3 erd\u0151',level3:'M\u00e9ly erd\u0151',
+level4:'Hegyi \u00f6sv\u00e9ny',level5:'Krist\u00e1lyt\u00f3',level6:'S\u00e1rk\u00e1nybarlang',
+npc_hint:'L\u00e1ttam egy kiskuty\u00e1t a {0} k\u00f6zel\u00e9ben!',
+npc_hello:['Szia!','Milyen sz\u00e9p nap!','Csak \u00edgy tov\u00e1bb!','Hallottad az ugat\u00e1st?'],
+npc_gate:['Oldd meg a feladatot!','Csak az okosak mehetnek!'],
+gate_east:'keleti kapu',gate_south:'d\u00e9li kapu',bridge:'h\u00edd',barrier:'akad\u00e1ly',
+thank_you:'K\u00f6sz\u00f6n\u00f6m, {0}!',quest_pattern:'Oldd meg a sort:',quest_solve:'Oldd meg:',quest_truefalse:'Igaz vagy Hamis?'}
+};
+let LANG='en';
+function t(key,...args){let s=(I18N[LANG]||I18N.en)[key]||(I18N.en)[key]||key;
+  args.forEach((a,i)=>s=s.replace('{'+i+'}',a));return s;}
+
+// ===== LEVELS =====
+const LEVELS=[
+{id:1,nameKey:'level1',diff:1,bgColor:'#87CEEB',
+map:[[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+[2,0,5,0,0,2,2,0,5,0,0,2,0,0,5,0,0,2],
+[2,0,18,1,1,1,1,1,0,5,0,2,0,9,0,0,0,2],
+[2,5,0,0,2,0,5,1,0,0,0,13,0,0,0,5,0,2],
+[2,0,0,0,2,0,0,1,0,0,0,6,1,1,1,1,0,2],
+[2,0,12,0,13,0,0,1,0,2,0,0,0,0,2,1,0,2],
+[2,2,0,0,0,0,5,1,0,2,0,8,0,0,2,1,5,2],
+[2,0,0,5,0,0,0,1,0,13,0,0,0,0,13,1,0,2],
+[2,0,0,0,0,6,1,1,0,0,5,0,0,0,0,1,0,2],
+[2,0,8,0,0,0,0,0,0,0,0,0,10,0,0,1,0,2],
+[2,0,0,0,5,0,0,0,0,2,2,0,0,0,1,1,0,2],
+[2,5,0,0,0,0,0,0,0,2,2,0,5,6,1,0,8,2],
+[2,0,0,5,0,9,0,5,0,0,0,0,0,0,0,0,17,2],
+[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]],
+dogs:[{key:'golden',x:2,y:9,name:'Buddy'},{key:'corgi',x:11,y:6,name:'Muffin'},{key:'dalmatian',x:16,y:11,name:'Spot'}],
+gates:[{x:5,y:8,qc:3,d:1},{x:11,y:4,qc:3,d:1},{x:13,y:11,qc:3,d:1}],
+npcs:[{type:9,x:13,y:2,hint:'npc_hint',ha:'gate_east'},{type:12,x:2,y:5,hint:'npc_hello'},
+{type:10,x:12,y:9,hint:'npc_hint',ha:'gate_south'},{type:9,x:5,y:12,hint:'npc_hint',ha:'bridge'}],
+start:{x:2,y:2},exit:{x:16,y:12}},
+
+{id:2,nameKey:'level2',diff:2,bgColor:'#5a8a3c',
+map:[[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+[2,14,14,2,14,14,14,2,14,14,14,2,14,14,14,14,14,14,14,2],
+[2,14,18,1,1,14,14,2,14,16,14,13,14,14,14,16,14,14,14,2],
+[2,14,14,2,1,14,9,14,14,14,14,14,14,2,2,14,14,14,14,2],
+[2,2,14,2,1,1,1,1,6,1,1,14,14,2,14,14,14,14,14,2],
+[2,14,14,14,2,14,14,14,14,14,1,14,14,14,14,14,2,2,14,2],
+[2,14,16,14,2,14,14,2,2,14,1,14,8,14,14,14,14,14,14,2],
+[2,14,14,14,14,14,14,2,14,14,1,14,14,14,10,14,14,14,14,2],
+[2,14,10,14,14,14,2,2,14,14,1,1,1,6,1,1,1,14,14,2],
+[2,14,14,14,14,6,1,1,1,14,14,14,14,14,14,14,1,14,14,2],
+[2,2,14,14,14,14,14,14,1,14,2,2,14,14,14,14,1,14,14,2],
+[2,14,14,8,14,14,14,14,1,14,2,14,16,14,14,14,1,8,14,2],
+[2,14,14,14,16,14,14,14,1,14,14,14,14,14,2,1,1,14,14,2],
+[2,14,9,14,14,14,14,14,1,1,1,14,14,14,2,14,14,14,14,2],
+[2,14,14,14,14,14,16,14,14,14,1,1,1,1,1,14,14,14,17,2],
+[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]],
+dogs:[{key:'husky',x:12,y:6,name:'Frost'},{key:'poodle',x:3,y:11,name:'Princess'},{key:'beagle',x:17,y:11,name:'Ziggy'}],
+gates:[{x:8,y:4,qc:3,d:2},{x:5,y:9,qc:4,d:2},{x:13,y:8,qc:3,d:2}],
+npcs:[{type:9,x:6,y:3,hint:'npc_hint',ha:'gate_east'},{type:10,x:8,y:2,hint:'npc_hello'},
+{type:10,x:2,y:8,hint:'npc_hint',ha:'gate_south'},{type:9,x:2,y:13,hint:'npc_gate'}],
+start:{x:2,y:2},exit:{x:18,y:14}},
+
+{id:3,nameKey:'level3',diff:3,bgColor:'#2e5016',
+map:[[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+[2,14,14,14,2,14,14,2,14,14,14,14,2,14,14,14,14,2,14,14,14,2],
+[2,14,18,1,1,14,14,2,14,14,16,14,2,14,14,14,14,14,14,14,14,2],
+[2,14,14,2,1,14,14,14,14,14,14,14,13,14,11,14,14,14,14,14,14,2],
+[2,2,14,2,1,1,6,1,1,1,14,14,14,14,14,14,14,2,2,14,14,2],
+[2,14,14,14,2,14,14,14,14,1,14,2,14,14,14,14,14,2,14,14,14,2],
+[2,14,16,14,2,14,14,2,14,1,14,2,14,8,14,14,14,14,14,14,14,2],
+[2,14,14,14,14,14,2,2,14,1,14,14,14,14,14,2,14,14,14,14,14,2],
+[2,14,8,14,14,14,14,14,14,1,1,1,6,1,1,1,1,14,14,14,14,2],
+[2,14,14,14,2,2,14,14,14,14,14,14,14,14,14,14,1,14,14,14,14,2],
+[2,14,14,14,2,14,14,14,14,14,2,14,14,14,14,14,1,14,14,14,14,2],
+[2,14,9,14,14,14,14,16,14,14,2,14,14,10,14,14,1,1,6,1,14,2],
+[2,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,1,8,2],
+[2,14,14,14,2,14,14,14,14,14,14,14,14,14,2,14,14,14,14,1,14,2],
+[2,14,14,14,2,2,14,14,14,14,14,14,14,14,2,2,14,14,14,1,17,2],
+[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]],
+dogs:[{key:'golden',x:2,y:8,name:'Charlie'},{key:'dalmatian',x:13,y:6,name:'Pepper'},{key:'corgi',x:20,y:12,name:'Biscuit'}],
+gates:[{x:6,y:4,qc:4,d:3},{x:12,y:8,qc:4,d:3},{x:18,y:11,qc:4,d:3}],
+npcs:[{type:11,x:14,y:3,hint:'npc_hint',ha:'gate_east'},{type:9,x:2,y:11,hint:'npc_hint',ha:'gate_south'},{type:10,x:13,y:11,hint:'npc_gate'}],
+start:{x:2,y:2},exit:{x:20,y:14}},
+
+{id:4,nameKey:'level4',diff:4,bgColor:'#607d8b',
+map:[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+[3,0,0,0,3,0,0,3,3,0,0,0,3,0,0,0,0,0,0,0,0,3],
+[3,0,18,1,1,0,0,3,0,0,0,0,3,0,0,0,0,3,0,0,0,3],
+[3,0,0,3,1,0,0,0,0,3,0,0,0,0,12,0,0,3,0,0,0,3],
+[3,3,0,3,1,1,1,6,1,1,0,0,0,0,0,0,0,3,0,0,0,3],
+[3,0,0,0,3,0,0,0,0,1,0,3,0,0,0,0,3,3,0,0,0,3],
+[3,0,0,0,3,0,0,3,0,1,0,3,0,8,0,0,0,0,0,0,0,3],
+[3,0,8,0,0,0,3,3,0,1,0,0,0,0,0,3,0,0,0,0,0,3],
+[3,0,0,0,0,0,0,0,0,1,1,1,6,1,1,1,1,0,0,0,0,3],
+[3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,0,3],
+[3,0,0,0,3,3,0,0,0,0,3,0,0,0,0,0,1,0,0,3,0,3],
+[3,0,0,0,3,0,0,0,0,0,3,0,0,11,0,0,1,0,0,0,0,3],
+[3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,3],
+[3,0,0,0,0,0,0,10,0,0,0,0,0,0,6,1,0,0,0,0,0,3],
+[3,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,8,0,3],
+[3,0,0,3,3,0,0,0,0,0,0,3,0,0,0,0,0,3,0,0,0,3],
+[3,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,17,3],
+[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]],
+dogs:[{key:'husky',x:2,y:7,name:'Storm'},{key:'poodle',x:13,y:6,name:'Belle'},{key:'beagle',x:19,y:14,name:'Rocky'}],
+gates:[{x:7,y:4,qc:4,d:4},{x:12,y:8,qc:4,d:4},{x:14,y:13,qc:5,d:4}],
+npcs:[{type:12,x:14,y:3,hint:'npc_hint',ha:'gate_east'},{type:10,x:7,y:13,hint:'npc_hint',ha:'gate_south'},{type:11,x:13,y:11,hint:'npc_gate'}],
+start:{x:2,y:2},exit:{x:20,y:16}},
+
+{id:5,nameKey:'level5',diff:5,bgColor:'#0277bd',
+map:[[2,2,2,2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2,2,2,2,2,2],
+[2,0,0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0,0,0,0,2],
+[2,0,18,1,7,1,0,4,4,4,4,4,4,4,4,4,4,4,0,0,0,0,0,2],
+[2,0,0,0,4,1,0,0,4,4,4,4,4,4,4,4,4,0,0,0,12,0,0,2],
+[2,2,0,0,4,1,1,6,1,7,1,0,0,4,4,4,0,0,0,0,0,0,0,2],
+[2,0,0,0,4,0,0,0,0,4,1,0,0,0,4,0,0,0,0,0,2,0,0,2],
+[2,0,0,0,4,0,8,0,0,4,1,0,0,0,0,0,0,8,0,0,2,0,0,2],
+[2,0,9,0,4,0,0,0,0,4,1,0,0,0,0,0,0,0,0,0,0,0,0,2],
+[2,0,0,0,4,4,0,0,4,4,1,1,6,1,1,1,0,0,0,0,0,0,0,2],
+[2,0,0,0,0,4,4,4,4,0,0,0,0,0,0,1,0,0,0,2,0,0,0,2],
+[2,0,0,0,0,0,4,4,0,0,0,0,0,0,0,1,0,0,0,2,0,0,0,2],
+[2,0,0,0,0,0,0,0,0,0,2,0,10,0,0,1,1,6,1,1,0,0,0,2],
+[2,0,0,5,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,1,0,8,0,2],
+[2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,1,0,0,0,2],
+[2,5,0,0,0,0,0,0,0,0,0,0,0,0,2,2,0,0,0,1,0,0,0,2],
+[2,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,2],
+[2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,17,2],
+[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]],
+dogs:[{key:'golden',x:6,y:6,name:'Sunny'},{key:'dalmatian',x:17,y:6,name:'Splash'},{key:'corgi',x:21,y:12,name:'Cookie'}],
+gates:[{x:7,y:4,qc:4,d:5},{x:12,y:8,qc:5,d:5},{x:17,y:11,qc:5,d:5}],
+npcs:[{type:9,x:2,y:7,hint:'npc_hint',ha:'bridge'},{type:12,x:20,y:3,hint:'npc_hint',ha:'gate_south'},{type:10,x:12,y:11,hint:'npc_gate'}],
+start:{x:2,y:2},exit:{x:22,y:16}},
+
+{id:6,nameKey:'level6',diff:6,bgColor:'#3e2723',
+map:[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+[3,14,14,14,3,14,14,14,14,3,14,14,14,3,14,14,14,14,14,3,14,14,14,3],
+[3,14,18,1,1,14,14,14,14,3,14,14,14,3,14,14,16,14,14,3,14,14,14,3],
+[3,14,14,3,1,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,3],
+[3,3,14,3,1,1,6,1,1,1,14,3,14,14,14,14,14,3,14,14,14,14,14,3],
+[3,14,14,14,3,14,14,14,14,1,14,3,14,14,14,14,14,3,14,14,14,14,14,3],
+[3,14,16,14,3,14,14,3,14,1,14,14,14,8,14,14,14,14,14,14,14,14,14,3],
+[3,14,14,14,14,14,3,3,14,1,14,14,14,14,14,3,14,14,14,14,14,14,14,3],
+[3,14,8,14,14,14,14,14,14,1,1,1,6,1,1,1,1,14,14,14,14,14,14,3],
+[3,14,14,14,3,3,14,14,14,14,14,14,14,14,14,14,1,14,14,3,14,14,14,3],
+[3,14,14,14,3,14,14,14,14,14,3,14,14,11,14,14,1,14,14,3,14,14,14,3],
+[3,14,14,14,14,14,14,14,14,14,3,14,14,14,14,14,1,1,6,1,14,14,14,3],
+[3,14,14,14,14,14,14,16,14,14,14,14,14,14,14,14,14,14,14,1,14,8,14,3],
+[3,14,9,14,14,14,14,14,14,14,14,14,14,14,3,14,14,14,14,1,14,14,14,3],
+[3,14,14,14,14,14,14,14,14,14,14,14,14,14,3,3,14,14,14,1,14,14,14,3],
+[3,14,14,3,3,14,14,14,14,14,14,14,14,14,14,14,14,14,1,1,14,14,14,3],
+[3,14,14,3,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,17,3],
+[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]],
+dogs:[{key:'husky',x:2,y:8,name:'Shadow'},{key:'poodle',x:13,y:6,name:'Diamond'},{key:'beagle',x:21,y:12,name:'Thunder'}],
+gates:[{x:6,y:4,qc:5,d:5},{x:12,y:8,qc:5,d:6},{x:18,y:11,qc:5,d:6}],
+npcs:[{type:9,x:2,y:13,hint:'npc_hint',ha:'gate_east'},{type:11,x:13,y:10,hint:'npc_gate'}],
+start:{x:2,y:2},exit:{x:22,y:16}}
 ];
 
-// ========== DOG DATA ==========
-const DOG_POOL = [
-  {emoji:'🐕',name:'Buddy'},{emoji:'🐩',name:'Rosie'},{emoji:'🦮',name:'Max'},
-  {emoji:'🐶',name:'Bella'},{emoji:'🐕‍🦺',name:'Rocky'},{emoji:'🐾',name:'Luna'},
-  {emoji:'🐕',name:'Charlie'},{emoji:'🐩',name:'Daisy'},{emoji:'🦮',name:'Milo'},
-  {emoji:'🐶',name:'Coco'},{emoji:'🐕‍🦺',name:'Rex'},{emoji:'🐾',name:'Lola'},
-  {emoji:'🐕',name:'Duke'},{emoji:'🐩',name:'Sasha'},{emoji:'🦮',name:'Bear'},
-  {emoji:'🐶',name:'Pepper'},{emoji:'🐕‍🦺',name:'Zeus'},{emoji:'🐾',name:'Nala'},
-  {emoji:'🐕',name:'Bruno'},{emoji:'🐩',name:'Ginger'},{emoji:'🦮',name:'Toby'},
-  {emoji:'🐶',name:'Ruby'},{emoji:'🐕‍🦺',name:'Thor'},{emoji:'🐾',name:'Kira'},
-  {emoji:'🐕',name:'Oscar'},{emoji:'🐩',name:'Willow'},{emoji:'🦮',name:'Finn'},
-];
+// ===== QUEST GENERATION =====
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
 
-// ========== TILE TYPES ==========
-const T = {
-  W: 'wall', P: 'path', G: 'grass', T: 'tree', R: 'water',
-  B: 'bridge', A: 'gate', S: 'start', E: 'end', K: 'rock',
-  F: 'flower', D: 'dark-tree', M: 'mountain', N: 'snow',
-  L: 'lava', C: 'castle-wall', O: 'castle-floor'
-};
-const WALKABLE = new Set([T.P, T.G, T.B, T.A, T.S, T.E, T.F, T.O]);
-
-const TILE_EMOJI = {
-  [T.W]:'', [T.P]:'', [T.G]:'', [T.T]:'🌳', [T.R]:'🌊', [T.B]:'🌉',
-  [T.A]:'⛩️', [T.S]:'🚩', [T.E]:'⭐', [T.K]:'🪨', [T.F]:['🌸','🌺','🌻','🌼','🌷'][0],
-  [T.D]:'🌲', [T.M]:'⛰️', [T.N]:'❄️', [T.L]:'🔥', [T.C]:'🧱', [T.O]:''
-};
-
-// ========== LEVEL DEFINITIONS ==========
-// Map: 2D array of tile types. Gates referenced by index.
-// Gates: {row,col,type,dogIdx,tasks} — type is the obstacle kind
-const OBSTACLE_TYPES = ['gate','bridge','bear','river','rock'];
-const OBSTACLE_ICONS = {gate:'⛩️',bridge:'🌉',bear:'🐻',river:'🌊',rock:'🪨'};
-
-
-// ========== LEVEL MAP GENERATOR ==========
-function buildLevels() {
-  const W=T.W,P=T.P,G=T.G,Tr=T.T,R=T.R,B=T.B,A=T.A,S=T.S,E=T.E,K=T.K,F=T.F,D=T.D,M=T.M,N=T.N,L=T.L,C=T.C,O=T.O;
-
-  return [
-    // Level 1: Sunny Meadow (10x10)
-    {
-      name:{en:"Sunny Meadow",de:"Sonnige Wiese",hu:"Napos rét"},
-      icon:"🌸",
-      bg:"linear-gradient(180deg,#87CEEB 0%,#a5d6a7 100%)",
-      tasks:3, difficulty:1,
-      map:[
-        [Tr,Tr,G, G, G, G, G, Tr,Tr,Tr],
-        [Tr,S, P, P, F, G, G, G, Tr,Tr],
-        [G, G, G, P, G, G, Tr, G, G, Tr],
-        [G, F, G, P, P, A, P, P, G, G ],
-        [Tr,G, G, G, G, G, G, P, G, Tr],
-        [G, G, Tr,G, F, G, G, P, G, G ],
-        [G, G, G, G, G, A, P, P, G, Tr],
-        [Tr,G, G, G, G, P, G, G, G, G ],
-        [G, G, F, G, G, P, P, A, P, E ],
-        [Tr,Tr,G, G, Tr,G, G, Tr,G, Tr],
-      ],
-      start:{r:1,c:1},
-      end:{r:8,c:9},
-      gates:[
-        {r:3,c:5,type:'gate',tasks:3},
-        {r:6,c:5,type:'gate',tasks:3},
-        {r:8,c:7,type:'gate',tasks:3},
-      ]
-    },
-    // Level 2: Whispering Woods (12x10)
-    {
-      name:{en:"Whispering Woods",de:"Flüsterwald",hu:"Suttogó erdő"},
-      icon:"🌲",
-      bg:"linear-gradient(180deg,#87CEEB 0%,#66bb6a 100%)",
-      tasks:3, difficulty:2,
-      map:[
-        [D, D, D, G, G, D, D, D, D, D, D, D ],
-        [D, S, P, P, G, D, G, G, G, D, D, D ],
-        [D, G, D, P, G, G, G, D, G, G, D, D ],
-        [G, G, D, P, P, A, P, P, G, G, G, D ],
-        [D, G, G, G, D, G, G, P, D, G, G, G ],
-        [D, D, G, G, D, G, G, P, G, G, D, G ],
-        [G, G, G, D, G, F, A, P, G, D, G, G ],
-        [G, F, G, G, G, G, P, P, P, A, P, G ],
-        [D, G, G, D, D, G, P, D, D, G, P, G ],
-        [D, D, D, D, D, G, A, P, P, P, P, E ],
-      ],
-      start:{r:1,c:1},
-      end:{r:9,c:11},
-      gates:[
-        {r:3,c:5,type:'bridge',tasks:3},
-        {r:6,c:6,type:'bear',tasks:3},
-        {r:7,c:9,type:'gate',tasks:4},
-        {r:9,c:6,type:'rock',tasks:3},
-      ]
-    },
-    // Level 3: Deep Forest (12x12)
-    {
-      name:{en:"Deep Forest",de:"Tiefer Wald",hu:"Mély erdő"},
-      icon:"🦋",
-      bg:"linear-gradient(180deg,#558b2f 0%,#2e7d32 100%)",
-      tasks:4, difficulty:3,
-      map:[
-        [D, D, D, D, D, D, D, D, D, D, D, D ],
-        [D, S, P, P, F, D, D, G, G, D, D, D ],
-        [D, D, D, P, D, D, G, G, D, D, D, D ],
-        [D, G, D, A, D, G, G, D, D, G, G, D ],
-        [D, G, G, P, G, G, D, D, G, G, D, D ],
-        [D, D, G, P, P, P, A, P, P, G, D, D ],
-        [D, D, D, G, G, D, D, D, P, D, D, D ],
-        [D, G, G, G, D, D, D, D, P, G, D, D ],
-        [D, G, D, D, D, G, G, A, P, G, G, D ],
-        [D, G, G, D, G, G, G, P, D, D, G, D ],
-        [D, D, G, G, G, F, G, P, P, A, P, E ],
-        [D, D, D, D, D, D, D, D, D, D, D, D ],
-      ],
-      start:{r:1,c:1},
-      end:{r:10,c:11},
-      gates:[
-        {r:3,c:3,type:'bear',tasks:4},
-        {r:5,c:6,type:'bridge',tasks:4},
-        {r:8,c:7,type:'gate',tasks:4},
-        {r:10,c:9,type:'rock',tasks:4},
-      ]
-    },
-    // Level 4: Mountain Trail (14x12)
-    {
-      name:{en:"Mountain Trail",de:"Bergpfad",hu:"Hegyi ösvény"},
-      icon:"🏔️",
-      bg:"linear-gradient(180deg,#90a4ae 0%,#78909c 100%)",
-      tasks:4, difficulty:4,
-      map:[
-        [K, K, M, M, K, K, K, M, M, K, K, K, K, K ],
-        [K, S, P, P, K, G, G, K, K, G, K, K, K, K ],
-        [K, K, K, P, G, G, K, K, G, G, K, K, K, K ],
-        [K, G, K, A, K, G, G, K, G, G, K, G, K, K ],
-        [K, G, G, P, P, P, K, K, G, K, K, G, K, K ],
-        [K, K, G, G, K, P, G, K, G, G, G, G, K, K ],
-        [K, K, K, G, K, A, P, P, P, G, K, K, K, K ],
-        [K, G, G, G, K, G, K, K, P, K, K, G, K, K ],
-        [K, G, K, K, K, G, K, K, P, P, A, P, K, K ],
-        [K, G, G, K, G, G, K, K, G, K, K, P, K, K ],
-        [K, K, G, G, G, F, K, K, G, K, A, P, P, E ],
-        [K, K, K, K, K, K, K, K, K, K, K, K, K, K ],
-      ],
-      start:{r:1,c:1},
-      end:{r:10,c:13},
-      gates:[
-        {r:3,c:3,type:'rock',tasks:4},
-        {r:6,c:5,type:'bear',tasks:4},
-        {r:8,c:10,type:'bridge',tasks:5},
-        {r:10,c:10,type:'gate',tasks:4},
-      ]
-    },
-    // Level 5: Crystal Lake (14x12)
-    {
-      name:{en:"Crystal Lake",de:"Kristallsee",hu:"Kristálytó"},
-      icon:"🌊",
-      bg:"linear-gradient(180deg,#4fc3f7 0%,#0288d1 100%)",
-      tasks:5, difficulty:5,
-      map:[
-        [G, Tr,G, R, R, R, R, R, G, Tr,G, G, G, G ],
-        [G, S, P, P, R, R, R, R, G, G, G, Tr,G, G ],
-        [G, Tr,G, P, R, R, R, R, G, G, G, G, Tr,G ],
-        [G, G, G, A, P, B, P, G, G, Tr,G, G, G, G ],
-        [G, Tr,G, G, R, R, P, G, G, G, G, G, G, G ],
-        [G, G, G, G, R, R, P, P, A, P, G, G, Tr,G ],
-        [G, G, Tr,G, R, R, R, R, G, P, G, G, G, G ],
-        [G, G, G, G, R, R, R, R, G, P, P, A, P, G ],
-        [G, Tr,G, G, G, R, R, G, G, Tr,G, G, P, G ],
-        [G, G, G, G, G, R, G, G, G, G, G, G, P, G ],
-        [G, G, Tr,G, G, G, G, G, A, P, P, P, P, G ],
-        [G, G, G, G, Tr,G, G, G, P, Tr,G, G, E, G ],
-      ],
-      start:{r:1,c:1},
-      end:{r:11,c:12},
-      gates:[
-        {r:3,c:3,type:'river',tasks:4},
-        {r:5,c:8,type:'bridge',tasks:5},
-        {r:7,c:11,type:'gate',tasks:5},
-        {r:10,c:8,type:'bear',tasks:5},
-      ]
-    },
-    // Level 6: Dragon's Den (16x14)
-    {
-      name:{en:"Dragon's Den",de:"Drachenhöhle",hu:"Sárkány barlangja"},
-      icon:"🏰",
-      bg:"linear-gradient(180deg,#5d4037 0%,#3e2723 100%)",
-      tasks:5, difficulty:6,
-      map:[
-        [C, C, C, C, C, C, C, C, C, C, C, C, C, C, C, C ],
-        [C, S, O, O, C, O, O, C, C, O, O, C, C, C, C, C ],
-        [C, C, C, O, C, O, C, C, O, O, C, C, C, C, C, C ],
-        [C, O, C, A, C, O, O, C, O, C, C, O, O, C, C, C ],
-        [C, O, O, O, O, O, C, C, O, C, O, O, C, C, C, C ],
-        [C, C, O, C, C, A, O, O, O, C, O, C, C, C, C, C ],
-        [C, C, O, C, C, O, C, C, O, C, O, C, C, C, C, C ],
-        [C, O, O, O, C, O, C, C, A, O, O, O, C, C, C, C ],
-        [C, O, C, O, C, O, C, C, O, C, C, O, C, C, C, C ],
-        [C, O, C, O, O, A, O, O, O, C, C, O, C, C, C, C ],
-        [C, O, C, C, C, O, C, C, O, C, O, O, O, C, C, C ],
-        [C, O, O, O, C, O, C, C, A, O, O, C, O, C, C, C ],
-        [C, C, C, O, C, O, C, C, C, C, C, C, O, O, E, C ],
-        [C, C, C, C, C, C, C, C, C, C, C, C, C, C, C, C ],
-      ],
-      start:{r:1,c:1},
-      end:{r:12,c:14},
-      gates:[
-        {r:3,c:3,type:'gate',tasks:5},
-        {r:5,c:5,type:'rock',tasks:5},
-        {r:7,c:8,type:'bear',tasks:5},
-        {r:9,c:5,type:'bridge',tasks:5},
-        {r:11,c:8,type:'gate',tasks:5},
-      ]
-    },
-  ];
+function genQuests(count,diff){
+  const q=[];const types=[];
+  if(count>=3)types.push('pattern');
+  for(let i=types.length;i<count;i++)types.push(pickType(diff));
+  for(const tp of shuffle(types))q.push(genQuest(tp,diff));
+  return q;
 }
-
-
-// ========== MATH QUEST GENERATOR ==========
-function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a}
-function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=rand(0,i);[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
-function pick(arr){return arr[rand(0,arr.length-1)]}
-
-// Difficulty ranges
-const DIFF = {
-  1:{max:20,ops:['+','-'],multMax:0,seqLen:4},
-  2:{max:50,ops:['+','-'],multMax:0,seqLen:5},
-  3:{max:100,ops:['+','-','×'],multMax:10,seqLen:5},
-  4:{max:100,ops:['+','-','×'],multMax:10,seqLen:6},
-  5:{max:100,ops:['+','-','×','÷'],multMax:12,seqLen:6},
-  6:{max:100,ops:['+','-','×','÷'],multMax:12,seqLen:7},
-};
-
-function genArithmetic(diff){
-  const d=DIFF[diff];
-  const op=pick(d.ops);
-  let a,b,answer;
-  if(op==='+'){
-    a=rand(1,Math.floor(d.max*0.6));b=rand(1,d.max-a);answer=a+b;
-  }else if(op==='-'){
-    answer=rand(0,Math.floor(d.max*0.5));b=rand(1,Math.floor(d.max*0.5));a=answer+b;
-  }else if(op==='×'){
-    a=rand(2,d.multMax);b=rand(2,d.multMax);answer=a*b;
-  }else{// ÷
-    b=rand(2,d.multMax);answer=rand(1,10);a=b*answer;
+function pickType(d){
+  const p=['arithmetic','missing','truefalse'];
+  if(d>=2)p.push('pattern','arithmetic');
+  if(d>=3)p.push('multiply','missing');
+  if(d>=4)p.push('multiply','pattern');
+  if(d>=5)p.push('divide');
+  return p[randInt(0,p.length-1)];
+}
+function genQuest(tp,d){
+  switch(tp){
+    case'pattern':return genPattern(d);
+    case'arithmetic':return genArith(d);
+    case'missing':return genMissing(d);
+    case'multiply':return genMul(d);
+    case'divide':return genDiv(d);
+    case'truefalse':return genTF(d);
+    default:return genArith(d);
   }
-  return {a,b,op,answer};
+}
+function genPattern(d){
+  const series=[];const pt=randInt(0,d>=3?3:1);
+  if(pt===0){const a=d<=2?randInt(15,20):randInt(30,60);const sn=randInt(7,9);
+    for(let i=0;i<4;i++){const n=sn-i;series.push({eq:`${a} \u2212 ${n} = `,ans:a-n})}}
+  else if(pt===1){const step=[5,10,2,3][randInt(0,3)];const a=randInt(5,15);
+    for(let i=0;i<4;i++){const n=a+step*i;series.push({eq:`${n} + ${step} = `,ans:n+step})}}
+  else if(pt===2){const b=[2,3,4,5][randInt(0,3)];const s=randInt(2,4);
+    for(let i=0;i<4;i++){const n=s+i;series.push({eq:`${b} \u00d7 ${n} = `,ans:b*n})}}
+  else{const step=[10,20,5][randInt(0,2)];const ad=randInt(3,9);
+    for(let i=0;i<4;i++){const n=step*(i+1);series.push({eq:`${n} + ${ad} = `,ans:n+ad})}}
+  return{type:'pattern',series};
+}
+function genArith(d){
+  let a,b,op,ans;
+  if(d<=1){op=randInt(0,1)?'+':'\u2212';a=randInt(3,15);b=randInt(2,10);if(op==='\u2212'&&b>a)[a,b]=[b,a];ans=op==='+'?a+b:a-b}
+  else if(d<=3){op=randInt(0,1)?'+':'\u2212';a=randInt(10,60);b=randInt(5,30);if(op==='\u2212'&&b>a)[a,b]=[b,a];ans=op==='+'?a+b:a-b}
+  else{op=randInt(0,1)?'+':'\u2212';a=randInt(20,80);b=randInt(10,50);if(op==='\u2212'&&b>a)[a,b]=[b,a];ans=op==='+'?a+b:a-b}
+  return{type:'choice',eq:`${a} ${op} ${b}`,ans,choices:genChoices(ans,d)};
+}
+function genMissing(d){
+  let a,b;if(d<=2){a=randInt(3,15);b=randInt(2,10)}else{a=randInt(10,50);b=randInt(5,30)}
+  if(randInt(0,1))return{type:'input',eq:`${a} + ___ = ${a+b}`,ans:b};
+  if(b>a)[a,b]=[b,a];return{type:'input',eq:`${a} \u2212 ___ = ${a-b}`,ans:b};
+}
+function genMul(d){
+  const tables=d<=3?[2,5,10]:[2,3,4,5,10];const base=tables[randInt(0,tables.length-1)];
+  const n=randInt(2,10);return{type:'choice',eq:`${base} \u00d7 ${n}`,ans:base*n,choices:genChoices(base*n,d)};
+}
+function genDiv(d){
+  const divs=[2,5,10];const dv=divs[randInt(0,divs.length-1)];const ans=randInt(2,10);
+  return{type:'choice',eq:`${ans*dv} \u00f7 ${dv}`,ans,choices:genChoices(ans,d)};
+}
+function genTF(d){
+  let a,b;if(d<=2){a=randInt(3,15);b=randInt(2,10)}else{a=randInt(10,50);b=randInt(5,30)}
+  const op=randInt(0,1)?'+':'\u2212';if(op==='\u2212'&&b>a)[a,b]=[b,a];
+  const correct=op==='+'?a+b:a-b;const isTrue=randInt(0,1);
+  const shown=isTrue?correct:correct+(randInt(0,1)?1:-1)*randInt(1,3);
+  return{type:'truefalse',eq:`${a} ${op} ${b} = ${shown}`,ans:!!isTrue};
+}
+function genChoices(ans,d){
+  const s=new Set([ans]);const r=d<=2?3:5;
+  while(s.size<4){let w=ans+(randInt(0,1)?1:-1)*randInt(1,r);if(w<0)w=ans+randInt(1,r);s.add(w)}
+  return shuffle([...s]);
 }
 
-// Quest type generators — each returns {type,question,answer,options?,extra?}
-const QUEST_TYPES = {
-  // 1. Multiple choice
-  multipleChoice(diff){
-    const{a,b,op,answer}=genArithmetic(diff);
-    const q=`${a} ${op} ${b} = ?`;
-    const opts=new Set([answer]);
-    while(opts.size<4){opts.add(answer+rand(-5,5))}
-    const options=shuffle([...opts].filter(x=>x>=0));
-    if(!options.includes(answer)){options[rand(0,3)]=answer}
-    return{type:'multipleChoice',question:q,answer,options};
-  },
+// ===== AUDIO =====
+let audioCtx;
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)()}
+function playNote(f,dur=0.15,type='square',vol=0.08){
+  if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type;o.frequency.value=f;g.gain.setValueAtTime(vol,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);
+}
+function sfxStep(){playNote(200+Math.random()*100,0.05,'triangle',0.04)}
+function sfxCorrect(){playNote(523,0.1);setTimeout(()=>playNote(659,0.1),100);setTimeout(()=>playNote(784,0.15),200)}
+function sfxWrong(){playNote(200,0.15,'sawtooth',0.06);setTimeout(()=>playNote(150,0.2,'sawtooth',0.04),150)}
+function sfxRescue(){[523,587,659,698,784].forEach((f,i)=>setTimeout(()=>playNote(f,0.2,'triangle',0.1),i*120))}
+function sfxGateOpen(){playNote(392,0.3,'triangle',0.08);setTimeout(()=>playNote(523,0.4,'triangle',0.1),200)}
+function sfxBubble(){playNote(800,0.08,'sine',0.04)}
 
-  // 2. Number input
-  numberInput(diff){
-    const{a,b,op,answer}=genArithmetic(diff);
-    return{type:'numberInput',question:`${a} ${op} ${b} = ?`,answer};
-  },
+// ===== GAME STATE =====
+let game=null,playerChar='ranger',playerName='Ada';
 
-  // 3. Fill the blank
-  fillBlank(diff){
-    const{a,b,op,answer}=genArithmetic(diff);
-    const side=rand(0,1); // 0=left blank, 1=right blank
-    let q,ans;
-    if(op==='+'){
-      if(side===0){q=`__ ${op} ${b} = ${answer}`;ans=a}
-      else{q=`${a} ${op} __ = ${answer}`;ans=b}
-    }else if(op==='-'){
-      if(side===0){q=`__ ${op} ${b} = ${a-b}`;ans=a}
-      else{q=`${a} ${op} __ = ${a-b}`;ans=b}
-    }else if(op==='×'){
-      if(side===0){q=`__ ${op} ${b} = ${answer}`;ans=a}
-      else{q=`${a} ${op} __ = ${answer}`;ans=b}
-    }else{
-      if(side===0){q=`__ ${op} ${b} = ${answer}`;ans=a}
-      else{q=`${a} ${op} __ = ${answer}`;ans=b}
-    }
-    return{type:'numberInput',question:q,answer:ans};
-  },
-
-  // 4. Pattern / sequence
-  pattern(diff){
-    const d=DIFF[diff];
-    const len=d.seqLen;
-    const step=rand(2,diff<=2?5:10);
-    const start=rand(1,20);
-    const seq=[];
-    for(let i=0;i<len;i++)seq.push(start+step*i);
-    const blankIdx=rand(Math.floor(len/2),len-1);
-    const answer=seq[blankIdx];
-    const display=seq.map((v,i)=>i===blankIdx?'__':v);
-    return{type:'pattern',question:'',answer,sequence:display,fullSeq:seq};
-  },
-
-  // 5. True/False
-  trueFalse(diff){
-    const{a,b,op,answer}=genArithmetic(diff);
-    const isTrue=rand(0,1)===1;
-    const shown=isTrue?answer:answer+pick([-3,-2,-1,1,2,3]);
-    const q=`${a} ${op} ${b} = ${shown}`;
-    return{type:'trueFalse',question:q,answer:isTrue};
-  },
-
-  // 6. Comparison
-  comparison(diff){
-    const r1=genArithmetic(diff);
-    const r2=genArithmetic(diff);
-    const val1=r1.answer, val2=r2.answer;
-    const expr1=`${r1.a} ${r1.op} ${r1.b}`;
-    const expr2=`${r2.a} ${r2.op} ${r2.b}`;
-    let answer;
-    if(val1>val2)answer='left';
-    else if(val2>val1)answer='right';
-    else answer='equal';
-    return{type:'comparison',question:'',answer,expr1,expr2,val1,val2};
-  },
-
-  // 7. Visual counting
-  visualCounting(diff){
-    const d=DIFF[diff];
-    const maxN=Math.min(d.max,20);
-    const groupA=rand(2,Math.floor(maxN/2));
-    const groupB=rand(1,maxN-groupA);
-    const total=groupA+groupB;
-    const askTotal=rand(0,1)===1;
-    let question,answer;
-    if(askTotal){
-      question=t('obstacles').gate; // placeholder, overridden in render
-      answer=total;
-    }else{
-      answer=Math.abs(groupA-groupB);
-    }
-    return{type:'visualCounting',question:'',answer,groupA,groupB,askTotal,total};
-  },
-
-  // 8. Word problem
-  wordProblem(diff){
-    const d=DIFF[diff];
-    const templates=t('word_templates');
-    const tmpl=pick(templates);
-    const playerName=game.playerName||'Ada';
-    let a,b,total,answer;
-    // Determine if this is an addition or subtraction template
-    const isSubtraction=tmpl.includes('{total}');
-    if(isSubtraction){
-      // Template: "{total} things, {b} left/removed. How many remain?"
-      total=rand(10,Math.min(d.max,50));
-      b=rand(1,Math.floor(total*0.6));
-      a=total-b;
-      answer=a; // total - b = remaining
-    }else{
-      // Template: "{a} + {b} = how many?"
-      a=rand(2,Math.floor(d.max*0.4));
-      b=rand(1,Math.floor(d.max*0.4));
-      total=a+b;
-      answer=total;
-    }
-    const q=tmpl.replace(/{name}/g,playerName).replace(/{a}/g,a).replace(/{b}/g,b).replace(/{total}/g,total);
-    return{type:'numberInput',question:q,answer};
-  },
-
-  // 9. Match pairs (simplified — pick 3 pairs, match left to right)
-  matchPairs(diff){
-    const pairs=[];
-    for(let i=0;i<3;i++){
-      const{a,b,op,answer}=genArithmetic(diff);
-      pairs.push({expr:`${a} ${op} ${b}`,val:answer});
-    }
-    return{type:'matchPairs',question:'',answer:null,pairs};
-  },
-
-  // 10. Number ordering — arrange numbers from smallest to biggest
-  numberOrder(diff){
-    const d=DIFF[diff];
-    const count=diff<=2?4:5;
-    const nums=new Set();
-    while(nums.size<count){nums.add(rand(1,d.max))}
-    const sorted=[...nums].sort((a,b)=>a-b);
-    const shuffled=shuffle([...sorted]);
-    return{type:'numberOrder',question:'',answer:sorted,numbers:shuffled};
-  },
-};
-
-function generateQuestTasks(diff,count){
-  // Determine which types to use based on difficulty
-  const available=['multipleChoice','numberInput','fillBlank','trueFalse','pattern'];
-  if(diff>=2)available.push('comparison','wordProblem','numberOrder');
-  if(diff>=3)available.push('visualCounting');
-  if(diff>=4)available.push('matchPairs');
-
-  const tasks=[];
-  const used=new Set();
-  for(let i=0;i<count;i++){
-    // Try to use different types
-    let candidates=available.filter(t=>!used.has(t));
-    if(candidates.length===0){candidates=available;used.clear()}
-    const type=pick(candidates);
-    used.add(type);
-    tasks.push(QUEST_TYPES[type](diff));
+class Game{
+  constructor(li){
+    this.ld=LEVELS[li];this.li=li;
+    this.map=this.ld.map.map(r=>[...r]);this.mh=this.map.length;this.mw=this.map[0].length;
+    this.p={x:this.ld.start.x,y:this.ld.start.y,dir:'down',frame:0,moving:false,
+      tx:this.ld.start.x,ty:this.ld.start.y,px:this.ld.start.x*TS,py:this.ld.start.y*TS};
+    this.cam={x:0,y:0};this.updateCam(true);
+    this.dogs=this.ld.dogs.map(d=>({...d,rescued:false}));this.rescued=[];
+    this.gates=this.ld.gates.map(g=>({...g,open:false,quests:null}));
+    this.npcs=this.ld.npcs.map(n=>({...n}));
+    this.startTime=Date.now();this.mistakes=0;this.totalDogs=this.dogs.length;
+    this.fc=0;this.particles=[];this.showBubble=null;
+    this.activeQuest=null;this.questIdx=0;this.questList=null;
+    this.moveDir=null;this.moveHeld=false;this.moveCD=0;
   }
-  return tasks;
-}
 
+  updateCam(instant=false){
+    const cv=document.getElementById('game-canvas');
+    const tx=this.p.px-cv.width/2+TS/2,ty=this.p.py-cv.height/2+TS/2;
+    if(instant){this.cam.x=tx;this.cam.y=ty}else{this.cam.x+=(tx-this.cam.x)*0.12;this.cam.y+=(ty-this.cam.y)*0.12}
+    this.cam.x=Math.max(0,Math.min(this.mw*TS-cv.width,this.cam.x));
+    this.cam.y=Math.max(0,Math.min(this.mh*TS-cv.height,this.cam.y));
+  }
 
-// ========== GAME STATE ==========
-const game = {
-  playerName: 'Ada',
-  playerChar: CHARACTERS[0],
-  currentLevel: 0,
-  levels: null,
-  // In-level state
-  map: null,
-  playerPos: {r:0,c:0},
-  gates: [],
-  dogs: [],
-  rescuedDogs: [],
-  followerPositions: [],
-  timerStart: 0,
-  timerInterval: null,
-  elapsed: 0,
-  mistakes: 0,
-  // Quest state
-  questActive: false,
-  currentGate: null,
-  currentTasks: [],
-  currentTaskIdx: 0,
-  taskMistakes: [],
-  // All rescued dogs across all levels
-  allRescuedDogs: [],
-  // DB
-  db: null,
-};
+  tryMove(dir){
+    if(this.p.moving||this.activeQuest)return;
+    const dx=dir==='left'?-1:dir==='right'?1:0,dy=dir==='up'?-1:dir==='down'?1:0;
+    this.p.dir=dir;const nx=this.p.x+dx,ny=this.p.y+dy;
+    if(nx<0||ny<0||nx>=this.mw||ny>=this.mh)return;
+    const tile=this.map[ny][nx];
 
-// ========== IndexedDB ==========
-function openDB(){
-  return new Promise((resolve)=>{
-    const req=indexedDB.open('AdaMathQuest',1);
-    req.onupgradeneeded=(e)=>{
-      const db=e.target.result;
-      if(!db.objectStoreNames.contains('records'))db.createObjectStore('records',{keyPath:'level'});
-      if(!db.objectStoreNames.contains('progress'))db.createObjectStore('progress',{keyPath:'key'});
-    };
-    req.onsuccess=(e)=>{game.db=e.target.result;resolve()};
-    req.onerror=()=>resolve();
-  });
-}
-function saveRecord(level,time,stars){
-  if(!game.db)return;
-  const tx=game.db.transaction('records','readwrite');
-  const store=tx.objectStore('records');
-  store.get(level).onsuccess=(e)=>{
-    const old=e.target.result;
-    if(!old||time<old.time){
-      store.put({level,time,stars,date:Date.now()});
+    // Gate check
+    if(tile===T.GATE){const g=this.gates.find(g=>g.x===nx&&g.y===ny);
+      if(g&&!g.open){this.openGateQuest(g);return}
+      if(g&&g.open){/* pass through */}else return;}
+
+    // NPC interact (don't walk into them)
+    if(INTERACT.has(tile)&&tile!==T.GATE&&tile!==T.SIGN){this.interact(nx,ny,tile);return}
+
+    if(!WALKABLE.has(tile))return;
+
+    // Dog pickup
+    const dog=this.dogs.find(d=>d.x===nx&&d.y===ny&&!d.rescued);
+    if(dog){dog.rescued=true;this.rescued.push(dog);this.map[ny][nx]=T.GRASS;
+      sfxRescue();this.addParts(nx*TS+TS/2,ny*TS+TS/2,20,dog.color||'#FFD700');
+      showFlash(dog.name+t('dog_rescued'),'#4CAF50');}
+
+    // Exit
+    if(tile===T.EXIT){
+      if(this.rescued.length>=this.totalDogs){this.complete();return}
+      else{showFlash(t('dogs_saved')+': '+this.rescued.length+'/'+this.totalDogs,'#FF9800');return}}
+
+    this.p.tx=nx;this.p.ty=ny;this.p.moving=true;this.p.frame++;sfxStep();
+  }
+
+  interact(x,y,tile){
+    const npc=this.npcs.find(n=>n.x===x&&n.y===y);
+    if(!npc){const dog=this.dogs.find(d=>d.x===x&&d.y===y&&!d.rescued);
+      if(dog)showSpeechBubble(dog.name,t('thank_you',playerName),x*TS-this.cam.x,y*TS-this.cam.y);return}
+    sfxBubble();
+    let text;
+    if(npc.hint==='npc_hello'||npc.hint==='npc_gate'){
+      const arr=t(npc.hint);text=Array.isArray(arr)?arr[randInt(0,arr.length-1)]:arr;
+    }else{text=t(npc.hint,t(npc.ha||''));}
+    const names={[T.NPC_BUT]:'\ud83e\udd8b',[T.NPC_SQU]:'\ud83d\udc3f\ufe0f',[T.NPC_BEAR]:'\ud83d\udc3b',[T.NPC_BIRD]:'\ud83d\udc26'};
+    showSpeechBubble(names[tile]||'?',text,x*TS-this.cam.x+TS/2,y*TS-this.cam.y);
+  }
+
+  openGateQuest(gate){
+    if(!gate.quests)gate.quests=genQuests(gate.qc,gate.d);
+    this.activeQuest=gate;this.questList=gate.quests;this.questIdx=0;
+    showQuestUI(this.questList,0,gate.qc);
+  }
+
+  questAnswered(correct){
+    if(!correct){this.mistakes++;return false}
+    this.questIdx++;
+    if(this.questIdx>=this.questList.length){
+      const gx=this.activeQuest.x,gy=this.activeQuest.y;
+      this.activeQuest.open=true;this.map[gy][gx]=T.PATH;
+      this.activeQuest=null;this.questList=null;sfxGateOpen();hideQuestUI();
+      this.addParts(gx*TS+TS/2,gy*TS+TS/2,15,'#FFD700');return true;
     }
-  };
-}
-function getRecord(level){
-  return new Promise((resolve)=>{
-    if(!game.db)return resolve(null);
-    const tx=game.db.transaction('records','readonly');
-    tx.objectStore('records').get(level).onsuccess=(e)=>resolve(e.target.result||null);
-  });
-}
-function saveProgress(maxLevel){
-  if(!game.db)return;
-  const tx=game.db.transaction('progress','readwrite');
-  tx.objectStore('progress').put({key:'maxLevel',value:maxLevel});
-}
-function getProgress(){
-  return new Promise((resolve)=>{
-    if(!game.db)return resolve(0);
-    const tx=game.db.transaction('progress','readonly');
-    tx.objectStore('progress').get('maxLevel').onsuccess=(e)=>resolve(e.target.result?.value||0);
-  });
-}
+    showQuestUI(this.questList,this.questIdx,this.questList.length);return true;
+  }
 
-// ========== SCREEN MANAGEMENT ==========
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+  update(){
+    this.fc++;animF=Math.floor(this.fc/15);
+    if(this.fc%15===0)for(const k in tileCache)if(k.startsWith('4_')||k.startsWith('17_'))delete tileCache[k];
 
-// ========== i18n UPDATE ==========
-function updateI18N(){
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.getAttribute('data-i18n');
-    const val=t(key);
-    if(val)el.textContent=val;
-  });
-}
-
-// ========== SOUND ==========
-const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-function playSound(type){
-  try{
-    const o=audioCtx.createOscillator();
-    const g=audioCtx.createGain();
-    o.connect(g);g.connect(audioCtx.destination);
-    g.gain.value=0.08;
-    if(type==='correct'){
-      o.frequency.value=523;o.type='sine';g.gain.value=0.1;o.start();
-      o.frequency.linearRampToValueAtTime(659,audioCtx.currentTime+0.1);
-      o.stop(audioCtx.currentTime+0.2);
-    }else if(type==='wrong'){
-      o.frequency.value=200;o.type='square';g.gain.value=0.06;o.start();
-      o.stop(audioCtx.currentTime+0.25);
-    }else if(type==='rescue'){
-      // Happy ascending arpeggio
-      const notes=[523,659,784,1047];
-      notes.forEach((freq,i)=>{
-        const oo=audioCtx.createOscillator();
-        const gg=audioCtx.createGain();
-        oo.connect(gg);gg.connect(audioCtx.destination);
-        oo.frequency.value=freq;oo.type='sine';
-        gg.gain.value=0.1;
-        oo.start(audioCtx.currentTime+i*0.12);
-        oo.stop(audioCtx.currentTime+i*0.12+0.15);
-      });
-      return;
-    }else if(type==='complete'){
-      // Victory fanfare
-      const notes=[523,659,784,1047,1047];
-      notes.forEach((freq,i)=>{
-        const oo=audioCtx.createOscillator();
-        const gg=audioCtx.createGain();
-        oo.connect(gg);gg.connect(audioCtx.destination);
-        oo.frequency.value=freq;oo.type='sine';
-        gg.gain.value=0.12;
-        oo.start(audioCtx.currentTime+i*0.15);
-        oo.stop(audioCtx.currentTime+i*0.15+0.2);
-      });
-      return;
-    }else if(type==='step'){
-      o.frequency.value=300;o.type='sine';g.gain.value=0.03;o.start();
-      o.stop(audioCtx.currentTime+0.05);
+    if(this.p.moving){
+      const tx=this.p.tx*TS,ty=this.p.ty*TS,spd=TS*0.2;
+      const dx=tx-this.p.px,dy=ty-this.p.py,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<spd){this.p.px=tx;this.p.py=ty;this.p.x=this.p.tx;this.p.y=this.p.ty;this.p.moving=false}
+      else{this.p.px+=(dx/dist)*spd;this.p.py+=(dy/dist)*spd}
     }
-  }catch(e){}
-}
+    if(!this.p.moving&&this.moveHeld&&this.moveDir){this.moveCD--;if(this.moveCD<=0){this.tryMove(this.moveDir);this.moveCD=2}}
+    this.particles=this.particles.filter(p=>{p.life--;p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;return p.life>0});
+    this.updateCam();
+  }
 
-// ========== SPARKLE EFFECT ==========
-function sparkle(x,y){
-  const emojis=['✨','⭐','🌟','💫','🎉'];
-  for(let i=0;i<5;i++){
-    const s=document.createElement('div');
-    s.className='sparkle';
-    s.textContent=pick(emojis);
-    s.style.left=(x+rand(-30,30))+'px';
-    s.style.top=(y+rand(-20,20))+'px';
-    s.style.animationDelay=(i*0.1)+'s';
-    document.body.appendChild(s);
-    setTimeout(()=>s.remove(),1200);
+  addParts(x,y,n,color){for(let i=0;i<n;i++)this.particles.push({x,y,vx:(Math.random()-0.5)*4,vy:-Math.random()*3-1,life:30+Math.random()*20,color,size:2+Math.random()*3})}
+
+  render(cx){
+    const cv=cx.canvas;cx.clearRect(0,0,cv.width,cv.height);
+    cx.fillStyle=this.ld.bgColor;cx.fillRect(0,0,cv.width,cv.height);
+    const sc=Math.max(0,Math.floor(this.cam.x/TS)),sr=Math.max(0,Math.floor(this.cam.y/TS));
+    const ec=Math.min(this.mw,Math.ceil((this.cam.x+cv.width)/TS)+1);
+    const er=Math.min(this.mh,Math.ceil((this.cam.y+cv.height)/TS)+1);
+
+    for(let r=sr;r<er;r++)for(let c=sc;c<ec;c++){
+      const tile=this.map[r][c];
+      const sx=Math.round(c*TS-this.cam.x),sy=Math.round(r*TS-this.cam.y);
+      const v=(r*7+c*13)%8;
+      cx.drawImage(renderTile(tile,v),sx,sy);
+      const npc=this.npcs.find(n=>n.x===c&&n.y===r);
+      if(npc&&NPCD[npc.type])NPCD[npc.type](cx,sx,sy,this.fc);
+      const dog=this.dogs.find(d=>d.x===c&&d.y===r&&!d.rescued);
+      if(dog){drawDogSprite(cx,dog.key,sx,sy,this.fc);
+        const bounce=Math.sin(this.fc*0.05)*3;cx.fillStyle='#FFD700';
+        cx.font=`bold ${14*SCALE}px monospace`;cx.textAlign='center';cx.fillText('!',sx+TS/2,sy-4+bounce)}
+    }
+
+    // Rescued dogs following
+    this.rescued.forEach((dog,i)=>{
+      const fx=this.p.px-(i+1)*TS*0.6,fy=this.p.py+Math.sin(this.fc*0.03+i)*4;
+      drawDogSprite(cx,dog.key,Math.round(fx-this.cam.x),Math.round(fy-this.cam.y),this.fc+i*20);
+    });
+
+    // Player
+    const ch=CHARS[playerChar];if(ch){
+      const sx=Math.round(this.p.px-this.cam.x),sy=Math.round(this.p.py-this.cam.y);
+      SPR.draw(cx,this.p.frame%2===0?ch.down:ch.walk,16,16,sx,sy,SCALE*2);
+      cx.fillStyle='#fff';cx.strokeStyle='#333';cx.lineWidth=2;
+      cx.font=`bold ${10*SCALE}px sans-serif`;cx.textAlign='center';
+      cx.strokeText(playerName,sx+TS/2,sy-6);cx.fillText(playerName,sx+TS/2,sy-6);
+    }
+
+    // Particles
+    this.particles.forEach(p=>{cx.globalAlpha=p.life/50;cx.fillStyle=p.color;
+      cx.fillRect(p.x-this.cam.x,p.y-this.cam.y,p.size,p.size)});cx.globalAlpha=1;
+
+    // HUD
+    const el=Math.floor((Date.now()-this.startTime)/1000);
+    document.getElementById('hud-timer').textContent=Math.floor(el/60)+':'+(el%60).toString().padStart(2,'0');
+    document.getElementById('hud-dogs').textContent=this.rescued.length+'/'+this.totalDogs;
+  }
+
+  complete(){
+    const el=Math.floor((Date.now()-this.startTime)/1000);
+    const stars=this.mistakes===0?3:this.mistakes<=2?2:1;
+    saveRecord(this.li,el,stars,this.mistakes);showVictory(this.rescued,el,this.mistakes,stars,this.li);
   }
 }
 
-// ========== INIT TITLE SCREEN ==========
+// ===== UI =====
+let flashTO;
+function showFlash(msg,color='#4CAF50'){
+  let el=document.getElementById('flash-msg');
+  if(!el){el=document.createElement('div');el.id='flash-msg';
+    el.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:40;padding:10px 24px;border-radius:20px;font-weight:700;font-size:0.95rem;color:#fff;pointer-events:none;transition:opacity 0.3s;box-shadow:0 4px 16px rgba(0,0,0,0.2)';
+    document.body.appendChild(el)}
+  el.textContent=msg;el.style.background=color;el.style.opacity='1';
+  clearTimeout(flashTO);flashTO=setTimeout(()=>el.style.opacity='0',2000);
+}
+
+function showSpeechBubble(name,text,sx,sy){
+  const b=document.getElementById('speech-bubble');
+  document.getElementById('speech-name').textContent=name;
+  document.getElementById('speech-text').textContent=text;
+  b.style.display='block';
+  const bw=Math.min(300,window.innerWidth-40);
+  b.style.left=Math.max(10,Math.min(window.innerWidth-bw-10,sx-bw/2))+'px';
+  b.style.top=Math.max(10,sy-80)+'px';b.style.maxWidth=bw+'px';
+  setTimeout(()=>{b.style.display='none'},3500);
+  b.onclick=()=>{b.style.display='none'};
+}
+
+function showQuestUI(quests,idx,total){
+  const ov=document.getElementById('quest-overlay'),body=document.getElementById('quest-body');
+  document.getElementById('quest-progress').textContent=t('task_of',idx+1,total);
+  ov.classList.add('active');body.innerHTML='';
+  const q=quests[idx];
+  if(q.type==='pattern')renderPattern(body,q);
+  else if(q.type==='choice')renderChoice(body,q);
+  else if(q.type==='input')renderInput(body,q);
+  else if(q.type==='truefalse')renderTF2(body,q);
+}
+
+function renderPattern(body,q){
+  const title=document.createElement('p');
+  title.style.cssText='font-weight:700;font-size:1rem;margin-bottom:12px;color:#333';
+  title.textContent=t('pattern_title');body.appendChild(title);
+  const ser=document.createElement('div');ser.className='pattern-series';
+  let cur=0;
+  function draw(){ser.innerHTML='';q.series.forEach((item,i)=>{
+    const row=document.createElement('div');
+    row.className='pattern-row'+(i===cur?' current':'')+(i<cur?' solved':'');
+    const eq=document.createElement('span');eq.className='pattern-eq';eq.textContent=item.eq;row.appendChild(eq);
+    if(i<cur){const a=document.createElement('span');a.className='pattern-answer pattern-eq';a.textContent=item.ans;a.style.color='#2e7d32';row.appendChild(a)}
+    else if(i===cur){
+      const inp=document.createElement('input');inp.type='number';inp.className='pattern-input';inp.inputMode='numeric';row.appendChild(inp);
+      const btn=document.createElement('button');btn.className='num-submit';btn.textContent=t('submit');
+      btn.onclick=()=>check(inp,item);inp.addEventListener('keydown',e=>{if(e.key==='Enter')check(inp,item)});
+      row.appendChild(btn);setTimeout(()=>inp.focus(),100)}
+    ser.appendChild(row)});}
+  function check(inp,item){
+    if(parseInt(inp.value)===item.ans){sfxCorrect();cur++;
+      if(cur>=q.series.length){draw();setTimeout(()=>{if(game)game.questAnswered(true)},600)}else draw()
+    }else{sfxWrong();if(game)game.mistakes++;
+      inp.style.borderColor='#f44336';inp.style.background='#ffebee';
+      setTimeout(()=>{inp.style.borderColor='#4CAF50';inp.style.background='';inp.value='';inp.focus()},500)}}
+  body.appendChild(ser);draw();
+}
+
+function renderChoice(body,q){
+  const eq=document.createElement('p');
+  eq.style.cssText="font-size:1.4rem;font-weight:700;text-align:center;margin:10px 0 16px;font-family:'Courier New',monospace";
+  eq.textContent=q.eq+' = ?';body.appendChild(eq);
+  const grid=document.createElement('div');grid.className='mc-grid';
+  q.choices.forEach(c=>{const btn=document.createElement('button');btn.className='mc-btn';btn.textContent=c;
+    btn.onclick=()=>{if(btn.disabled)return;grid.querySelectorAll('.mc-btn').forEach(b=>b.disabled=true);
+      if(c===q.ans){btn.classList.add('correct');sfxCorrect();setTimeout(()=>{if(game)game.questAnswered(true)},600)}
+      else{btn.classList.add('wrong');sfxWrong();if(game)game.mistakes++;
+        grid.querySelectorAll('.mc-btn').forEach(b=>{if(parseInt(b.textContent)===q.ans)b.classList.add('correct')});
+        setTimeout(()=>{grid.querySelectorAll('.mc-btn').forEach(b=>{b.disabled=false;b.classList.remove('wrong','correct')})},1000)}};
+    grid.appendChild(btn)});body.appendChild(grid);
+}
+
+function renderInput(body,q){
+  const r=document.createElement('div');r.className='num-input-row';
+  const eq=document.createElement('span');eq.className='num-eq';eq.textContent=q.eq;r.appendChild(eq);body.appendChild(r);
+  const r2=document.createElement('div');r2.className='num-input-row';r2.style.marginTop='8px';
+  const inp=document.createElement('input');inp.type='number';inp.className='num-input';inp.inputMode='numeric';r2.appendChild(inp);
+  const btn=document.createElement('button');btn.className='num-submit';btn.textContent=t('submit');
+  let att=0;
+  function check(){
+    if(parseInt(inp.value)===q.ans){sfxCorrect();inp.disabled=true;btn.disabled=true;
+      setTimeout(()=>{if(game)game.questAnswered(true)},600)}
+    else{sfxWrong();if(game)game.mistakes++;att++;
+      if(att>=3){const h=document.createElement('p');h.style.cssText='text-align:center;color:#e65100;font-weight:700;margin-top:8px';
+        h.textContent=t('hint')+q.ans;body.appendChild(h)}
+      inp.style.borderColor='#f44336';inp.style.background='#ffebee';
+      setTimeout(()=>{inp.style.borderColor='#4CAF50';inp.style.background='';inp.value='';inp.focus()},500)}}
+  btn.onclick=check;inp.addEventListener('keydown',e=>{if(e.key==='Enter')check()});
+  r2.appendChild(btn);body.appendChild(r2);setTimeout(()=>inp.focus(),100);
+}
+
+function renderTF2(body,q){
+  const eq=document.createElement('p');
+  eq.style.cssText="font-size:1.3rem;font-weight:700;text-align:center;margin:10px 0 16px;font-family:'Courier New',monospace";
+  eq.textContent=q.eq;body.appendChild(eq);
+  const row=document.createElement('div');row.className='tf-row';
+  [true,false].forEach(val=>{const btn=document.createElement('button');
+    btn.className='tf-btn '+(val?'yes':'no');btn.textContent=val?t('true_btn'):t('false_btn');
+    btn.onclick=()=>{row.querySelectorAll('.tf-btn').forEach(b=>b.disabled=true);
+      if(val===q.ans){btn.style.boxShadow='0 0 0 3px #4CAF50';sfxCorrect();
+        setTimeout(()=>{if(game)game.questAnswered(true)},600)}
+      else{btn.style.boxShadow='0 0 0 3px #f44336';sfxWrong();if(game)game.mistakes++;
+        setTimeout(()=>{row.querySelectorAll('.tf-btn').forEach(b=>{b.disabled=false;b.style.boxShadow=''})},1000)}};
+    row.appendChild(btn)});body.appendChild(row);
+}
+
+function hideQuestUI(){document.getElementById('quest-overlay').classList.remove('active')}
+
+// ===== RECORDS =====
+let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('AdaMathQuestDB',1);
+  r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('records'))d.createObjectStore('records',{keyPath:'li'})};
+  r.onsuccess=e=>{db=e.target.result;res(db)};r.onerror=e=>rej(e)})}
+function saveRecord(li,time,stars,mistakes){if(!db)return;const tx=db.transaction('records','readwrite');const s=tx.objectStore('records');
+  const r=s.get(li);r.onsuccess=()=>{const ex=r.result;if(!ex||time<ex.time||stars>ex.stars)s.put({li,time,stars,mistakes,date:Date.now()})}}
+function getRecords(){if(!db)return Promise.resolve({});return new Promise(res=>{const tx=db.transaction('records','readonly');
+  const r=tx.objectStore('records').getAll();r.onsuccess=()=>{const m={};r.result.forEach(r=>m[r.li]=r);res(m)};r.onerror=()=>res({})})}
+
+// ===== SCREENS =====
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
 function initTitle(){
-  // Characters
-  const cs=document.getElementById('char-select');
-  cs.innerHTML='';
-  CHARACTERS.forEach((ch,i)=>{
-    const btn=document.createElement('button');
-    btn.className='char-btn'+(i===0?' selected':'');
-    btn.textContent=ch.emoji;
-    btn.title=ch.name;
-    btn.onclick=()=>{
-      cs.querySelectorAll('.char-btn').forEach(b=>b.classList.remove('selected'));
-      btn.classList.add('selected');
-      game.playerChar=ch;
-    };
-    cs.appendChild(btn);
-  });
+  const sel=document.getElementById('char-select');sel.innerHTML='';
+  Object.entries(CHARS).forEach(([key,ch])=>{
+    const div=document.createElement('div');div.className='char-option'+(key===playerChar?' selected':'');
+    const c=document.createElement('canvas');c.width=32;c.height=32;
+    const cx=c.getContext('2d');cx.imageSmoothingEnabled=false;SPR.draw(cx,ch.down,16,16,0,0,2);
+    div.appendChild(c);const name=document.createElement('span');
+    name.textContent=(ch.name[LANG]||ch.name.en).split(' ').pop();div.appendChild(name);
+    div.onclick=()=>{sel.querySelectorAll('.char-option').forEach(d=>d.classList.remove('selected'));
+      div.classList.add('selected');playerChar=key;initAudio()};sel.appendChild(div)});
 
-  // Languages
-  const lr=document.getElementById('lang-row');
-  lr.innerHTML='';
-  [{code:'en',label:'English 🇬🇧'},{code:'de',label:'Deutsch 🇩🇪'},{code:'hu',label:'Magyar 🇭🇺'}].forEach(l=>{
-    const btn=document.createElement('button');
-    btn.className='lang-btn'+(l.code===lang?' active':'');
-    btn.textContent=l.label;
-    btn.onclick=()=>{
-      lang=l.code;
-      localStorage.setItem('amq-lang',lang);
-      lr.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      updateI18N();
-    };
-    lr.appendChild(btn);
-  });
-
-  document.getElementById('play-btn').onclick=()=>{
-    game.playerName=document.getElementById('player-name').value.trim()||'Ada';
-    audioCtx.resume();
-    showLevelSelect();
-  };
-
-  updateI18N();
+  // Title art
+  const ac=document.getElementById('title-art-canvas');const ax=ac.getContext('2d');ax.imageSmoothingEnabled=false;
+  ax.clearRect(0,0,200,120);
+  ['golden','dalmatian','husky','corgi'].forEach((k,i)=>{const d=DOGS[k];
+    if(d)SPR.draw(ax,d.sprite,12,12,20+i*45,35,3)});
 }
 
-// ========== LEVEL SELECT ==========
-let _levelSelectRunning=false;
 async function showLevelSelect(){
-  if(_levelSelectRunning)return;
-  _levelSelectRunning=true;
-  showScreen('level-screen');
-  const grid=document.getElementById('level-grid');
-  grid.innerHTML='';
-
-  let maxLevel=0;
-  try{maxLevel=await getProgress()||0}catch(e){}
-
-  game.levels=buildLevels();
-  const frag=document.createDocumentFragment();
-  for(let i=0;i<game.levels.length;i++){
-    const lv=game.levels[i];
-    const card=document.createElement('div');
-    card.className='level-card'+(i<=maxLevel?'':' locked');
-    let rec=null;
-    try{rec=await getRecord(i)}catch(e){}
-    if(rec)card.classList.add('completed');
-
-    card.innerHTML=`
-      <div class="level-icon">${lv.icon}</div>
-      <div class="level-name">${lv.name[lang]||lv.name.en}</div>
-      <div class="level-info">${lv.gates.length} 🐕</div>
-      ${rec?`<div class="stars">${'⭐'.repeat(rec.stars)}${'☆'.repeat(3-rec.stars)}</div>
-        <div class="best-time">${t('best')}: ${fmtTime(rec.time)}</div>`:''}
-    `;
-    if(i<=maxLevel){
-      const lvl=i;
-      card.onclick=()=>startLevel(lvl);
-    }
-    frag.appendChild(card);
-  }
-  grid.appendChild(frag);
-
-  document.getElementById('back-title').onclick=()=>showScreen('title-screen');
-  _levelSelectRunning=false;
+  showScreen('level-screen');const grid=document.getElementById('level-grid');grid.innerHTML='';
+  const recs=await getRecords();
+  LEVELS.forEach((lv,i)=>{
+    const card=document.createElement('div');card.className='level-card';
+    const rec=recs[i];const unlocked=i===0||recs[i-1];
+    if(!unlocked)card.classList.add('locked');if(rec)card.classList.add('completed');
+    const c=document.createElement('canvas');c.width=lv.map[0].length*4;c.height=lv.map.length*4;
+    const cx=c.getContext('2d');cx.imageSmoothingEnabled=false;
+    lv.map.forEach((row,r)=>row.forEach((tile,col)=>{
+      cx.fillStyle=tile===T.TREE||tile===T.BUSH?'#2e7d32':tile===T.WATER?'#1976d2':
+        tile===T.PATH||tile===T.BRIDGE?'#d4a574':tile===T.ROCK?'#78909c':tile===T.GATE?'#8d6e63':'#7cb342';
+      cx.fillRect(col*4,r*4,4,4)}));card.appendChild(c);
+    const h3=document.createElement('h3');h3.textContent=t(lv.nameKey);card.appendChild(h3);
+    const p=document.createElement('p');p.textContent=lv.dogs.length+' \ud83d\udc15';card.appendChild(p);
+    if(rec){const st=document.createElement('div');st.className='level-stars';
+      st.textContent='\u2b50'.repeat(rec.stars)+'\u2606'.repeat(3-rec.stars);card.appendChild(st);
+      const tm=document.createElement('p');const m=Math.floor(rec.time/60),s=(rec.time%60).toString().padStart(2,'0');
+      tm.textContent=t('best_time')+': '+m+':'+s;tm.style.fontSize='0.7rem';card.appendChild(tm)}
+    if(unlocked)card.onclick=()=>{initAudio();startLevel(i)};
+    grid.appendChild(card)});
 }
 
-function fmtTime(ms){
-  const s=Math.floor(ms/1000);
-  const m=Math.floor(s/60);
-  return `${m}:${String(s%60).padStart(2,'0')}`;
+function showVictory(dogs,time,mistakes,stars,li){
+  showScreen('victory-screen');hideQuestUI();
+  const de=document.getElementById('victory-dogs');de.innerHTML='';
+  dogs.forEach(dog=>{const div=document.createElement('div');div.className='victory-dog';
+    div.style.animation='float 2s ease-in-out infinite';div.style.animationDelay=Math.random()*2+'s';
+    const c=document.createElement('canvas');c.width=24;c.height=24;
+    const cx=c.getContext('2d');cx.imageSmoothingEnabled=false;
+    const dd=DOGS[dog.key];if(dd)SPR.draw(cx,dd.sprite,12,12,0,0,2);div.appendChild(c);
+    const p=document.createElement('p');p.textContent=dog.name;div.appendChild(p);de.appendChild(div)});
+  const se=document.getElementById('victory-stats');
+  const m=Math.floor(time/60),s=(time%60).toString().padStart(2,'0');
+  se.innerHTML='<p style="font-size:1.2rem;text-align:center">'+'\u2b50'.repeat(stars)+'\u2606'.repeat(3-stars)+'</p>'+
+    '<p>\u23f1\ufe0f '+t('time')+': '+m+':'+s+'</p><p>\u274c '+t('mistakes')+': '+mistakes+'</p>'+
+    '<p>\ud83d\udc15 '+t('dogs_saved')+': '+dogs.length+'</p>';
+  sfxRescue();
+  const nb=document.getElementById('victory-next');
+  if(li<LEVELS.length-1){nb.style.display='block';nb.onclick=()=>startLevel(li+1)}else nb.style.display='none';
+  document.getElementById('victory-menu').onclick=()=>showLevelSelect();
 }
 
-// ========== START LEVEL ==========
+// ===== GAME LOOP =====
+let canvas,ctx,rafId;
 function startLevel(idx){
-  game.currentLevel=idx;
-  const lv=game.levels[idx];
-
-  // Show story
-  const story=t('stories')[idx+1]||{emoji:'🐕',text:''};
-  document.getElementById('story-emoji').textContent=story.emoji;
-  document.getElementById('story-text').textContent=story.text;
-  showScreen('story-screen');
-
-  document.getElementById('story-continue').onclick=()=>{
-    initLevel(idx);
-    showScreen('game-screen');
-  };
+  showScreen('game-screen');canvas=document.getElementById('game-canvas');ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;if(game)game.updateCam(true)}
+  window.removeEventListener('resize',resize);window.addEventListener('resize',resize);resize();
+  game=new Game(idx);for(const k in tileCache)delete tileCache[k];
+  if(rafId)cancelAnimationFrame(rafId);
+  function loop(){if(!game)return;game.update();game.render(ctx);rafId=requestAnimationFrame(loop)}loop();
 }
 
-// ========== INIT LEVEL ==========
-function initLevel(idx){
-  const lv=game.levels[idx];
-  game.map=lv.map;
-  game.playerPos={...lv.start};
-  game.mistakes=0;
-  game.rescuedDogs=[];
-  game.followerPositions=[];
-  game.questActive=false;
-
-  // Assign dogs to gates
-  const dogPool=shuffle([...DOG_POOL]);
-  game.gates=lv.gates.map((g,i)=>({
-    ...g,
-    dog:dogPool[i%dogPool.length],
-    solved:false,
-    tasks:generateQuestTasks(lv.difficulty,g.tasks),
-  }));
-  game.dogs=game.gates.map(g=>({...g.dog,r:g.r-1,c:g.c,rescued:false}));
-
-  // Timer
-  game.timerStart=Date.now();
-  clearInterval(game.timerInterval);
-  game.timerInterval=setInterval(updateTimer,1000);
-
-  // Set background
-  document.getElementById('game-viewport').style.background=lv.bg;
-  document.getElementById('hud-level').textContent=`${lv.icon} ${lv.name[lang]||lv.name.en}`;
-
-  renderMap();
-  renderPlayer();
-  renderDogs();
-  updateHUD();
-  // Delay camera centering to ensure layout is complete
-  requestAnimationFrame(()=>requestAnimationFrame(()=>centerCamera()));
-}
-
-// ========== RENDER MAP ==========
-function renderMap(){
-  const mapEl=document.getElementById('game-map');
-  const rows=game.map.length;
-  const cols=game.map[0].length;
-  mapEl.style.gridTemplateColumns=`repeat(${cols},var(--tile))`;
-  mapEl.style.gridTemplateRows=`repeat(${rows},var(--tile))`;
-  mapEl.innerHTML='';
-
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      const tileType=game.map[r][c];
-      const div=document.createElement('div');
-      div.className=`tile tile-${tileType}`;
-      div.dataset.r=r;
-      div.dataset.c=c;
-
-      // Emoji content
-      let emoji=TILE_EMOJI[tileType]||'';
-      if(tileType===T.F)emoji=['🌸','🌺','🌻','🌼','🌷'][rand(0,4)];
-      if(tileType===T.G && rand(0,8)===0)emoji=pick(['🌿','🍃','']);
-      if(tileType===T.P && rand(0,15)===0)emoji=pick(['🦋','🐛','']);
-
-      // Gate overlay
-      const gate=game.gates.find(g=>g.r===r&&g.c===c);
-      if(gate){
-        emoji=gate.solved?'✅':OBSTACLE_ICONS[gate.type];
-        if(gate.solved)div.classList.add('solved');
-      }
-
-      if(emoji)div.textContent=emoji;
-      mapEl.appendChild(div);
-    }
-  }
-}
-
-function renderPlayer(){
-  const mapEl=document.getElementById('game-map');
-  // Remove old player
-  mapEl.querySelectorAll('.player-sprite,.dog-follower').forEach(e=>e.remove());
-
-  const tile=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile'));
-
-  // Player
-  const p=document.createElement('div');
-  p.className='player-sprite';
-  p.id='player';
-  p.textContent=game.playerChar.emoji;
-  p.style.left=(game.playerPos.c*tile)+'px';
-  p.style.top=(game.playerPos.r*tile)+'px';
-  p.style.width=tile+'px';
-  p.style.height=tile+'px';
-  p.style.display='flex';
-  p.style.alignItems='center';
-  p.style.justifyContent='center';
-  mapEl.appendChild(p);
-
-  // Follower dogs
-  game.followerPositions.forEach((pos,i)=>{
-    const d=document.createElement('div');
-    d.className='dog-follower';
-    d.id='follower-'+i;
-    d.textContent=game.rescuedDogs[i].emoji;
-    d.style.left=(pos.c*tile)+'px';
-    d.style.top=(pos.r*tile)+'px';
-    d.style.width=tile+'px';
-    d.style.height=tile+'px';
-    d.style.display='flex';
-    d.style.alignItems='center';
-    d.style.justifyContent='center';
-    mapEl.appendChild(d);
-  });
-}
-
-function renderDogs(){
-  const mapEl=document.getElementById('game-map');
-  mapEl.querySelectorAll('.dog-marker').forEach(e=>e.remove());
-  const tile=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile'));
-
-  game.dogs.forEach((dog,i)=>{
-    if(dog.rescued)return;
-    const d=document.createElement('div');
-    d.className='dog-marker';
-    d.textContent=dog.emoji;
-    d.style.left=(dog.c*tile)+'px';
-    d.style.top=(dog.r*tile)+'px';
-    d.style.width=tile+'px';
-    d.style.height=tile+'px';
-    d.style.display='flex';
-    d.style.alignItems='center';
-    d.style.justifyContent='center';
-    d.style.animationDelay=(i*0.3)+'s';
-    mapEl.appendChild(d);
-  });
-}
-
-function updateHUD(){
-  const saved=game.rescuedDogs.length;
-  const total=game.gates.length;
-  document.getElementById('hud-dogs').textContent=`🐕 ${saved}/${total}`;
-}
-
-function updateTimer(){
-  game.elapsed=Date.now()-game.timerStart;
-  document.getElementById('hud-timer').textContent=`⏱ ${fmtTime(game.elapsed)}`;
-}
-
-function getTileSize(){
-  return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile'));
-}
-
-function centerCamera(){
-  const mapEl=document.getElementById('game-map');
-  const tile=getTileSize();
-  const vw=window.innerWidth;
-  const vh=window.innerHeight-50; // Account for HUD
-  const px=game.playerPos.c*tile+tile/2;
-  const py=game.playerPos.r*tile+tile/2;
-  const tx=Math.round(vw/2-px);
-  const ty=Math.round(vh/2-py);
-  mapEl.style.transform=`translate(${tx}px,${ty}px)`;
-}
-
-// ========== PLAYER MOVEMENT ==========
-function movePlayer(dr,dc){
-  if(game.questActive)return;
-  const nr=game.playerPos.r+dr;
-  const nc=game.playerPos.c+dc;
-
-  // Bounds check
-  if(nr<0||nr>=game.map.length||nc<0||nc>=game.map[0].length)return;
-
-  const tileType=game.map[nr][nc];
-  if(!WALKABLE.has(tileType))return;
-
-  // Check for unsolved gate
-  const gate=game.gates.find(g=>g.r===nr&&g.c===nc&&!g.solved);
-  if(gate){
-    openQuest(gate);
-    return;
-  }
-
-  // Move
-  const oldPos={...game.playerPos};
-  game.playerPos={r:nr,c:nc};
-
-  // Update followers
-  if(game.followerPositions.length>0){
-    for(let i=game.followerPositions.length-1;i>0;i--){
-      game.followerPositions[i]={...game.followerPositions[i-1]};
-    }
-    game.followerPositions[0]={...oldPos};
-  }
-
-  // Animate
-  const tile=getTileSize();
-  const player=document.getElementById('player');
-  if(player){
-    player.style.left=(nc*tile)+'px';
-    player.style.top=(nr*tile)+'px';
-  }
-  game.followerPositions.forEach((pos,i)=>{
-    const f=document.getElementById('follower-'+i);
-    if(f){
-      f.style.left=(pos.c*tile)+'px';
-      f.style.top=(pos.r*tile)+'px';
-    }
-  });
-
-  playSound('step');
-  centerCamera(true);
-
-  // Check for end tile
-  const lv=game.levels[game.currentLevel];
-  if(nr===lv.end.r&&nc===lv.end.c){
-    if(game.rescuedDogs.length===game.gates.length){
-      levelComplete();
-    }else{
-      // Show hint that they need to rescue all dogs
-      showHint({en:'Rescue all dogs first! 🐕',de:'Rette erst alle Hunde! 🐕',hu:'Először mentsd meg az összes kutyát! 🐕'}[lang]||'Rescue all dogs first!');
-    }
-  }
-}
-
-// Keyboard
-document.addEventListener('keydown',(e)=>{
-  if(game.questActive)return;
-  switch(e.key){
-    case'ArrowUp':case'w':case'W':movePlayer(-1,0);e.preventDefault();break;
-    case'ArrowDown':case's':case'S':movePlayer(1,0);e.preventDefault();break;
-    case'ArrowLeft':case'a':case'A':movePlayer(0,-1);e.preventDefault();break;
-    case'ArrowRight':case'd':case'D':movePlayer(0,1);e.preventDefault();break;
-  }
+// ===== INPUT =====
+document.addEventListener('keydown',e=>{
+  if(e.repeat)return;initAudio();
+  const dm={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
+  if(dm[e.key]&&game){e.preventDefault();game.moveDir=dm[e.key];game.moveHeld=true;game.tryMove(dm[e.key])}
+  if((e.key===' '||e.key==='Enter')&&game&&!game.activeQuest){
+    const bb=document.getElementById('speech-bubble');
+    if(bb.style.display==='block'){bb.style.display='none'}
+    else{const dirs={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+      const d=dirs[game.p.dir]||[0,1];const fx=game.p.x+d[0],fy=game.p.y+d[1];
+      if(fx>=0&&fy>=0&&fx<game.mw&&fy<game.mh){const tile=game.map[fy][fx];if(INTERACT.has(tile))game.interact(fx,fy,tile)}}}
+  if(e.key==='Escape'){if(game&&game.activeQuest){hideQuestUI();game.activeQuest=null;game.questList=null}
+    else if(game){game=null;if(rafId)cancelAnimationFrame(rafId);showLevelSelect()}}
+});
+document.addEventListener('keyup',e=>{
+  const dm={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
+  if(dm[e.key]&&game&&game.moveDir===dm[e.key])game.moveHeld=false;
 });
 
-// D-Pad
-document.querySelectorAll('.dpad-btn').forEach(btn=>{
-  const dir=btn.dataset.dir;
-  const handler=(e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    if(dir==='up')movePlayer(-1,0);
-    else if(dir==='down')movePlayer(1,0);
-    else if(dir==='left')movePlayer(0,-1);
-    else if(dir==='right')movePlayer(0,1);
-  };
-  btn.addEventListener('click',handler);
-  btn.addEventListener('touchstart',handler,{passive:false});
-});
+// D-pad
+document.querySelectorAll('.dpad-btn[data-dir]').forEach(btn=>{const dir=btn.dataset.dir;
+  function start(e){e.preventDefault();initAudio();if(game){game.moveDir=dir;game.moveHeld=true;game.tryMove(dir)}}
+  function stop(e){e.preventDefault();if(game&&game.moveDir===dir)game.moveHeld=false}
+  btn.addEventListener('touchstart',start,{passive:false});btn.addEventListener('mousedown',start);
+  btn.addEventListener('touchend',stop,{passive:false});btn.addEventListener('mouseup',stop);btn.addEventListener('mouseleave',stop)});
+
+document.querySelector('.dpad-center').addEventListener('touchstart',e=>{e.preventDefault();initAudio();if(!game)return;
+  const bb=document.getElementById('speech-bubble');if(bb.style.display==='block'){bb.style.display='none';return}
+  const dirs={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};const d=dirs[game.p.dir]||[0,1];
+  const fx=game.p.x+d[0],fy=game.p.y+d[1];
+  if(fx>=0&&fy>=0&&fx<game.mw&&fy<game.mh){const tile=game.map[fy][fx];if(INTERACT.has(tile))game.interact(fx,fy,tile)}
+},{passive:false});
 
 // Touch swipe
-let touchStartX=0,touchStartY=0;
-document.getElementById('game-viewport')?.addEventListener('touchstart',(e)=>{
-  touchStartX=e.touches[0].clientX;
-  touchStartY=e.touches[0].clientY;
-},{passive:true});
-document.getElementById('game-viewport')?.addEventListener('touchend',(e)=>{
-  const dx=e.changedTouches[0].clientX-touchStartX;
-  const dy=e.changedTouches[0].clientY-touchStartY;
-  const minSwipe=30;
-  if(Math.abs(dx)>Math.abs(dy)){
-    if(dx>minSwipe)movePlayer(0,1);
-    else if(dx<-minSwipe)movePlayer(0,-1);
-  }else{
-    if(dy>minSwipe)movePlayer(1,0);
-    else if(dy<-minSwipe)movePlayer(-1,0);
-  }
-},{passive:true});
-
-// Pause
-document.getElementById('hud-pause').onclick=()=>showLevelSelect();
-
-// Resize handler
-window.addEventListener('resize',()=>{
-  if(document.getElementById('game-screen').classList.contains('active')){
-    centerCamera();
-  }
-});
-
-
-// ========== QUEST SYSTEM ==========
-function openQuest(gate){
-  game.questActive=true;
-  game.currentGate=gate;
-  game.currentTasks=gate.tasks;
-  game.currentTaskIdx=0;
-  game.taskMistakes=new Array(gate.tasks.length).fill(false);
-
-  const overlay=document.getElementById('quest-overlay');
-  overlay.classList.add('active');
-
-  // Set obstacle info
-  document.getElementById('quest-icon').textContent=OBSTACLE_ICONS[gate.type];
-  document.getElementById('quest-title').textContent=t('obstacles')[gate.type]||t('quest_gate');
-
-  renderQuestTask();
-}
-
-function renderQuestTask(){
-  game._taskAttempts=0;
-  const task=game.currentTasks[game.currentTaskIdx];
-  const total=game.currentTasks.length;
-  const idx=game.currentTaskIdx;
-
-  // Progress dots
-  const prog=document.getElementById('quest-progress');
-  prog.innerHTML='';
-  for(let i=0;i<total;i++){
-    const dot=document.createElement('div');
-    dot.className='quest-dot';
-    if(i<idx)dot.classList.add(game.taskMistakes[i]?'wrong':'done');
-    if(i===idx)dot.classList.add('current');
-    prog.appendChild(dot);
-  }
-
-  // Story
-  const storyEl=document.getElementById('quest-story');
-  const storyTexts={
-    en:["A friendly squirrel watches you solve this!","The forest birds are cheering for you!","A butterfly landed nearby — it believes in you!","The wise owl nods encouragingly!","Even the flowers are rooting for you!"],
-    de:["Ein freundliches Eichhörnchen schaut zu!","Die Waldvögel feuern dich an!","Ein Schmetterling glaubt an dich!","Die weise Eule nickt ermutigend!","Sogar die Blumen drücken dir die Daumen!"],
-    hu:["Egy barátságos mókus figyel!","Az erdei madarak szurkolnak!","Egy pillangó szállt le melletted — hisz benned!","A bölcs bagoly bátorítóan bólint!","Még a virágok is szurkolnak!"],
-  };
-  storyEl.textContent=pick(storyTexts[lang]||storyTexts.en);
-
-  // Question
-  const qEl=document.getElementById('quest-question');
-  const areaEl=document.getElementById('quest-answer-area');
-  const fbEl=document.getElementById('quest-feedback');
-  fbEl.className='quest-feedback';fbEl.style.display='none';
-  areaEl.innerHTML='';
-
-  switch(task.type){
-    case'multipleChoice':
-      qEl.textContent=task.question;
-      const choices=document.createElement('div');
-      choices.className='quest-choices';
-      task.options.forEach(opt=>{
-        const btn=document.createElement('button');
-        btn.className='choice-btn';
-        btn.textContent=opt;
-        btn.onclick=()=>handleAnswer(opt===task.answer,btn,choices);
-        choices.appendChild(btn);
-      });
-      areaEl.appendChild(choices);
-      break;
-
-    case'numberInput':
-      qEl.textContent=task.question;
-      const row=document.createElement('div');
-      row.className='quest-input-row';
-      const inp=document.createElement('input');
-      inp.type='number';inp.className='quest-number-input';inp.id='quest-input';
-      inp.inputMode='numeric';inp.autocomplete='off';
-      const sub=document.createElement('button');
-      sub.className='quest-submit-btn';sub.textContent=t('submit');
-      sub.onclick=()=>{
-        const val=parseInt(inp.value);
-        handleAnswer(val===task.answer,sub,row);
-      };
-      inp.addEventListener('keydown',(e)=>{
-        if(e.key==='Enter')sub.click();
-      });
-      row.appendChild(inp);row.appendChild(sub);
-      areaEl.appendChild(row);
-      setTimeout(()=>inp.focus(),100);
-      break;
-
-    case'trueFalse':
-      qEl.textContent=task.question;
-      const tfRow=document.createElement('div');
-      tfRow.className='quest-tf-row';
-      [true,false].forEach(val=>{
-        const btn=document.createElement('button');
-        btn.className='tf-btn';
-        btn.textContent=val?t('true_btn'):t('false_btn');
-        btn.onclick=()=>handleAnswer(val===task.answer,btn,tfRow);
-        tfRow.appendChild(btn);
-      });
-      areaEl.appendChild(tfRow);
-      break;
-
-    case'pattern':
-      qEl.innerHTML=`<span style="font-size:0.85rem;color:var(--text-light)">${{en:'What number goes in the blank?',de:'Welche Zahl fehlt?',hu:'Melyik szám hiányzik?'}[lang]||'What number goes in the blank?'}</span>`;
-      const patDisp=document.createElement('div');
-      patDisp.className='pattern-display';
-      task.sequence.forEach(v=>{
-        const item=document.createElement('div');
-        item.className='pattern-item '+(v==='__'?'pattern-blank':'pattern-num');
-        item.textContent=v==='__'?'?':v;
-        patDisp.appendChild(item);
-      });
-      areaEl.appendChild(patDisp);
-      const pRow=document.createElement('div');
-      pRow.className='quest-input-row';
-      const pInp=document.createElement('input');
-      pInp.type='number';pInp.className='quest-number-input';pInp.id='quest-input';
-      pInp.inputMode='numeric';
-      const pSub=document.createElement('button');
-      pSub.className='quest-submit-btn';pSub.textContent=t('submit');
-      pSub.onclick=()=>{
-        const val=parseInt(pInp.value);
-        handleAnswer(val===task.answer,pSub,pRow);
-      };
-      pInp.addEventListener('keydown',(e)=>{if(e.key==='Enter')pSub.click()});
-      pRow.appendChild(pInp);pRow.appendChild(pSub);
-      areaEl.appendChild(pRow);
-      setTimeout(()=>pInp.focus(),100);
-      break;
-
-    case'comparison':
-      qEl.innerHTML=`<span style="font-size:0.9rem">${{en:'Which is bigger? (or equal)',de:'Was ist größer? (oder gleich)',hu:'Melyik a nagyobb? (vagy egyenlő)'}[lang]||'Which is bigger?'}</span>`;
-      const cmpRow=document.createElement('div');
-      cmpRow.className='compare-row';
-      const leftBtn=document.createElement('button');
-      leftBtn.className='compare-expr';leftBtn.textContent=task.expr1;
-      const vsSpan=document.createElement('span');
-      vsSpan.className='compare-vs';vsSpan.textContent='VS';
-      const rightBtn=document.createElement('button');
-      rightBtn.className='compare-expr';rightBtn.textContent=task.expr2;
-      const eqBtn=document.createElement('button');
-      eqBtn.className='compare-expr';eqBtn.textContent=t('equal_btn');eqBtn.style.fontSize='0.9rem';
-
-      leftBtn.onclick=()=>handleCompare('left',task.answer,[leftBtn,rightBtn,eqBtn]);
-      rightBtn.onclick=()=>handleCompare('right',task.answer,[leftBtn,rightBtn,eqBtn]);
-      eqBtn.onclick=()=>handleCompare('equal',task.answer,[leftBtn,rightBtn,eqBtn]);
-
-      cmpRow.appendChild(leftBtn);cmpRow.appendChild(vsSpan);cmpRow.appendChild(rightBtn);
-      areaEl.appendChild(cmpRow);
-      const eqRow=document.createElement('div');
-      eqRow.style.textAlign='center';eqRow.style.marginTop='8px';
-      eqRow.appendChild(eqBtn);
-      areaEl.appendChild(eqRow);
-      break;
-
-    case'visualCounting':
-      const emojis=['🐶','🐾','🦴','🌸','⭐'];
-      const em=pick(emojis);
-      const vg=document.createElement('div');
-      vg.className='visual-grid';
-      const g1=document.createElement('div');g1.className='visual-group';
-      for(let i=0;i<task.groupA;i++){const s=document.createElement('span');s.className='visual-item';s.textContent=em;g1.appendChild(s)}
-      const g2=document.createElement('div');g2.className='visual-group';
-      for(let i=0;i<task.groupB;i++){const s=document.createElement('span');s.className='visual-item';s.textContent=em;g2.appendChild(s)}
-      vg.appendChild(g1);vg.appendChild(g2);
-      areaEl.appendChild(vg);
-
-      if(task.askTotal){
-        qEl.innerHTML=`<span>${{en:'How many in total?',de:'Wie viele insgesamt?',hu:'Hány van összesen?'}[lang]}</span>`;
-      }else{
-        qEl.innerHTML=`<span>${{en:'How many more in the first group?',de:'Wie viele mehr in der ersten Gruppe?',hu:'Mennyivel több van az első csoportban?'}[lang]}</span>`;
-      }
-
-      const vRow=document.createElement('div');
-      vRow.className='quest-input-row';
-      const vInp=document.createElement('input');
-      vInp.type='number';vInp.className='quest-number-input';vInp.id='quest-input';
-      vInp.inputMode='numeric';
-      const vSub=document.createElement('button');
-      vSub.className='quest-submit-btn';vSub.textContent=t('submit');
-      vSub.onclick=()=>{
-        handleAnswer(parseInt(vInp.value)===task.answer,vSub,vRow);
-      };
-      vInp.addEventListener('keydown',(e)=>{if(e.key==='Enter')vSub.click()});
-      vRow.appendChild(vInp);vRow.appendChild(vSub);
-      areaEl.appendChild(vRow);
-      setTimeout(()=>vInp.focus(),100);
-      break;
-
-    case'matchPairs':
-      qEl.innerHTML=`<span>${{en:'Match each expression to its answer!',de:'Ordne jede Rechnung dem Ergebnis zu!',hu:'Párosítsd a kifejezéseket az eredménnyel!'}[lang]}</span>`;
-      renderMatchPairs(task,areaEl);
-      break;
-
-    case'numberOrder':
-      qEl.innerHTML=`<span>${{en:'Put the numbers in order (smallest first)!',de:'Ordne die Zahlen (kleinste zuerst)!',hu:'Rakd sorba a számokat (legkisebb elöl)!'}[lang]}</span>`;
-      renderNumberOrder(task,areaEl);
-      break;
-  }
-}
-
-function renderMatchPairs(task,container){
-  const mc=document.createElement('div');
-  mc.className='match-container';
-  const leftCol=document.createElement('div');leftCol.className='match-col';
-  const rightCol=document.createElement('div');rightCol.className='match-col';
-
-  const exprs=task.pairs.map((p,i)=>({text:p.expr,idx:i,matched:false}));
-  const vals=shuffle(task.pairs.map((p,i)=>({text:String(p.val),idx:i,matched:false})));
-
-  let selectedLeft=null;
-  let matchCount=0;
-
-  exprs.forEach(item=>{
-    const btn=document.createElement('button');
-    btn.className='match-item';btn.textContent=item.text;btn.dataset.idx=item.idx;
-    btn.onclick=()=>{
-      if(item.matched)return;
-      leftCol.querySelectorAll('.match-item').forEach(b=>b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedLeft=item;
-    };
-    leftCol.appendChild(btn);
-  });
-
-  vals.forEach(item=>{
-    const btn=document.createElement('button');
-    btn.className='match-item';btn.textContent=item.text;btn.dataset.idx=item.idx;
-    btn.onclick=()=>{
-      if(item.matched||!selectedLeft)return;
-      if(parseInt(selectedLeft.idx)===parseInt(item.idx)){
-        // Correct match
-        btn.classList.add('matched');
-        const leftBtn=leftCol.querySelector(`[data-idx="${selectedLeft.idx}"]`);
-        if(leftBtn)leftBtn.classList.add('matched');
-        item.matched=true;
-        selectedLeft.matched=true;
-        exprs.find(e=>e.idx===selectedLeft.idx).matched=true;
-        selectedLeft=null;
-        matchCount++;
-        playSound('correct');
-        if(matchCount===task.pairs.length){
-          setTimeout(()=>handleAnswer(true,null,null),500);
-        }
-      }else{
-        // Wrong
-        btn.classList.add('wrong-match');
-        setTimeout(()=>btn.classList.remove('wrong-match'),400);
-        game.mistakes++;
-        game.taskMistakes[game.currentTaskIdx]=true;
-        playSound('wrong');
-      }
-    };
-    rightCol.appendChild(btn);
-  });
-
-  mc.appendChild(leftCol);mc.appendChild(rightCol);
-  container.appendChild(mc);
-}
-
-function renderNumberOrder(task,container){
-  const row=document.createElement('div');
-  row.style.cssText='display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px';
-
-  const resultRow=document.createElement('div');
-  resultRow.style.cssText='display:flex;gap:6px;justify-content:center;margin-bottom:12px;min-height:50px;padding:8px;background:#f5f5f5;border-radius:12px;border:2px dashed #e0e0e0';
-
-  const selected=[];
-  const buttons=[];
-
-  task.numbers.forEach(num=>{
-    const btn=document.createElement('button');
-    btn.className='choice-btn';
-    btn.textContent=num;
-    btn.style.minWidth='60px';
-    btn.onclick=()=>{
-      if(btn.disabled)return;
-      selected.push(num);
-      btn.disabled=true;
-      btn.style.opacity='0.4';
-
-      const chip=document.createElement('span');
-      chip.style.cssText='background:var(--primary);color:#fff;padding:6px 14px;border-radius:10px;font-weight:700;font-size:1.1rem';
-      chip.textContent=num;
-      resultRow.appendChild(chip);
-
-      if(selected.length===task.numbers.length){
-        // Check answer
-        const correct=JSON.stringify(selected)===JSON.stringify(task.answer);
-        if(correct){
-          handleAnswer(true,null,null);
-        }else{
-          // Reset
-          handleAnswer(false,null,null);
-          setTimeout(()=>{
-            selected.length=0;
-            resultRow.innerHTML='';
-            buttons.forEach(b=>{b.disabled=false;b.style.opacity='1'});
-          },1200);
-        }
-      }
-    };
-    buttons.push(btn);
-    row.appendChild(btn);
-  });
-
-  container.appendChild(resultRow);
-  container.appendChild(row);
-}
-
-function handleCompare(chosen,answer,btns){
-  const correct=chosen===answer;
-  if(correct){
-    const correctBtn=chosen==='left'?btns[0]:chosen==='right'?btns[1]:btns[2];
-    correctBtn.classList.add('correct');
-  }else{
-    const wrongBtn=chosen==='left'?btns[0]:chosen==='right'?btns[1]:btns[2];
-    wrongBtn.classList.add('wrong');
-  }
-  btns.forEach(b=>b.disabled=true);
-  handleAnswer(correct,null,null);
-}
-
-function handleAnswer(correct,clickedEl,container){
-  const fbEl=document.getElementById('quest-feedback');
-
-  if(correct){
-    playSound('correct');
-    fbEl.textContent=tRand('correct');
-    fbEl.className='quest-feedback show correct-fb';
-    if(clickedEl)clickedEl.classList.add('correct');
-
-    // Sparkle on the quest box
-    const box=document.getElementById('quest-box');
-    const rect=box.getBoundingClientRect();
-    sparkle(rect.left+rect.width/2,rect.top+40);
-
-    setTimeout(()=>{
-      game.currentTaskIdx++;
-      if(game.currentTaskIdx>=game.currentTasks.length){
-        completeGate();
-      }else{
-        renderQuestTask();
-      }
-    },900);
-  }else{
-    playSound('wrong');
-    fbEl.textContent=tRand('wrong');
-    fbEl.className='quest-feedback show wrong-fb';
-    if(clickedEl){
-      clickedEl.classList.add('wrong');
-      clickedEl.style.animation='shake 0.4s';
-    }
-    game.mistakes++;
-    game.taskMistakes[game.currentTaskIdx]=true;
-
-    // After 2 wrong attempts on this task, show the answer and move on
-    if(!game._taskAttempts)game._taskAttempts=0;
-    game._taskAttempts++;
-
-    if(game._taskAttempts>=3){
-      // Show correct answer and move on
-      const task=game.currentTasks[game.currentTaskIdx];
-      setTimeout(()=>{
-        fbEl.textContent={en:'The answer was: ',de:'Die Antwort war: ',hu:'A válasz: '}[lang]+(task.answer===true?t('true_btn'):task.answer===false?t('false_btn'):task.answer);
-        fbEl.className='quest-feedback show wrong-fb';
-        setTimeout(()=>{
-          game._taskAttempts=0;
-          game.currentTaskIdx++;
-          if(game.currentTaskIdx>=game.currentTasks.length){
-            completeGate();
-          }else{
-            renderQuestTask();
-          }
-        },2000);
-      },800);
-    }else{
-      // Clear input for retry
-      setTimeout(()=>{
-        fbEl.style.display='none';
-        if(clickedEl){
-          clickedEl.classList.remove('wrong');
-          clickedEl.style.animation='';
-        }
-        const inp=document.getElementById('quest-input');
-        if(inp){inp.value='';inp.focus()}
-      },1000);
-    }
-  }
-}
-
-function completeGate(){
-  const gate=game.currentGate;
-  gate.solved=true;
-
-  // Rescue the dog
-  const dogIdx=game.gates.indexOf(gate);
-  const dog=game.dogs[dogIdx];
-  dog.rescued=true;
-  game.rescuedDogs.push(dog);
-
-  // Add to follower list
-  game.followerPositions.push({...game.playerPos});
-
-  // Close quest
-  game.questActive=false;
-  document.getElementById('quest-overlay').classList.remove('active');
-
-  playSound('rescue');
-
-  // Re-render
-  renderMap();
-  renderPlayer();
-  renderDogs();
-  updateHUD();
-
-  // Show rescue banner
-  showRescueBanner(dog);
-
-  // Check if all gates solved and show direction to exit
-  if(game.rescuedDogs.length===game.gates.length){
-    highlightExit();
-  }
-}
-
-function highlightExit(){
-  const mapEl=document.getElementById('game-map');
-  const existing=mapEl.querySelector('.exit-arrow');
-  if(existing)return;
-  const lv=game.levels[game.currentLevel];
-  const tile=getTileSize();
-  const arrow=document.createElement('div');
-  arrow.className='exit-arrow';
-  arrow.textContent='⭐';
-  arrow.style.cssText=`
-    position:absolute;z-index:6;
-    font-size:calc(var(--tile)*0.5);
-    left:${lv.end.c*tile}px;top:${lv.end.r*tile-tile*0.3}px;
-    width:${tile}px;text-align:center;
-    animation:exit-bounce 1s ease-in-out infinite;
-    pointer-events:none;
-  `;
-  mapEl.appendChild(arrow);
-}
-
-function showRescueBanner(dog){
-  const banner=document.createElement('div');
-  banner.style.cssText=`
-    position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:50;
-    background:#fff;border-radius:16px;padding:12px 24px;
-    box-shadow:0 4px 24px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;
-    animation:quest-pop 0.3s ease-out;font-weight:700;font-size:1rem;
-  `;
-  banner.innerHTML=`<span style="font-size:1.8rem">${dog.emoji}</span> ${dog.name} ${{en:'rescued!',de:'gerettet!',hu:'megmentve!'}[lang]||'rescued!'} 🎉`;
-  document.body.appendChild(banner);
-  setTimeout(()=>{banner.style.transition='opacity 0.5s';banner.style.opacity='0';setTimeout(()=>banner.remove(),600)},2500);
-
-  // If all dogs rescued, show hint to go to exit
-  if(game.rescuedDogs.length===game.gates.length){
-    setTimeout(()=>{
-      showHint({en:'All dogs rescued! Go to the ⭐ star!',de:'Alle Hunde gerettet! Geh zum ⭐ Stern!',hu:'Minden kutya megmentve! Menj a ⭐ csillaghoz!'}[lang]||'All dogs rescued! Go to the ⭐!');
-    },3000);
-  }
-}
-
-function showHint(text){
-  const hint=document.createElement('div');
-  hint.style.cssText=`
-    position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:50;
-    background:#fff3e0;border:2px solid #ff9800;border-radius:16px;padding:10px 20px;
-    box-shadow:0 4px 20px rgba(0,0,0,0.15);font-weight:600;font-size:0.95rem;color:#e65100;
-    animation:quest-pop 0.3s ease-out;text-align:center;
-  `;
-  hint.textContent=text;
-  document.body.appendChild(hint);
-  setTimeout(()=>{hint.style.transition='opacity 0.5s';hint.style.opacity='0';setTimeout(()=>hint.remove(),600)},3000);
-}
-
-// ========== LEVEL COMPLETE ==========
-async function levelComplete(){
-  clearInterval(game.timerInterval);
-  const elapsed=Date.now()-game.timerStart;
-  const stars=game.mistakes===0?3:game.mistakes<=2?2:1;
-
-  playSound('complete');
-
-  // Save record
-  const oldRec=await getRecord(game.currentLevel);
-  const isNewRecord=!oldRec||elapsed<oldRec.time;
-  saveRecord(game.currentLevel,elapsed,Math.max(stars,oldRec?.stars||0));
-
-  // Unlock next level
-  const maxLevel=await getProgress();
-  if(game.currentLevel>=maxLevel){
-    saveProgress(game.currentLevel+1);
-  }
-
-  // Add to all rescued
-  game.allRescuedDogs.push(...game.rescuedDogs);
-
-  // Show complete screen
-  showScreen('complete-screen');
-  document.getElementById('complete-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
-  document.getElementById('complete-time').textContent=`${t('time')}: ${fmtTime(elapsed)}`;
-  document.getElementById('complete-record').textContent=isNewRecord?t('new_record'):(oldRec?`${t('best')}: ${fmtTime(oldRec.time)}`:'');
-
-  const dogsEl=document.getElementById('complete-dogs');
-  dogsEl.innerHTML='';
-  game.rescuedDogs.forEach((dog,i)=>{
-    const d=document.createElement('div');
-    d.className='complete-dog';
-    d.style.animationDelay=(i*0.15)+'s';
-    d.innerHTML=`<div class="dog-emoji">${dog.emoji}</div><div class="dog-name">${dog.name}</div>`;
-    dogsEl.appendChild(d);
-  });
-
-  // Next level or victory
-  const nextBtn=document.getElementById('next-level-btn');
-  if(game.currentLevel<game.levels.length-1){
-    nextBtn.style.display='';
-    nextBtn.onclick=()=>startLevel(game.currentLevel+1);
-  }else{
-    nextBtn.style.display='none';
-    // Show victory after a beat
-    setTimeout(()=>showVictory(),500);
-  }
-
-  document.getElementById('complete-back').onclick=()=>showLevelSelect();
-}
-
-function showVictory(){
-  showScreen('victory-screen');
-  const name=game.playerName;
-  document.getElementById('victory-title').textContent=t('victory_title');
-  document.getElementById('victory-message').textContent=t('victory_msg').replace('{name}',name);
-
-  const dogsEl=document.getElementById('victory-dogs');
-  dogsEl.innerHTML='';
-  game.allRescuedDogs.forEach((dog,i)=>{
-    const d=document.createElement('div');
-    d.className='victory-dog';
-    d.style.animationDelay=(i*0.1)+'s';
-    d.innerHTML=`
-      <div class="dog-emoji">${dog.emoji}</div>
-      <div class="dog-name">${dog.name}</div>
-      <div class="dog-thanks">${t('thank_you').replace('{name}',name)}</div>
-    `;
-    dogsEl.appendChild(d);
-  });
-
-  document.getElementById('victory-btn').onclick=()=>{
-    game.allRescuedDogs=[];
-    showScreen('title-screen');
-  };
-}
-
-// ========== INIT ==========
+let touchS=null;
+document.getElementById('game-canvas').addEventListener('touchstart',e=>{if(e.touches.length===1)touchS={x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});
+document.getElementById('game-canvas').addEventListener('touchend',e=>{if(!touchS||!game)return;
+  const dx=e.changedTouches[0].clientX-touchS.x,dy=e.changedTouches[0].clientY-touchS.y;
+  if(Math.sqrt(dx*dx+dy*dy)>30){const dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');game.tryMove(dir)}
+  touchS=null});
+
+document.getElementById('hud-menu').addEventListener('click',()=>{if(game){game=null;if(rafId)cancelAnimationFrame(rafId);showLevelSelect()}});
+
+// ===== INIT =====
 async function init(){
-  await openDB();
-  initTitle();
+  await openDB().catch(()=>{});
+  const sl=localStorage.getItem('amq-lang');if(sl)LANG=sl;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===LANG));
+  document.querySelectorAll('.lang-btn').forEach(btn=>{btn.onclick=()=>{LANG=btn.dataset.lang;
+    localStorage.setItem('amq-lang',LANG);
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===LANG));
+    updateI18N();initTitle()}});
+  const sn=localStorage.getItem('amq-name');if(sn)document.getElementById('player-name').value=sn;
+  document.getElementById('play-btn').addEventListener('click',()=>{initAudio();
+    playerName=document.getElementById('player-name').value||'Ada';localStorage.setItem('amq-name',playerName);showLevelSelect()});
+  document.getElementById('level-back').addEventListener('click',()=>{showScreen('title-screen');initTitle()});
+  updateI18N();initTitle();
 }
+
+function updateI18N(){document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n)});
+  document.title="Ada's Math Quest"}
 
 init();
 </script>
-</body></html>
+</body>
+</html>
