@@ -338,6 +338,14 @@ input{font-family:inherit;outline:none}
 .match-item.matched{border-color:var(--primary);background:#c8e6c9;color:var(--primary-dark);cursor:default}
 .match-item.wrong-match{border-color:var(--danger);background:#ffcdd2;animation:shake 0.4s}
 
+/* Number order */
+.order-slot{
+  min-width:50px;min-height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:#f5f5f5;border:2px dashed #e0e0e0;
+  font-weight:700;font-size:1rem;color:var(--primary-dark);
+}
+
 /* Visual counting */
 .visual-grid{
   display:flex;gap:6px;justify-content:center;flex-wrap:wrap;
@@ -1116,12 +1124,23 @@ const QUEST_TYPES = {
     }
     return{type:'matchPairs',question:'',answer:null,pairs};
   },
+
+  // 10. Number ordering — arrange numbers from smallest to biggest
+  numberOrder(diff){
+    const d=DIFF[diff];
+    const count=diff<=2?4:5;
+    const nums=new Set();
+    while(nums.size<count){nums.add(rand(1,d.max))}
+    const sorted=[...nums].sort((a,b)=>a-b);
+    const shuffled=shuffle([...sorted]);
+    return{type:'numberOrder',question:'',answer:sorted,numbers:shuffled};
+  },
 };
 
 function generateQuestTasks(diff,count){
   // Determine which types to use based on difficulty
   const available=['multipleChoice','numberInput','fillBlank','trueFalse','pattern'];
-  if(diff>=2)available.push('comparison','wordProblem');
+  if(diff>=2)available.push('comparison','wordProblem','numberOrder');
   if(diff>=3)available.push('visualCounting');
   if(diff>=4)available.push('matchPairs');
 
@@ -1662,6 +1681,7 @@ function openQuest(gate){
 }
 
 function renderQuestTask(){
+  game._taskAttempts=0;
   const task=game.currentTasks[game.currentTaskIdx];
   const total=game.currentTasks.length;
   const idx=game.currentTaskIdx;
@@ -1834,6 +1854,11 @@ function renderQuestTask(){
       qEl.innerHTML=`<span>${{en:'Match each expression to its answer!',de:'Ordne jede Rechnung dem Ergebnis zu!',hu:'Párosítsd a kifejezéseket az eredménnyel!'}[lang]}</span>`;
       renderMatchPairs(task,areaEl);
       break;
+
+    case'numberOrder':
+      qEl.innerHTML=`<span>${{en:'Put the numbers in order (smallest first)!',de:'Ordne die Zahlen (kleinste zuerst)!',hu:'Rakd sorba a számokat (legkisebb elöl)!'}[lang]}</span>`;
+      renderNumberOrder(task,areaEl);
+      break;
   }
 }
 
@@ -1896,6 +1921,56 @@ function renderMatchPairs(task,container){
   container.appendChild(mc);
 }
 
+function renderNumberOrder(task,container){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px';
+
+  const resultRow=document.createElement('div');
+  resultRow.style.cssText='display:flex;gap:6px;justify-content:center;margin-bottom:12px;min-height:50px;padding:8px;background:#f5f5f5;border-radius:12px;border:2px dashed #e0e0e0';
+
+  const selected=[];
+  const buttons=[];
+
+  task.numbers.forEach(num=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.textContent=num;
+    btn.style.minWidth='60px';
+    btn.onclick=()=>{
+      if(btn.disabled)return;
+      selected.push(num);
+      btn.disabled=true;
+      btn.style.opacity='0.4';
+
+      const chip=document.createElement('span');
+      chip.style.cssText='background:var(--primary);color:#fff;padding:6px 14px;border-radius:10px;font-weight:700;font-size:1.1rem';
+      chip.textContent=num;
+      resultRow.appendChild(chip);
+
+      if(selected.length===task.numbers.length){
+        // Check answer
+        const correct=JSON.stringify(selected)===JSON.stringify(task.answer);
+        if(correct){
+          handleAnswer(true,null,null);
+        }else{
+          // Reset
+          handleAnswer(false,null,null);
+          setTimeout(()=>{
+            selected.length=0;
+            resultRow.innerHTML='';
+            buttons.forEach(b=>{b.disabled=false;b.style.opacity='1'});
+          },1200);
+        }
+      }
+    };
+    buttons.push(btn);
+    row.appendChild(btn);
+  });
+
+  container.appendChild(resultRow);
+  container.appendChild(row);
+}
+
 function handleCompare(chosen,answer,btns){
   const correct=chosen===answer;
   if(correct){
@@ -1930,7 +2005,7 @@ function handleAnswer(correct,clickedEl,container){
       }else{
         renderQuestTask();
       }
-    },800);
+    },900);
   }else{
     playSound('wrong');
     fbEl.textContent=tRand('wrong');
@@ -1942,16 +2017,38 @@ function handleAnswer(correct,clickedEl,container){
     game.mistakes++;
     game.taskMistakes[game.currentTaskIdx]=true;
 
-    // Clear input for retry
-    setTimeout(()=>{
-      fbEl.style.display='none';
-      if(clickedEl){
-        clickedEl.classList.remove('wrong');
-        clickedEl.style.animation='';
-      }
-      const inp=document.getElementById('quest-input');
-      if(inp){inp.value='';inp.focus()}
-    },1000);
+    // After 2 wrong attempts on this task, show the answer and move on
+    if(!game._taskAttempts)game._taskAttempts=0;
+    game._taskAttempts++;
+
+    if(game._taskAttempts>=3){
+      // Show correct answer and move on
+      const task=game.currentTasks[game.currentTaskIdx];
+      setTimeout(()=>{
+        fbEl.textContent={en:'The answer was: ',de:'Die Antwort war: ',hu:'A válasz: '}[lang]+(task.answer===true?t('true_btn'):task.answer===false?t('false_btn'):task.answer);
+        fbEl.className='quest-feedback show wrong-fb';
+        setTimeout(()=>{
+          game._taskAttempts=0;
+          game.currentTaskIdx++;
+          if(game.currentTaskIdx>=game.currentTasks.length){
+            completeGate();
+          }else{
+            renderQuestTask();
+          }
+        },2000);
+      },800);
+    }else{
+      // Clear input for retry
+      setTimeout(()=>{
+        fbEl.style.display='none';
+        if(clickedEl){
+          clickedEl.classList.remove('wrong');
+          clickedEl.style.animation='';
+        }
+        const inp=document.getElementById('quest-input');
+        if(inp){inp.value='';inp.focus()}
+      },1000);
+    }
   }
 }
 
