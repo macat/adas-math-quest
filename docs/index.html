@@ -1011,9 +1011,11 @@ class Game{
   render(cx){
     const cv=cx.canvas;cx.clearRect(0,0,cv.width,cv.height);
     cx.fillStyle=this.ld.bgColor;cx.fillRect(0,0,cv.width,cv.height);
+    cx.save();cx.scale(RENDER_SCALE,RENDER_SCALE);
+    const vw=cv.width/RENDER_SCALE,vh=cv.height/RENDER_SCALE;
     const sc=Math.max(0,Math.floor(this.cam.x/TS)-1),sr=Math.max(0,Math.floor(this.cam.y/TS)-1);
-    const ec=Math.min(this.mw,Math.ceil((this.cam.x+cv.width)/TS)+1);
-    const er=Math.min(this.mh,Math.ceil((this.cam.y+cv.height)/TS)+1);
+    const ec=Math.min(this.mw,Math.ceil((this.cam.x+vw)/TS)+1);
+    const er=Math.min(this.mh,Math.ceil((this.cam.y+vh)/TS)+1);
 
     // Render tiles
     for(let r=sr;r<er;r++)for(let c=sc;c<ec;c++){
@@ -1139,7 +1141,7 @@ class Game{
     document.getElementById('hud-timer').textContent=Math.floor(el/60)+':'+(el%60).toString().padStart(2,'0');
     document.getElementById('hud-dogs').textContent=this.rescued.length+'/'+this.totalDogs;
 
-    ctx.restore(); // end world scale
+    cx.restore(); // end world scale
     // Minimap
     const mmS=2,mmW=this.mw*mmS,mmH=this.mh*mmS;
     const mmX=cv.width-mmW-10,mmY=cv.height-mmH-10;
