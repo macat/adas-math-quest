@@ -804,16 +804,18 @@ class Game{
       if(g&&!g.open){this.openGateQuest(g);return}
       if(g&&g.open){/* pass through */}else return;}
 
+    // Dog rescue - walk onto dog tile
+    if(tile===T.DOG){const dog=this.dogs.find(d=>d.x===nx&&d.y===ny&&!d.rescued);
+      if(dog){dog.rescued=true;this.rescued.push(dog);this.map[ny][nx]=T.GRASS;
+        sfxRescue();this.addParts(nx*TS+TS/2,ny*TS+TS/2,20,dog.color||'#FFD700');
+        showFlash(dog.name+t('dog_rescued'),'#4CAF50');
+        this.p.tx=nx;this.p.ty=ny;this.p.moving=true;this.p.frame++;sfxStep();return}
+      else{this.map[ny][nx]=T.GRASS;}}
+
     // NPC interact (don't walk into them)
-    if(INTERACT.has(tile)&&tile!==T.GATE&&tile!==T.SIGN){this.interact(nx,ny,tile);return}
+    if(INTERACT.has(tile)&&tile!==T.GATE&&tile!==T.DOG&&tile!==T.SIGN){this.interact(nx,ny,tile);return}
 
     if(!WALKABLE.has(tile))return;
-
-    // Dog pickup
-    const dog=this.dogs.find(d=>d.x===nx&&d.y===ny&&!d.rescued);
-    if(dog){dog.rescued=true;this.rescued.push(dog);this.map[ny][nx]=T.GRASS;
-      sfxRescue();this.addParts(nx*TS+TS/2,ny*TS+TS/2,20,dog.color||'#FFD700');
-      showFlash(dog.name+t('dog_rescued'),'#4CAF50');}
 
     // Exit
     if(tile===T.EXIT){
