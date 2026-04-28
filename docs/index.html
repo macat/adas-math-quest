@@ -59,9 +59,32 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 .dpad-center{grid-column:2;grid-row:2;font-size:0.65rem;font-weight:700;background:rgba(76,175,80,0.5)}
 .dpad-right{grid-column:3;grid-row:2}.dpad-down{grid-column:2;grid-row:3}
 
-.speech-bubble{position:fixed;z-index:30;max-width:280px;padding:12px 16px;background:#fff;border-radius:16px;border:3px solid #333;font-size:0.85rem;color:#333;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:none;animation:bubblePop 0.3s ease-out}
-.speech-bubble::after{content:'';position:absolute;bottom:-12px;left:30px;border:8px solid transparent;border-top-color:#333}
-.speech-bubble .npc-name{font-weight:800;color:#4CAF50;margin-bottom:4px;font-size:0.8rem}
+
+#story-screen{background:linear-gradient(180deg,#1a1a2e 0%,#2d1b4e 40%,#1a1a2e 100%);gap:0;padding:0;z-index:200}
+.story-frame{max-width:600px;width:90%;padding:30px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
+.story-portrait{width:80px;height:80px;border-radius:50%;border:4px solid #FFD700;background:#2a2a4a;display:flex;align-items:center;justify-content:center;font-size:2.5rem;box-shadow:0 0 20px rgba(255,215,0,0.3);animation:portraitGlow 2s ease-in-out infinite}
+@keyframes portraitGlow{0%,100%{box-shadow:0 0 20px rgba(255,215,0,0.3)}50%{box-shadow:0 0 35px rgba(255,215,0,0.5)}}
+.story-speaker{font-size:1rem;font-weight:800;color:#FFD700;font-family:'Courier New',monospace;letter-spacing:1px}
+.story-text{font-size:1.05rem;color:#e0e0e0;line-height:1.6;min-height:60px;font-weight:500}
+.story-text .typewriter-cursor{display:inline-block;width:2px;height:1em;background:#FFD700;animation:blink 0.7s infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.story-btn{padding:10px 28px;border-radius:20px;font-size:0.9rem;font-weight:700;background:rgba(255,215,0,0.15);color:#FFD700;border:2px solid rgba(255,215,0,0.4);cursor:pointer;transition:all .2s;letter-spacing:0.5px}
+.story-btn:hover{background:rgba(255,215,0,0.25);border-color:#FFD700;transform:translateY(-1px)}
+.story-skip{position:absolute;top:16px;right:16px;padding:6px 14px;border-radius:14px;font-size:0.75rem;font-weight:700;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.15);cursor:pointer;transition:all .2s}
+.story-skip:hover{color:#fff;background:rgba(255,255,255,0.2)}
+.story-dots{display:flex;gap:8px;margin-top:4px}
+.story-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all .3s}
+.story-dot.active{background:#FFD700;box-shadow:0 0 8px rgba(255,215,0,0.5)}
+.story-dot.done{background:rgba(255,215,0,0.5)}
+.story-stars{font-size:2rem;margin:8px 0;animation:starPop 0.5s ease-out}
+@keyframes starPop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+.speech-bubble{position:fixed;z-index:30;max-width:320px;padding:14px 18px;background:rgba(255,255,255,0.97);border-radius:18px;border:3px solid #333;font-size:0.9rem;color:#333;box-shadow:0 6px 24px rgba(0,0,0,0.25);display:none;animation:bubblePop 0.3s ease-out;backdrop-filter:blur(4px)}
+.speech-bubble .npc-portrait{font-size:1.4rem;display:inline-block;margin-right:6px;vertical-align:middle}
+.speech-bubble .npc-name{font-weight:800;color:#4CAF50;margin-bottom:4px;font-size:0.85rem;display:flex;align-items:center;gap:6px}
+.speech-bubble .npc-text{line-height:1.5}
+.speech-bubble .speech-tap{font-size:0.7rem;color:#999;text-align:right;margin-top:6px;font-style:italic}
+
 @keyframes bubblePop{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
 
 .quest-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);animation:fadeIn 0.3s}
@@ -121,6 +144,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
   <canvas class="title-art" id="title-art-canvas" width="240" height="100"></canvas>
   <div class="title-logo">Ada's Math Quest</div>
   <div class="title-sub" data-i18n="title_sub">Rescue the lost puppies!</div>
+  <div style="font-size:0.65rem;color:rgba(45,80,22,0.5);cursor:pointer;margin-top:-8px" id="reset-story" title="Reset story intro">🔄 replay intro</div>
   <div class="char-select" id="char-select"></div>
   <input class="name-input" id="player-name" value="Ada" maxlength="12">
   <div class="lang-row">
@@ -152,8 +176,9 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
     <button class="dpad-btn dpad-down" data-dir="down">&#9660;</button>
   </div>
   <div class="speech-bubble" id="speech-bubble">
-    <div class="npc-name" id="speech-name"></div>
-    <div id="speech-text"></div>
+    <div class="npc-name" id="speech-name"><span class="npc-portrait" id="speech-portrait"></span><span id="speech-name-text"></span></div>
+    <div class="npc-text" id="speech-text"></div>
+    <div class="speech-tap" id="speech-tap"></div>
   </div>
 </div>
 <div class="quest-overlay" id="quest-overlay">
@@ -164,6 +189,16 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
     </div>
     <div class="quest-bar-wrap"><div class="quest-bar" id="quest-bar" style="width:0%"></div></div>
     <div class="quest-body" id="quest-body"></div>
+  </div>
+</div>
+<div id="story-screen" class="screen">
+  <button class="story-skip" id="story-skip">SKIP ⏭️</button>
+  <div class="story-frame">
+    <div class="story-portrait" id="story-portrait">🦋</div>
+    <div class="story-speaker" id="story-speaker"></div>
+    <div class="story-text" id="story-text"></div>
+    <div class="story-dots" id="story-dots"></div>
+    <button class="story-btn" id="story-next">▶</button>
   </div>
 </div>
 <div id="victory-screen" class="screen">
@@ -427,6 +462,426 @@ let LANG='en';
 function t(key,...args){let s=(I18N[LANG]||I18N.en)[key]||(I18N.en)[key]||key;
   if(Array.isArray(s))s=s[Math.floor(Math.random()*s.length)];
   args.forEach((a,i)=>s=s.replace('{'+i+'}',a));return s;}
+
+// ===== STORY SYSTEM =====
+const STORY = {
+  // Named NPC characters with portraits, personalities, and per-level dialogue
+  npcs: {
+    bella: { portrait: '🦋', type: 'NPC_BUT', name: { en: 'Bella', de: 'Bella', hu: 'Bella' } },
+    oliver: { portrait: '🦉', type: 'NPC_BIRD', name: { en: 'Oliver', de: 'Oliver', hu: 'Oliver' } },
+    sammy: { portrait: '🐿️', type: 'NPC_SQU', name: { en: 'Sammy', de: 'Sammy', hu: 'Sammy' } },
+    bruno: { portrait: '🐻', type: 'NPC_BEAR', name: { en: 'Bruno', de: 'Bruno', hu: 'Brunó' } },
+    elara: { portrait: '🦅', type: 'NPC_BIRD', name: { en: 'Elara', de: 'Elara', hu: 'Elara' } },
+    fritz: { portrait: '🐸', type: 'NPC_SQU', name: { en: 'Fritz', de: 'Fritz', hu: 'Fritz' } },
+    dex: { portrait: '🐉', type: 'NPC_BEAR', name: { en: 'Dex', de: 'Dex', hu: 'Dex' } },
+    pip: { portrait: '🐦', type: 'NPC_BIRD', name: { en: 'Pip', de: 'Pip', hu: 'Pip' } },
+    luna: { portrait: '🦔', type: 'NPC_SQU', name: { en: 'Luna', de: 'Luna', hu: 'Luna' } },
+    rex: { portrait: '🦊', type: 'NPC_BUT', name: { en: 'Rex', de: 'Rex', hu: 'Rex' } }
+  },
+
+  // Intro sequence (shown once on first play)
+  intro: {
+    en: [
+      { portrait: '🌍', speaker: 'Once upon a time...', text: 'The land was full of happy puppies. They played in the meadows, splashed in the lakes, and napped under the ancient trees.' },
+      { portrait: '🦊', speaker: 'Professor Zählix', text: '"Too much noise! Too much barking! I need SILENCE for my calculations!" The grumpy old fox couldn\'t stand the puppies\' joy.' },
+      { portrait: '🔒', speaker: 'Professor Zählix', text: 'So he invented magical Number Locks — cages that can only be opened by solving math puzzles. He locked up ALL the puppies!' },
+      { portrait: '🦋', speaker: 'Bella the Butterfly', text: '"Please help us! You have the Gift of Patterns — you can see the math that holds the locks together. Only YOU can save them!"' },
+      { portrait: '⭐', speaker: '{name}, the hero!', text: 'And so the adventure begins! Travel through meadows, forests, mountains, and more. Solve the Number Locks and free every last puppy!' }
+    ],
+    de: [
+      { portrait: '🌍', speaker: 'Es war einmal...', text: 'Das Land war voller fröhlicher Welpen. Sie spielten auf den Wiesen, planschten in den Seen und schliefen unter den alten Bäumen.' },
+      { portrait: '🦊', speaker: 'Professor Zählix', text: '"Zu viel Lärm! Zu viel Bellen! Ich brauche STILLE für meine Berechnungen!" Der mürrische alte Fuchs konnte die Freude der Welpen nicht ertragen.' },
+      { portrait: '🔒', speaker: 'Professor Zählix', text: 'Also erfand er magische Zahlenschlösser — Käfige, die nur durch Mathe-Aufgaben geöffnet werden können. Er sperrte ALLE Welpen ein!' },
+      { portrait: '🦋', speaker: 'Bella der Schmetterling', text: '"Bitte hilf uns! Du hast die Gabe der Muster — du kannst die Mathematik sehen, die die Schlösser zusammenhält. Nur DU kannst sie retten!"' },
+      { portrait: '⭐', speaker: '{name}, die Heldin!', text: 'Und so beginnt das Abenteuer! Reise durch Wiesen, Wälder, Berge und mehr. Löse die Zahlenschlösser und befreie jeden einzelnen Welpen!' }
+    ],
+    hu: [
+      { portrait: '🌍', speaker: 'Egyszer volt, hol nem volt...', text: 'Az ország tele volt boldog kiskutyákkal. Játszottak a réteken, pancsoltak a tavakban, és az öreg fák alatt szunyókáltak.' },
+      { portrait: '🦊', speaker: 'Zählix professzor', text: '"Túl sok a zaj! Túl sok az ugatás! CSEND kell a számításaimhoz!" A mogorva öreg róka nem bírta a kölykök örömét.' },
+      { portrait: '🔒', speaker: 'Zählix professzor', text: 'Ezért feltalálta a mágikus Számlezárakat — ketreceket, amiket csak matek feladatok megoldásával lehet kinyitni. MINDEN kiskutyát bezárta!' },
+      { portrait: '🦋', speaker: 'Bella a pillangó', text: '"Kérlek, segíts! Neked van a Minták Ajándéka — te látod a matekot, ami a zárakat összetartja. Csak TE tudod megmenteni őket!"' },
+      { portrait: '⭐', speaker: '{name}, a hős!', text: 'És így kezdődik a kaland! Utazz réteken, erdőkön, hegyeken át. Oldd meg a Számlezárakat és szabadítsd ki az összes kiskutyát!' }
+    ]
+  },
+
+  // Level intros
+  levelIntro: {
+    en: [
+      { portrait: '🦋', speaker: 'Bella', text: 'Welcome to the Sunny Meadow! It used to be full of happy barking... now it\'s too quiet. The first puppies are locked up nearby. Please find them!' },
+      { portrait: '🦉', speaker: 'Oliver the Owl', text: 'Hoo-hoo! Welcome to the Whispering Woods. Be careful — the deeper you go, the harder the Number Locks become. Professor Zählix is watching...' },
+      { portrait: '🐻', speaker: 'Bruno the Bear', text: 'The puppies used to play with my cubs every day. Now the Deep Forest is so lonely... I heard them whimpering behind the big rocks. Please hurry!' },
+      { portrait: '🦅', speaker: 'Elara the Eagle', text: 'I can see cages on the mountain peaks from up here! The locks are much stronger at this altitude. Steel yourself — the Mountain Trail awaits.' },
+      { portrait: '🐸', speaker: 'Fritz the Frog', text: 'Ribbit! The Crystal Lake puppies loved to swim here. But Zählix froze their cages in magical ice! You\'ll need sharp math skills to melt them.' },
+      { portrait: '🐉', speaker: 'Dex the Dragon', text: 'This is it — the Dragon\'s Den. Zählix\'s strongest Number Locks guard the last puppies. I\'m just a small dragon, but... I believe in you!' }
+    ],
+    de: [
+      { portrait: '🦋', speaker: 'Bella', text: 'Willkommen auf der Sonnigen Wiese! Hier war es voller fröhliches Bellen... jetzt ist es zu still. Die ersten Welpen sind in der Nähe eingesperrt. Bitte finde sie!' },
+      { portrait: '🦉', speaker: 'Oliver die Eule', text: 'Huu-huu! Willkommen im Flüsterwald. Sei vorsichtig — je tiefer du gehst, desto schwieriger werden die Zahlenschlösser. Professor Zählix beobachtet...' },
+      { portrait: '🐻', speaker: 'Bruno der Bär', text: 'Die Welpen spielten jeden Tag mit meinen Jungen. Jetzt ist der Tiefe Wald so einsam... Ich hörte sie hinter den großen Felsen wimmern. Bitte beeile dich!' },
+      { portrait: '🦅', speaker: 'Elara der Adler', text: 'Von hier oben sehe ich Käfige auf den Berggipfeln! Die Schlösser sind in dieser Höhe viel stärker. Mach dich bereit — der Bergpfad wartet.' },
+      { portrait: '🐸', speaker: 'Fritz der Frosch', text: 'Quak! Die Kristallsee-Welpen liebten es hier zu schwimmen. Aber Zählix hat ihre Käfige in magisches Eis eingefroren! Du brauchst scharfe Mathe-Skills.' },
+      { portrait: '🐉', speaker: 'Dex der Drache', text: 'Das ist es — die Drachenhöhle. Zählix\' stärkste Zahlenschlösser bewachen die letzten Welpen. Ich bin nur ein kleiner Drache, aber... ich glaube an dich!' }
+    ],
+    hu: [
+      { portrait: '🦋', speaker: 'Bella', text: 'Üdv a Napos Réten! Régen tele volt vidám ugatással... most túl csendes. Az első kiskutyák a közelben vannak bezárva. Kérlek, keresd meg őket!' },
+      { portrait: '🦉', speaker: 'Oliver a bagoly', text: 'Huhú! Üdv a Suttogó Erdőben. Légy óvatos — minél mélyebbre mész, annál nehezebb Számlezárakat találsz. Zählix professzor figyel...' },
+      { portrait: '🐻', speaker: 'Brunó a medve', text: 'A kiskutyák minden nap játszottak a bocsaimmal. Most a Mély Erdő nagyon magányos... Hallottam nyüszítésüket a nagy sziklák mögött. Kérlek, siess!' },
+      { portrait: '🦅', speaker: 'Elara a sas', text: 'Innen fentről ketreceket látok a hegycsúcsokon! A zárak sokkal erősebbek ebben a magasságban. Készülj fel — a Hegyi Ösvény vár.' },
+      { portrait: '🐸', speaker: 'Fritz a béka', text: 'Brekk! A Kristálytó kiskutyái imádtak itt úszni. De Zählix mágikus jégbe fagyasztotta a ketreceiket! Éles matek-tudás kell a megolvasztásukhoz.' },
+      { portrait: '🐉', speaker: 'Dex a sárkány', text: 'Ez az — a Sárkánybarlang. Zählix legerősebb Számlezárai őrzik az utolsó kiskutyákat. Csak egy kis sárkány vagyok, de... hiszek benned!' }
+    ]
+  },
+
+  // Level outros (shown after completing each level)
+  levelOutro: {
+    en: [
+      { portrait: '🦋', speaker: 'Bella', text: 'The meadow is alive with barking again! But Bella whispers: "There are more puppies trapped deeper in the woods... Will you keep going?"' },
+      { portrait: '🦉', speaker: 'Oliver', text: '"Remarkable! But my keen eyes see more cages beyond the forest. Sammy the squirrel says Professor Zählix fled toward the Deep Forest..."' },
+      { portrait: '🐻', speaker: 'Bruno', text: '"My cubs are playing with the puppies again! Thank you! But Bruno looks worried: "I heard Zählix has hidden more puppies up in the mountains..."' },
+      { portrait: '🦅', speaker: 'Elara', text: '"The mountain air is filled with joyful barks! But Elara circles down: "I spotted more cages near the Crystal Lake. Zählix won\'t give up easily."' },
+      { portrait: '🐸', speaker: 'Fritz', text: '"Ribbit! The lake is full of swimming puppies again! But Fritz looks nervous: "Zählix retreated to his den... the Dragon\'s Den. His last stronghold."' },
+      { portrait: '✨', speaker: 'The End', text: '' }
+    ],
+    de: [
+      { portrait: '🦋', speaker: 'Bella', text: 'Die Wiese lebt wieder mit fröhlichem Bellen! Aber Bella flüstert: "Es gibt noch mehr Welpen tiefer im Wald... Machst du weiter?"' },
+      { portrait: '🦉', speaker: 'Oliver', text: '"Bemerkenswert! Aber meine scharfen Augen sehen mehr Käfige hinter dem Wald. Sammy sagt, Professor Zählix floh in den Tiefen Wald..."' },
+      { portrait: '🐻', speaker: 'Bruno', text: '"Meine Jungen spielen wieder mit den Welpen! Danke! Aber Bruno schaut besorgt: "Ich hörte, Zählix hat mehr Welpen in den Bergen versteckt..."' },
+      { portrait: '🦅', speaker: 'Elara', text: '"Die Bergluft ist voller freudiger Beller! Aber Elara kreist herunter: "Ich sah mehr Käfige am Kristallsee. Zählix gibt nicht leicht auf."' },
+      { portrait: '🐸', speaker: 'Fritz', text: '"Quak! Der See ist wieder voller schwimmender Welpen! Aber Fritz schaut nervös: "Zählix hat sich in seine Höhle zurückgezogen... die Drachenhöhle."' },
+      { portrait: '✨', speaker: 'Ende', text: '' }
+    ],
+    hu: [
+      { portrait: '🦋', speaker: 'Bella', text: 'A rét újra tele van vidám ugatással! De Bella suttog: "Még több kiskutya van bezárva mélyebben az erdőben... Folytatod?"' },
+      { portrait: '🦉', speaker: 'Oliver', text: '"Figyelemre méltó! De éles szemeim több ketrecet látnak az erdőn túl. Sammy azt mondja, Zählix professzor a Mély Erdő felé menekült..."' },
+      { portrait: '🐻', speaker: 'Brunó', text: '"A bocsaim újra játszanak a kiskutyákkal! Köszönöm! De Brunó aggódva néz: "Hallottam, Zählix több kiskutyát rejtett el a hegyekben..."' },
+      { portrait: '🦅', speaker: 'Elara', text: '"A hegyi levegő tele van örömteli ugatással! De Elara leereszkedik: "Több ketrecet láttam a Kristálytónál. Zählix nem adja fel könnyen."' },
+      { portrait: '🐸', speaker: 'Fritz', text: '"Brekk! A tó újra tele úszó kiskutyákkal! De Fritz idegesen néz: "Zählix visszavonult a barlangjába... a Sárkánybarlangba. Az utolsó erődje."' },
+      { portrait: '✨', speaker: 'Vége', text: '' }
+    ]
+  },
+
+  // Final ending sequence (after level 6)
+  ending: {
+    en: [
+      { portrait: '🦊', speaker: 'Professor Zählix', text: '"Impossible! You broke ALL my Number Locks?! How can a child solve such complex patterns?!"' },
+      { portrait: '⭐', speaker: '{name}', text: '"Because math isn\'t about silence and order, Professor. It\'s about seeing patterns and solving puzzles — and that\'s FUN!"' },
+      { portrait: '🦊', speaker: 'Professor Zählix', text: 'The old fox pauses. He looks at the puppies playing happily. A tiny smile appears. "Perhaps... perhaps the barking isn\'t noise after all. It\'s... joy."' },
+      { portrait: '🎉', speaker: 'Professor Zählix', text: '"I\'m sorry for what I did. Let me make it up to everyone — I\'ll use my math magic to throw the biggest celebration this land has ever seen!"' },
+      { portrait: '🐕', speaker: 'All the puppies', text: '"WOOF WOOF WOOF!" All the rescued puppies bark with joy! They gather around {name}, wagging their tails. The land is happy once more!' },
+      { portrait: '👑', speaker: 'The End', text: 'Congratulations, {name}! You saved every single puppy and taught Professor Zählix that joy is the most beautiful sound in the world. You are a true Math Hero! 🌟' }
+    ],
+    de: [
+      { portrait: '🦊', speaker: 'Professor Zählix', text: '"Unmöglich! Du hast ALLE meine Zahlenschlösser geknackt?! Wie kann ein Kind solche Muster lösen?!"' },
+      { portrait: '⭐', speaker: '{name}', text: '"Weil Mathe nicht nur Stille und Ordnung ist, Professor. Es geht darum, Muster zu erkennen und Rätsel zu lösen — und das macht SPASS!"' },
+      { portrait: '🦊', speaker: 'Professor Zählix', text: 'Der alte Fuchs hält inne. Er schaut die fröhlich spielenden Welpen an. Ein kleines Lächeln erscheint. "Vielleicht... ist das Bellen doch kein Lärm. Es ist... Freude."' },
+      { portrait: '🎉', speaker: 'Professor Zählix', text: '"Es tut mir leid. Lasst mich alles wiedergutmachen — ich werde meine Mathe-Magie nutzen, um die größte Feier zu veranstalten, die es je gab!"' },
+      { portrait: '🐕', speaker: 'Alle Welpen', text: '"WUFF WUFF WUFF!" Alle geretteten Welpen bellen vor Freude! Sie versammeln sich um {name} und wedeln mit den Schwänzen. Das Land ist wieder glücklich!' },
+      { portrait: '👑', speaker: 'Ende', text: 'Herzlichen Glückwunsch, {name}! Du hast jeden einzelnen Welpen gerettet und Professor Zählix gelehrt, dass Freude das schönste Geräusch der Welt ist. Du bist eine wahre Mathe-Heldin! 🌟' }
+    ],
+    hu: [
+      { portrait: '🦊', speaker: 'Zählix professzor', text: '"Lehetetlen! MINDEN Számlezáramat feltörted?! Hogy oldhat meg egy gyerek ilyen bonyolult mintákat?!"' },
+      { portrait: '⭐', speaker: '{name}', text: '"Mert a matek nem a csendről és rendről szól, Professzor. A mintázatok felismeréséről és a rejtvények megoldásáról — és ez JÓ MÓKA!"' },
+      { portrait: '🦊', speaker: 'Zählix professzor', text: 'Az öreg róka megáll. Nézi a boldogan játszó kölykeket. Halvány mosoly jelenik meg. "Talán... talán az ugatás mégsem zaj. Ez... öröm."' },
+      { portrait: '🎉', speaker: 'Zählix professzor', text: '"Sajnálom, amit tettem. Hadd tegyem jóvá — a matek-varázslatommal a legnagyobb ünnepséget rendezem, amit ez a föld valaha látott!"' },
+      { portrait: '🐕', speaker: 'Az összes kiskutya', text: '"VAU VAU VAU!" Az összes megmentett kiskutya örömében ugat! Összegyűlnek {name} körül, farkukat csóválva. Az ország újra boldog!' },
+      { portrait: '👑', speaker: 'Vége', text: 'Gratulálok, {name}! Minden egyes kiskutyát megmentettél és megtanítottad Zählix professzornak, hogy az öröm a legszebb hang a világon. Igazi Matek Hős vagy! 🌟' }
+    ]
+  },
+
+  // Per-level NPC dialogue (first NPC of each type gets these lines)
+  // Each level maps NPC tile positions to named characters with dialogue
+  npcDialogue: {
+    en: [
+      // Level 1 — Sunny Meadow
+      [
+        { char: 'bella', lines: ['Oh thank goodness you\'re here! The meadow puppies need your help!', 'I saw a puppy locked behind the wooden gate to the east!', 'Professor Zählix\'s Number Locks are weak here. You can do this!'] },
+        { char: 'pip', lines: ['Chirp! I heard barking from behind that gate over there!', 'The puppies are scared but okay. Hurry!', 'You\'re doing great! Keep going!'] },
+        { char: 'luna', lines: ['*sniff sniff* I can smell puppy treats near the rocks...', 'Those Number Locks look tricky, but I believe in you!', 'Did you know? Professor Zählix used to be a kind teacher...'] },
+        { char: 'sammy', lines: ['Hey hey hey! I saw Zählix running that way! He looked angry!', 'The gates are locked with math puzzles. Solve them to get through!', 'I hid some acorns near the puppies. Don\'t tell anyone!'] }
+      ],
+      // Level 2 — Whispering Woods
+      [
+        { char: 'oliver', lines: ['Hoo-hoo! The forest grows darker ahead. But wisdom lights the way.', 'The Number Locks here have patterns. Look carefully at each one.', 'Zählix passed through here muttering about "multiplication shields"...'] },
+        { char: 'sammy', lines: ['Psst! I followed Zählix through the woods. He went toward the Deep Forest!', 'The puppies in the second zone are behind TWO gates!', 'Quick quick quick! Before Zählix adds more locks!'] },
+        { char: 'bella', lines: ['The forest butterflies told me there are puppies near the old bridge.', 'Stay on the path — the woods can be confusing!', 'You\'ve already freed some puppies! The forest feels warmer already.'] },
+        { char: 'pip', lines: ['Tweet! I can fly over the gates, but the puppies can\'t...', 'I heard a puppy howling to the north!', 'The owl Oliver knows many secrets. Talk to him!'] }
+      ],
+      // Level 3 — Deep Forest
+      [
+        { char: 'bruno', lines: ['*sad growl* The puppies used to play with my cubs every day...', 'There\'s a secret path through the thick trees. Look for mushrooms!', 'Zählix put his strongest locks on the cages deep in the forest.'] },
+        { char: 'oliver', lines: ['The deeper you go, the harder the math becomes. But so does your skill!', 'I saw three cages hidden among the ruins to the east.', 'Zählix fears those who can see patterns. That is YOUR gift.'] },
+        { char: 'luna', lines: ['The mushrooms here glow at night. They\'re pointing toward a puppy!', 'Be brave! The Number Locks can\'t hold you back.', 'I found a pawprint trail heading north...'] },
+        { char: 'sammy', lines: ['The squirrel network says Zählix fled to the mountains!', 'There\'s a puppy behind the waterfall. Well, near it anyway!', 'You\'re a legend! All the forest animals are cheering for you!'] }
+      ],
+      // Level 4 — Mountain Trail
+      [
+        { char: 'elara', lines: ['From up here, I can see cages on three different peaks!', 'The mountain locks use bigger numbers. Stay focused!', 'Zählix thinks the altitude will stop you. Prove him wrong!'] },
+        { char: 'bruno', lines: ['The mountain air is thin, but the puppies need you!', 'I cleared some rocks from the path. It should be easier now.', 'Almost there! I can hear barking from the summit!'] },
+        { char: 'pip', lines: ['The wind is strong up here! But so are you!', 'I spotted a cage near the rope bridge. Be careful!', 'Zählix\'s locks are getting desperate. He knows you\'re coming!'] },
+        { char: 'sammy', lines: ['*shivering* It\'s cold up here! But I brought you trail mix!', 'The mountain goats say there\'s a shortcut through the cave!', 'One more peak to go! You can see the lake from here!'] }
+      ],
+      // Level 5 — Crystal Lake
+      [
+        { char: 'fritz', lines: ['Ribbit! The water puppies loved swimming here. Now the lake is too quiet...', 'Zählix froze some cages with ice-math! Extra tricky puzzles ahead!', 'Follow the lily pads — they lead to the hidden cages!'] },
+        { char: 'elara', lines: ['The lake reflects the mountains beautifully. But look — cages beneath the surface!', 'Fritz may seem silly, but he knows every inch of this lake.', 'After this, only the Dragon\'s Den remains. Zählix\'s last stronghold.'] },
+        { char: 'bella', lines: ['The lake butterflies are dancing! They\'re happy you\'re here!', 'I saw ripples near the dock — a puppy cage is underwater there!', 'You\'ve come so far! The puppies believe in you!'] },
+        { char: 'oliver', lines: ['The Crystal Lake was sacred once. It will be again when you free the puppies.', 'Zählix fears the lake — he can\'t swim! His cages here were placed hastily.', 'After the lake... comes the final challenge. Rest while you can.'] }
+      ],
+      // Level 6 — Dragon's Den
+      [
+        { char: 'dex', lines: ['I\'m Dex! I\'m the dragon who guards this place. But I\'m on YOUR side!', 'Zählix\'s final Number Locks are his masterwork. But you\'ve beaten everything else!', 'When you free the last puppy, Zählix\'s spell will break forever!'] },
+        { char: 'bruno', lines: ['I followed you all the way here. We all believe in you!', 'The last cages are behind magical barriers. But you have the Gift of Patterns!', 'This is it. The final battle. Give it everything you\'ve got!'] },
+        { char: 'bella', lines: ['All the animals of the land are watching and cheering for you!', 'Zählix is hiding deeper in the den. He\'s scared of YOU now!', 'You\'re the bravest adventurer I\'ve ever met!'] },
+        { char: 'oliver', lines: ['Every puzzle you\'ve solved has made you stronger. This is your moment.', 'Zählix underestimated you from the very beginning.', 'The last locks will be tough. But you are tougher.'] }
+      ]
+    ],
+    de: [
+      [
+        { char: 'bella', lines: ['Oh Gott sei Dank bist du da! Die Wiesen-Welpen brauchen deine Hilfe!', 'Ich sah einen Welpen hinter dem Holztor im Osten eingesperrt!', 'Zählix\' Zahlenschlösser sind hier schwach. Du schaffst das!'] },
+        { char: 'pip', lines: ['Piep! Ich hörte Bellen hinter dem Tor dort drüben!', 'Die Welpen haben Angst, aber es geht ihnen gut. Beeil dich!', 'Du machst das toll! Weiter so!'] },
+        { char: 'luna', lines: ['*schnüffel* Ich rieche Welpen-Leckerlis bei den Felsen...', 'Die Zahlenschlösser sehen knifflig aus, aber ich glaube an dich!', 'Wusstest du? Professor Zählix war einmal ein netter Lehrer...'] },
+        { char: 'sammy', lines: ['He he he! Ich sah Zählix in die Richtung rennen! Er sah wütend aus!', 'Die Tore sind mit Mathe-Rätseln verschlossen. Löse sie!', 'Ich habe Eicheln bei den Welpen versteckt. Sag es niemandem!'] }
+      ],
+      [
+        { char: 'oliver', lines: ['Huu-huu! Der Wald wird dunkler. Aber Weisheit leuchtet den Weg.', 'Die Zahlenschlösser hier haben Muster. Schau genau hin!', 'Zählix kam hier durch und murmelte über "Multiplikations-Schilde"...'] },
+        { char: 'sammy', lines: ['Psst! Ich folgte Zählix durch den Wald. Er ging zum Tiefen Wald!', 'Die Welpen in der zweiten Zone sind hinter ZWEI Toren!', 'Schnell schnell! Bevor Zählix mehr Schlösser anbringt!'] },
+        { char: 'bella', lines: ['Die Waldschmetterlinge sagten mir, dass Welpen bei der Brücke sind.', 'Bleib auf dem Weg — der Wald kann verwirrend sein!', 'Du hast schon Welpen befreit! Der Wald fühlt sich wärmer an.'] },
+        { char: 'pip', lines: ['Tschirp! Ich kann über die Tore fliegen, aber die Welpen nicht...', 'Ich hörte einen Welpen im Norden heulen!', 'Die Eule Oliver kennt viele Geheimnisse. Sprich mit ihm!'] }
+      ],
+      [
+        { char: 'bruno', lines: ['*trauriges Brummen* Die Welpen spielten jeden Tag mit meinen Jungen...', 'Es gibt einen geheimen Pfad durch die Bäume. Suche nach Pilzen!', 'Zählix hat seine stärksten Schlösser an die Käfige tief im Wald gehängt.'] },
+        { char: 'oliver', lines: ['Je tiefer du gehst, desto schwieriger wird die Mathe. Aber auch dein Können!', 'Ich sah drei Käfige zwischen den Ruinen im Osten.', 'Zählix fürchtet die, die Muster sehen können. Das ist DEIN Talent.'] },
+        { char: 'luna', lines: ['Die Pilze hier leuchten nachts. Sie zeigen zu einem Welpen!', 'Sei mutig! Die Zahlenschlösser halten dich nicht auf.', 'Ich fand eine Pfotenspur Richtung Norden...'] },
+        { char: 'sammy', lines: ['Das Eichhörnchen-Netzwerk sagt, Zählix floh in die Berge!', 'Es gibt einen Welpen hinter dem Wasserfall. Na ja, in der Nähe!', 'Du bist eine Legende! Alle Waldtiere jubeln dir zu!'] }
+      ],
+      [
+        { char: 'elara', lines: ['Von hier oben sehe ich Käfige auf drei verschiedenen Gipfeln!', 'Die Bergschlösser nutzen größere Zahlen. Bleib konzentriert!', 'Zählix denkt, die Höhe stoppt dich. Beweise ihm das Gegenteil!'] },
+        { char: 'bruno', lines: ['Die Bergluft ist dünn, aber die Welpen brauchen dich!', 'Ich habe Steine vom Weg geräumt. Es sollte jetzt einfacher sein.', 'Fast da! Ich höre Bellen vom Gipfel!'] },
+        { char: 'pip', lines: ['Der Wind ist stark hier oben! Aber du bist stärker!', 'Ich entdeckte einen Käfig bei der Hängebrücke. Sei vorsichtig!', 'Zählix\' Schlösser werden verzweifelt. Er weiß, dass du kommst!'] },
+        { char: 'sammy', lines: ['*zittert* Es ist kalt hier oben! Aber ich brachte dir Studentenfutter!', 'Die Bergziegen sagen, es gibt eine Abkürzung durch die Höhle!', 'Noch ein Gipfel! Man kann den See von hier sehen!'] }
+      ],
+      [
+        { char: 'fritz', lines: ['Quak! Die Wasser-Welpen liebten es hier zu schwimmen. Jetzt ist es zu still...', 'Zählix hat Käfige mit Eis-Mathe eingefroren! Extra knifflige Rätsel!', 'Folge den Seerosenblättern — sie führen zu den Käfigen!'] },
+        { char: 'elara', lines: ['Der See spiegelt die Berge wunderschön. Aber schau — Käfige unter der Oberfläche!', 'Fritz mag albern wirken, aber er kennt jeden Winkel des Sees.', 'Danach bleibt nur die Drachenhöhle. Zählix\' letzte Festung.'] },
+        { char: 'bella', lines: ['Die Seeschmetterlinge tanzen! Sie freuen sich über dich!', 'Ich sah Wellen beim Steg — dort ist ein Welpen-Käfig!', 'Du bist so weit gekommen! Die Welpen glauben an dich!'] },
+        { char: 'oliver', lines: ['Der Kristallsee war einst heilig. Er wird es wieder sein.', 'Zählix fürchtet den See — er kann nicht schwimmen! Seine Käfige hier wurden hastig platziert.', 'Nach dem See... kommt die letzte Herausforderung.'] }
+      ],
+      [
+        { char: 'dex', lines: ['Ich bin Dex! Ich bewache diesen Ort. Aber ich bin auf DEINER Seite!', 'Zählix\' letzte Zahlenschlösser sind sein Meisterwerk. Aber du hast alles andere geschafft!', 'Wenn du den letzten Welpen befreist, bricht Zählix\' Zauber für immer!'] },
+        { char: 'bruno', lines: ['Ich bin dir den ganzen Weg gefolgt. Wir alle glauben an dich!', 'Die letzten Käfige sind hinter magischen Barrieren. Aber du hast das Talent!', 'Das ist es. Der letzte Kampf. Gib alles!'] },
+        { char: 'bella', lines: ['Alle Tiere des Landes schauen zu und jubeln dir zu!', 'Zählix versteckt sich tiefer in der Höhle. Er hat jetzt Angst vor DIR!', 'Du bist die mutigste Abenteurerin, die ich je getroffen habe!'] },
+        { char: 'oliver', lines: ['Jedes gelöste Rätsel hat dich stärker gemacht. Das ist dein Moment.', 'Zählix hat dich von Anfang an unterschätzt.', 'Die letzten Schlösser werden hart. Aber du bist härter.'] }
+      ]
+    ],
+    hu: [
+      [
+        { char: 'bella', lines: ['Hála az égnek, itt vagy! A réti kiskutyáknak segítségre van szükségük!', 'Láttam egy kiskutyát bezárva a keleti fakapu mögött!', 'Zählix Számlezárai itt gyengék. Meg tudod csinálni!'] },
+        { char: 'pip', lines: ['Csirip! Ugatást hallottam a kapu mögül!', 'A kiskutyák félnek, de jól vannak. Siess!', 'Remekül csinálod! Csak így tovább!'] },
+        { char: 'luna', lines: ['*szimatolás* Kutyajutalmat szagolok a sziklák közelében...', 'A Számlezárak trükkösnek tűnnek, de hiszek benned!', 'Tudtad? Zählix professzor egykor kedves tanár volt...'] },
+        { char: 'sammy', lines: ['Hé hé hé! Láttam Zählixet arra rohanni! Dühösnek tűnt!', 'A kapuk matek feladatokkal vannak lezárva. Oldd meg őket!', 'Makkokat rejtettem a kiskutyák közelébe. Ne mondd el senkinek!'] }
+      ],
+      [
+        { char: 'oliver', lines: ['Huhú! Az erdő sötétebb lesz előttünk. De a bölcsesség megvilágítja az utat.', 'Az itteni Számlezárakban minták vannak. Nézd meg figyelmesen!', 'Zählix erre járt és "szorzás-pajzsokról" motyogott...'] },
+        { char: 'sammy', lines: ['Psszt! Követtem Zählixet az erdőn át. A Mély Erdő felé ment!', 'A második zóna kiskutyái KÉT kapu mögött vannak!', 'Gyorsan! Mielőtt Zählix több zárat tesz fel!'] },
+        { char: 'bella', lines: ['Az erdei pillangók mesélték, hogy kiskutyák vannak a régi hídnál.', 'Maradj az ösvényen — az erdő megtévesztő lehet!', 'Már szabadítottál ki kiskutyákat! Az erdő már melegebb.'] },
+        { char: 'pip', lines: ['Csirip! Át tudok repülni a kapukon, de a kiskutyák nem...', 'Hallottam egy kiskutyát vonítani északon!', 'Oliver a bagoly sok titkot tud. Beszélj vele!'] }
+      ],
+      [
+        { char: 'bruno', lines: ['*szomorú morgás* A kiskutyák minden nap játszottak a bocsaimmal...', 'Van egy titkos ösvény a sűrű fákon át. Keresd a gombákat!', 'Zählix a legerősebb zárait tette a mély erdei ketrecekre.'] },
+        { char: 'oliver', lines: ['Minél mélyebbre mész, annál nehezebb a matek. De a tudásod is nő!', 'Három ketrecet láttam a keleti romok között.', 'Zählix fél azoktól, akik mintákat látnak. Ez a TE ajándékod.'] },
+        { char: 'luna', lines: ['Az itteni gombák éjjel világítanak. Egy kiskutya felé mutatnak!', 'Légy bátor! A Számlezárak nem tarthatnak vissza.', 'Mancsnyomot találtam észak felé...'] },
+        { char: 'sammy', lines: ['A mókus-hálózat szerint Zählix a hegyekbe menekült!', 'Van egy kiskutya a vízesés mögött. Nos, a közelében!', 'Legenda vagy! Minden erdei állat szurkol neked!'] }
+      ],
+      [
+        { char: 'elara', lines: ['Innen fentről három különböző csúcson látok ketreceket!', 'A hegyi zárak nagyobb számokat használnak. Koncentrálj!', 'Zählix azt hiszi, a magasság megállít. Bizonyítsd be az ellenkezőjét!'] },
+        { char: 'bruno', lines: ['A hegyi levegő ritka, de a kiskutyáknak szükségük van rád!', 'Sziklákat takarítottam el az útról. Most könnyebb lesz.', 'Majdnem ott! Ugatást hallok a csúcsról!'] },
+        { char: 'pip', lines: ['A szél erős itt fent! De te erősebb vagy!', 'Ketrecet láttam a kötélhídnál. Légy óvatos!', 'Zählix zárai kétségbeesettek. Tudja, hogy jössz!'] },
+        { char: 'sammy', lines: ['*remegés* Hideg van itt fent! De hoztam neked diót!', 'A hegyi kecskék szerint van egy rövidítés a barlangon át!', 'Még egy csúcs! Innen látni a tavat!'] }
+      ],
+      [
+        { char: 'fritz', lines: ['Brekk! A vízi kiskutyák imádtak itt úszni. Most túl csendes a tó...', 'Zählix jég-matekkal fagyasztotta be a ketreceket! Extra trükkös feladatok!', 'Kövesd a tavirózsákat — a rejtett ketrecekhez vezetnek!'] },
+        { char: 'elara', lines: ['A tó gyönyörűen tükrözi a hegyeket. De nézd — ketrecek a víz alatt!', 'Fritz bolondnak tűnhet, de ismeri a tó minden zugát.', 'Ezután már csak a Sárkánybarlang marad. Zählix utolsó erődje.'] },
+        { char: 'bella', lines: ['A tavi pillangók táncolnak! Örülnek, hogy itt vagy!', 'Hullámokat láttam a mólónál — ott van egy ketrec!', 'Olyan messzire jutottál! A kiskutyák hisznek benned!'] },
+        { char: 'oliver', lines: ['A Kristálytó egykor szent volt. Újra az lesz, ha kiszabadítod a kiskutyákat.', 'Zählix fél a tótól — nem tud úszni! A ketreceit sietve helyezte el.', 'A tó után... jön az utolsó kihívás.'] }
+      ],
+      [
+        { char: 'dex', lines: ['Dex vagyok! Én őrzöm ezt a helyet. De a TE oldaladdon állok!', 'Zählix utolsó Számlezárai a mestermunkái. De te mindent legyőztél!', 'Ha az utolsó kiskutyát is kiszabadítod, Zählix varázslata örökre megtörik!'] },
+        { char: 'bruno', lines: ['Egészen idáig követtelek. Mindannyian hiszünk benned!', 'Az utolsó ketrecek mágikus akadályok mögött vannak. De neked van a Tehetséged!', 'Ez az. Az utolsó csata. Adj bele mindent!'] },
+        { char: 'bella', lines: ['Az ország összes állata figyel és szurkol neked!', 'Zählix mélyebben bújik a barlangban. Most ő fél TŐLED!', 'Te vagy a legbátrabb kalandor, akivel valaha találkoztam!'] },
+        { char: 'oliver', lines: ['Minden megoldott rejtvény erősebbé tett. Ez a te pillanatod.', 'Zählix kezdettől fogva alábecsült téged.', 'Az utolsó zárak nehezek lesznek. De te keményebb vagy.'] }
+      ]
+    ]
+  },
+
+  // Dog cage approach messages
+  cageApproach: {
+    en: ['A scared puppy whimpers inside the cage... Break the Number Lock to set them free!',
+         'You can hear tiny barks from behind the lock! Solve the puzzle to rescue them!',
+         'The puppy\'s eyes light up when they see you! Quick, solve the Number Lock!'],
+    de: ['Ein verängstigter Welpe wimmert im Käfig... Knacke das Zahlenschloss!',
+         'Du hörst winziges Bellen hinter dem Schloss! Löse das Rätsel!',
+         'Die Augen des Welpen leuchten auf! Schnell, löse das Zahlenschloss!'],
+    hu: ['Egy ijedt kiskutya nyüszít a ketrecben... Törd fel a Számlezárat!',
+         'Apró ugatást hallasz a zár mögül! Oldd meg a feladatot a megmentéshez!',
+         'A kiskutya szeme felcsillan, amikor meglát téged! Gyorsan, oldd meg a Számlezárat!']
+  },
+
+  // Dog rescue messages
+  dogRescue: {
+    en: ['Thank you, {name}! I was so scared in there!', 'Woof! You\'re my hero, {name}!',
+         'I knew someone would come! Thank you!', '*happy tail wagging* Freedom! Woof woof!',
+         '{name} is the best! I\'ll follow you anywhere!', 'The Number Lock is broken! I\'m free! Thank you!'],
+    de: ['Danke, {name}! Ich hatte solche Angst!', 'Wuff! Du bist mein Held, {name}!',
+         'Ich wusste, jemand würde kommen! Danke!', '*fröhliches Schwanzwedeln* Freiheit! Wuff wuff!',
+         '{name} ist die Beste! Ich folge dir überall hin!', 'Das Zahlenschloss ist geknackt! Ich bin frei! Danke!'],
+    hu: ['Köszönöm, {name}! Annyira féltem!', 'Vau! Te vagy a hősöm, {name}!',
+         'Tudtam, hogy jön valaki! Köszönöm!', '*boldog farökcsóválás* Szabadság! Vau vau!',
+         '{name} a legjobb! Bárhová követlek!', 'A Számlezár megtört! Szabad vagyok! Köszönöm!']
+  }
+};
+
+// Story state
+const storyState = {
+  introSeen: localStorage.getItem('amq-intro-seen') === 'true',
+  npcTalkCount: {} // tracks how many times each NPC was talked to
+};
+
+// Get named NPC for a position in current level
+function getLevelNPC(levelIdx, npcIndex) {
+  const dialogue = (STORY.npcDialogue[LANG] || STORY.npcDialogue.en)[levelIdx];
+  if (!dialogue) return null;
+  return dialogue[npcIndex % dialogue.length];
+}
+
+// Typewriter effect
+function typewriterEffect(element, text, speed = 30) {
+  return new Promise(resolve => {
+    element.innerHTML = '';
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'typewriter-cursor';
+    element.appendChild(cursor);
+    function type() {
+      if (i < text.length) {
+        element.insertBefore(document.createTextNode(text[i]), cursor);
+        i++;
+        setTimeout(type, speed);
+      } else {
+        cursor.remove();
+        resolve();
+      }
+    }
+    type();
+  });
+}
+
+// Show story sequence (intro, level intro/outro, ending)
+function showStorySequence(scenes, onComplete) {
+  const screen = document.getElementById('story-screen');
+  const portrait = document.getElementById('story-portrait');
+  const speaker = document.getElementById('story-speaker');
+  const textEl = document.getElementById('story-text');
+  const dots = document.getElementById('story-dots');
+  const nextBtn = document.getElementById('story-next');
+  const skipBtn = document.getElementById('story-skip');
+
+  let idx = 0;
+  let typing = false;
+  let fullText = '';
+
+  // Build dots
+  dots.innerHTML = '';
+  scenes.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'story-dot' + (i === 0 ? ' active' : '');
+    dots.appendChild(dot);
+  });
+
+  function showScene(i) {
+    const scene = scenes[i];
+    const txt = scene.text.replace('{name}', playerName);
+    const spk = scene.speaker.replace('{name}', playerName);
+    fullText = txt;
+    portrait.textContent = scene.portrait;
+    speaker.textContent = spk;
+
+    // Update dots
+    dots.querySelectorAll('.story-dot').forEach((d, di) => {
+      d.className = 'story-dot' + (di < i ? ' done' : '') + (di === i ? ' active' : '');
+    });
+
+    typing = true;
+    typewriterEffect(textEl, txt, 25).then(() => { typing = false; });
+  }
+
+  function finish() {
+    screen.classList.remove('active');
+    document.removeEventListener('keydown', keyHandler);
+    nextBtn.onclick = null;
+    skipBtn.onclick = null;
+    onComplete();
+  }
+
+  function advance() {
+    if (typing) { typing = false; textEl.textContent = fullText; return; }
+    idx++;
+    if (idx >= scenes.length) { finish(); } else { showScene(idx); }
+  }
+
+  // Also advance on space/enter/click on screen
+  function keyHandler(e) {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advance(); }
+  }
+  document.addEventListener('keydown', keyHandler);
+  nextBtn.onclick = advance;
+  skipBtn.onclick = finish;
+
+  showScreen('story-screen');
+  showScene(0);
+}
+
+// Show game intro (first play only)
+function showGameIntro(onComplete) {
+  if (storyState.introSeen) { onComplete(); return; }
+  const scenes = (STORY.intro[LANG] || STORY.intro.en);
+  showStorySequence(scenes, () => {
+    storyState.introSeen = true;
+    localStorage.setItem('amq-intro-seen', 'true');
+    onComplete();
+  });
+}
+
+// Show level intro
+function showLevelIntro(levelIdx, onComplete) {
+  const scenes = (STORY.levelIntro[LANG] || STORY.levelIntro.en);
+  if (!scenes[levelIdx]) { onComplete(); return; }
+  showStorySequence([scenes[levelIdx]], onComplete);
+}
+
+// Show level outro
+function showLevelOutro(levelIdx, onComplete) {
+  if (levelIdx === 5) {
+    // Final level - show ending
+    showStorySequence(STORY.ending[LANG] || STORY.ending.en, onComplete);
+    return;
+  }
+  const scenes = (STORY.levelOutro[LANG] || STORY.levelOutro.en);
+  if (!scenes[levelIdx]) { onComplete(); return; }
+  showStorySequence([scenes[levelIdx]], onComplete);
+}
+
+// Get random cage approach message
+function getCageMessage() {
+  const msgs = STORY.cageApproach[LANG] || STORY.cageApproach.en;
+  return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+// Get random dog rescue message
+function getDogRescueMessage() {
+  const msgs = STORY.dogRescue[LANG] || STORY.dogRescue.en;
+  return msgs[Math.floor(Math.random() * msgs.length)].replace('{name}', playerName);
+}
+
 
 // ===== PROCEDURAL MAP GENERATOR =====
 function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
@@ -908,6 +1363,7 @@ class Game{
       if(nearDog&&!nearDog.cageOpen){
         // Open quest for this dog cage
         if(!nearDog.quests)nearDog.quests=genQuests(3,this.ld.diff);
+        showFlash('🐕 '+getCageMessage(),'#FF9800');
         this.activeQuest={type:'dogCage',dog:nearDog,x:nx,y:ny};
         this.questList=nearDog.quests;this.questIdx=0;
         this.addBurst(nx*TS+TS/2,ny*TS+TS/2,8,'#FF9800');
@@ -936,7 +1392,7 @@ class Game{
           this.particles.push({x:nx*TS+TS/2,y:ny*TS+TS/2,vx:Math.cos(angle)*1.5,vy:Math.sin(angle)*1.5-2,
             life:40+Math.random()*20,color:'#e91e63',size:3,heart:true});
         }
-        showFlash('🐕 '+dog.name+t('dog_rescued'),'#4CAF50');
+        showFlash('🐕 '+dog.name+': "'+getDogRescueMessage()+'"','#4CAF50');
         this.doMove(nx,ny);
         return;
       }
@@ -975,12 +1431,29 @@ class Game{
     const npc=this.npcs.find(n=>n.x===x&&n.y===y);
     if(!npc)return;
     sfxBubble();
-    const isHintNpc=Math.random()>0.4;
-    const text=isHintNpc?t('npc_hint'):t('npc_hello');
-    const names={[T.NPC_BUT]:'🦋 Butterfly',[T.NPC_SQU]:'🐿️ Squirrel',[T.NPC_BEAR]:'🐻 Bear',[T.NPC_BIRD]:'🐦 Bird'};
+    // Find this NPC's index among all NPCs
+    const npcIdx=this.npcs.indexOf(npc);
+    const storyNpc=getLevelNPC(this.li,npcIdx);
+    let name,portrait,text;
+    if(storyNpc){
+      const charData=STORY.npcs[storyNpc.char];
+      portrait=charData?charData.portrait:'❓';
+      name=(charData?charData.name[LANG]||charData.name.en:storyNpc.char);
+      // Cycle through dialogue lines
+      const key=this.li+'_'+npcIdx;
+      if(!storyState.npcTalkCount[key])storyState.npcTalkCount[key]=0;
+      const lineIdx=storyState.npcTalkCount[key]%storyNpc.lines.length;
+      text=storyNpc.lines[lineIdx];
+      storyState.npcTalkCount[key]++;
+    } else {
+      const fallbackNames={[T.NPC_BUT]:'Butterfly',[T.NPC_SQU]:'Squirrel',[T.NPC_BEAR]:'Bear',[T.NPC_BIRD]:'Bird'};
+      const fallbackPortraits={[T.NPC_BUT]:'🦋',[T.NPC_SQU]:'🐿️',[T.NPC_BEAR]:'🐻',[T.NPC_BIRD]:'🐦'};
+      name=fallbackNames[tile]||'???';portrait=fallbackPortraits[tile]||'❓';
+      text=t(Math.random()>0.4?'npc_hint':'npc_hello');
+    }
     const screenX=(x*TS-this.cam.x+TS/2)*RENDER_SCALE;
     const screenY=(y*TS-this.cam.y)*RENDER_SCALE;
-    showSpeechBubble(names[tile]||'?',text,screenX,screenY);
+    showSpeechBubble(portrait+' '+name,text,screenX,screenY);
   }
 
   openGateQuest(gate){
@@ -1031,7 +1504,7 @@ class Game{
             vx:Math.cos(angle)*2.5,vy:Math.sin(angle)*2.5-1,
             life:35+Math.random()*20,color:['#FFD700','#FF9800','#4CAF50'][i%3],size:2+Math.random()*2});
         }
-        showFlash('🔓 '+dog.name+' is free! Go get them!','#FF9800');
+        showFlash('🔓 '+dog.name+': "'+getDogRescueMessage()+'"','#FF9800');
         return true;
       }
       // Gate solved!
@@ -1130,6 +1603,19 @@ class Game{
       if(npc&&NPCD[npc.type]){
         const bob=Math.sin(npc.bobT)*1.5;
         NPCD[npc.type](cx,sx,sy+bob,this.fc);
+        // Draw NPC name from story data
+        const npcIdx=this.npcs.indexOf(npc);
+        const storyNpc=getLevelNPC(this.li,npcIdx);
+        if(storyNpc){
+          const charData=STORY.npcs[storyNpc.char];
+          if(charData){
+            const npcName=charData.name[LANG]||charData.name.en;
+            cx.fillStyle='rgba(0,0,0,0.6)';cx.font='bold '+Math.max(7,TS*0.3)+'px sans-serif';cx.textAlign='center';
+            cx.fillText(charData.portrait+' '+npcName,sx+TS/2,sy-2+bob);
+            cx.fillStyle='#fff';cx.font='bold '+Math.max(6,TS*0.28)+'px sans-serif';
+            cx.fillText(charData.portrait+' '+npcName,sx+TS/2,sy-2.5+bob);
+          }
+        }
       }
 
       // Draw unrescued dogs with bouncing "!" and glow
@@ -1293,7 +1779,8 @@ class Game{
     const el=Math.floor((Date.now()-this.startTime)/1000);
     const stars=this.mistakes===0?3:this.mistakes<=2?2:1;
     saveRecord(this.li,el,stars,this.mistakes);
-    showVictory(this.rescued,el,this.mistakes,stars,this.li);
+    const li=this.li,rescued=this.rescued,mistakes=this.mistakes;
+    showLevelOutro(li,()=>showVictory(rescued,el,mistakes,stars,li));
   }
 }
 
@@ -1311,14 +1798,25 @@ function showFlash(msg,color='#4CAF50'){
 
 function showSpeechBubble(name,text,sx,sy){
   const b=document.getElementById('speech-bubble');
-  document.getElementById('speech-name').textContent=name;
-  document.getElementById('speech-text').textContent=text;
+  const nameEl=document.getElementById('speech-name-text');
+  const textEl=document.getElementById('speech-text');
+  const tapEl=document.getElementById('speech-tap');
+  if(nameEl)nameEl.textContent=name;
+  textEl.textContent='';
+  if(tapEl)tapEl.textContent='▼ tap to close';
   b.style.display='block';
-  const bw=Math.min(280,window.innerWidth-40);
+  const bw=Math.min(320,window.innerWidth-30);
   b.style.left=Math.max(10,Math.min(window.innerWidth-bw-10,sx-bw/2))+'px';
-  b.style.top=Math.max(10,sy-80)+'px';b.style.maxWidth=bw+'px';
-  setTimeout(()=>{b.style.display='none'},4000);
-  b.onclick=()=>{b.style.display='none'};
+  b.style.top=Math.max(10,sy-100)+'px';b.style.maxWidth=bw+'px';
+  // Typewriter effect for speech
+  let i=0;
+  const interval=setInterval(()=>{
+    if(i<text.length){textEl.textContent+=text[i];i++}else clearInterval(interval);
+  },22);
+  clearTimeout(b._hideTO);
+  b._hideTO=setTimeout(()=>{b.style.display='none';clearInterval(interval)},Math.max(4000,text.length*35+2000));
+  b.onclick=()=>{clearInterval(interval);textEl.textContent=text;
+    clearTimeout(b._hideTO);b._hideTO=setTimeout(()=>{b.style.display='none'},1500)};
 }
 
 function showQuestUI(quests,idx,total){
@@ -1505,13 +2003,16 @@ function showVictory(dogs,time,mistakes,stars,li){
 
 // ===== GAME LOOP =====
 let canvas,ctx,rafId;
-function startLevel(idx){
+function actualStartLevel(idx){
   showScreen('game-screen');canvas=document.getElementById('game-canvas');ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;if(game)game.updateCam(true)}
   window.removeEventListener('resize',resize);window.addEventListener('resize',resize);resize();
   game=new Game(idx);for(const k in tileCache)delete tileCache[k];
   if(rafId)cancelAnimationFrame(rafId);
   function loop(){if(!game)return;game.update();game.render(ctx);rafId=requestAnimationFrame(loop)}loop();
+}
+function startLevel(idx){
+  showLevelIntro(idx,()=>actualStartLevel(idx));
 }
 
 // ===== INPUT =====
@@ -1576,8 +2077,12 @@ async function init(){
     updateI18N();initTitle()}});
   const sn=localStorage.getItem('amq-name');if(sn)document.getElementById('player-name').value=sn;
   document.getElementById('play-btn').addEventListener('click',()=>{initAudio();
-    playerName=document.getElementById('player-name').value||'Ada';localStorage.setItem('amq-name',playerName);showLevelSelect()});
+    playerName=document.getElementById('player-name').value||'Ada';localStorage.setItem('amq-name',playerName);
+    showGameIntro(()=>showLevelSelect())});
   document.getElementById('level-back').addEventListener('click',()=>{showScreen('title-screen');initTitle()});
+  document.getElementById('reset-story').addEventListener('click',()=>{
+    localStorage.removeItem('amq-intro-seen');storyState.introSeen=false;
+    showFlash('Story reset! Click Play to see the intro again.','#FF9800')});
   updateI18N();initTitle();
 }
 
