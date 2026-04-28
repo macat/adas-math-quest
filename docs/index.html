@@ -1632,85 +1632,407 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
   
   // City biome: lay out street grid with buildings
   if(isCity){
-    const roadSpacingH=7+Math.floor(rng()*2); // horizontal road every 7-8 rows
-    const roadSpacingV=9+Math.floor(rng()*2); // vertical road every 9-10 cols
-    // Lay horizontal roads
-    for(let ry=roadSpacingH;ry<h-2;ry+=roadSpacingH){
-      for(let rx=1;rx<w-1;rx++){
-        if(ry>0&&ry<h-1)map[ry][rx]=T.ROAD;
-        if(ry+1>0&&ry+1<h-1)map[ry+1][rx]=T.ROAD;
-        // Sidewalks above and below
-        if(ry-1>0)map[ry-1][rx]=T.SIDEWALK;
-        if(ry+2<h-1)map[ry+2][rx]=T.SIDEWALK;
-      }
+    // === CITY MAP GENERATION — NYC & Budapest ===
+    // Helper: fill a rect on the map
+    function cityFill(x1,y1,x2,y2,tile){
+      for(let cy=Math.max(1,y1);cy<=Math.min(h-2,y2);cy++)
+        for(let cx=Math.max(1,x1);cx<=Math.min(w-2,x2);cx++) map[cy][cx]=tile;
     }
-    // Lay vertical roads
-    for(let vx=roadSpacingV;vx<w-2;vx+=roadSpacingV){
+    // Helper: check bounds
+    function inB(x2,y2){return x2>0&&x2<w-1&&y2>0&&y2<h-1;}
+
+    // --- Build an irregular street grid ---
+    // Major avenues (vertical, wide) at varied spacing
+    const avenues=[];
+    let ax=6+Math.floor(rng()*4);
+    while(ax<w-4){
+      const aWidth=rng()<0.4?3:2; // some avenues are wider
+      avenues.push({x:ax,w:aWidth});
+      ax+=10+Math.floor(rng()*6); // 10-15 cols apart
+    }
+    // Cross streets (horizontal, narrower) at varied spacing
+    const streets=[];
+    let sy2=5+Math.floor(rng()*3);
+    while(sy2<h-3){
+      const sWidth=rng()<0.25?2:1; // most streets narrow, some wider
+      streets.push({y:sy2,h:sWidth});
+      sy2+=4+Math.floor(rng()*4); // 4-7 rows apart
+    }
+
+    // Lay avenues
+    for(const av of avenues){
       for(let vy=1;vy<h-1;vy++){
-        map[vy][vx]=T.ROAD;
-        if(vx+1<w-1)map[vy][vx+1]=T.ROAD;
+        for(let dx2=0;dx2<av.w;dx2++){
+          if(inB(av.x+dx2,vy)) map[vy][av.x+dx2]=T.ROAD;
+        }
         // Sidewalks on sides
-        if(vx-1>0&&map[vy][vx-1]===T.BUILDING)map[vy][vx-1]=T.SIDEWALK;
-        if(vx+2<w-1&&map[vy][vx+2]===T.BUILDING)map[vy][vx+2]=T.SIDEWALK;
+        if(inB(av.x-1,vy)&&map[vy][av.x-1]===T.BUILDING) map[vy][av.x-1]=T.SIDEWALK;
+        if(inB(av.x+av.w,vy)&&map[vy][av.x+av.w]===T.BUILDING) map[vy][av.x+av.w]=T.SIDEWALK;
       }
     }
-    // Add windows and doors on building edges facing streets
-    for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<w-2;x2++){
-      if(map[y2][x2]!==T.BUILDING)continue;
-      // Check if adjacent to sidewalk or road
-      const adjStreet=[[0,1],[0,-1],[1,0],[-1,0]].some(([dy2,dx2])=>{
-        const t2=map[y2+dy2][x2+dx2];return t2===T.SIDEWALK||t2===T.ROAD;
-      });
-      if(!adjStreet)continue;
-      // Bottom row buildings get doors occasionally
-      const belowIsWalk=y2+1<h-1&&(map[y2+1][x2]===T.SIDEWALK||map[y2+1][x2]===T.ROAD);
-      if(belowIsWalk&&rng()<0.12){map[y2][x2]=T.BLDG_DOOR;continue;}
-      if(rng()<0.25)map[y2][x2]=T.BLDG_WINDOW;
-    }
-    // Scatter parks (small green spaces, 2-3 per map)
-    for(let p2=0;p2<3;p2++){
-      const px2=3+Math.floor(rng()*(w-6)),py2=3+Math.floor(rng()*(h-6));
-      for(let pdy=-1;pdy<=1;pdy++)for(let pdx=-1;pdx<=1;pdx++){
-        const ptx=px2+pdx,pty=py2+pdy;
-        if(ptx>1&&ptx<w-2&&pty>1&&pty<h-2&&(map[pty][ptx]===T.BUILDING||map[pty][ptx]===T.SIDEWALK)){
-          map[pty][ptx]=T.PARK;
+    // Lay cross streets
+    for(const st of streets){
+      for(let vx=1;vx<w-1;vx++){
+        for(let dy2=0;dy2<st.h;dy2++){
+          if(inB(vx,st.y+dy2)) map[st.y+dy2][vx]=T.ROAD;
         }
+        // Sidewalks above/below
+        if(inB(vx,st.y-1)&&map[st.y-1][vx]===T.BUILDING) map[st.y-1][vx]=T.SIDEWALK;
+        if(inB(vx,st.y+st.h)&&map[st.y+st.h][vx]===T.BUILDING) map[st.y+st.h][vx]=T.SIDEWALK;
       }
     }
-    // Lampposts along sidewalks
-    for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<w-2;x2++){
-      if(map[y2][x2]===T.SIDEWALK&&rng()<0.04)map[y2][x2]=T.LAMPPOST;
-    }
-    // NYC: taxis on roads
-    if(biome==='city_nyc'){
-      for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<w-2;x2++){
-        if(map[y2][x2]===T.ROAD&&rng()<0.02)map[y2][x2]=T.TAXI;
-      }
-    }
-    // Budapest: Danube river running horizontally through center
-    if(biome==='city_budapest'){
-      const riverY=Math.floor(h/2);
-      for(let rx=1;rx<w-1;rx++){
-        for(let ry2=-1;ry2<=2;ry2++){
-          const ry3=riverY+ry2;
-          if(ry3>0&&ry3<h-1)map[ry3][rx]=T.RIVER;
-        }
-      }
-      // Add 3 bridges across the river
-      const bridgeSpacing=Math.floor(w/4);
-      for(let bi=1;bi<=3;bi++){
-        const bx=Math.min(w-3,Math.max(2,bi*bridgeSpacing));
-        for(let ry2=-1;ry2<=2;ry2++){
-          const ry3=riverY+ry2;
-          if(ry3>0&&ry3<h-1){
-            map[ry3][bx]=T.BRIDGE;map[ry3][bx+1]=T.BRIDGE;
+
+    // --- Add jogs/offsets to break straight lines ---
+    for(const st of streets){
+      if(rng()<0.4){
+        // Shift part of a street 1 tile up or down
+        const jogX=Math.floor(w*0.3+rng()*w*0.4);
+        const jogDir=rng()<0.5?-1:1;
+        for(let vx=jogX;vx<Math.min(w-2,jogX+8+Math.floor(rng()*10));vx++){
+          const ny2=st.y+jogDir;
+          if(inB(vx,ny2)){
+            map[ny2][vx]=T.ROAD;
+            if(inB(vx,ny2+jogDir)&&map[ny2+jogDir][vx]===T.BUILDING) map[ny2+jogDir][vx]=T.SIDEWALK;
           }
         }
-        // Sidewalk approaches to bridge
-        for(const dy2 of [-2,3]){
-          const ay=riverY+dy2;
-          if(ay>0&&ay<h-1){map[ay][bx]=T.SIDEWALK;map[ay][bx+1]=T.SIDEWALK;}
+      }
+    }
+
+    // --- Building variety: courtyards, L-shapes, alleys ---
+    // Find building blocks (rectangular regions of BUILDING tiles)
+    for(let by2=3;by2<h-3;by2+=2){
+      for(let bx2=3;bx2<w-3;bx2+=2){
+        if(map[by2][bx2]!==T.BUILDING)continue;
+        // Find block extent
+        let bw2=0,bh2=0;
+        while(bx2+bw2<w-1&&map[by2][bx2+bw2]===T.BUILDING)bw2++;
+        while(by2+bh2<h-1&&map[by2+bh2][bx2]===T.BUILDING)bh2++;
+        if(bw2<4||bh2<4)continue;
+        const choice=rng();
+        if(choice<0.2&&bw2>=6&&bh2>=6){
+          // Courtyard: hollow out center
+          const margin=1+Math.floor(rng());
+          for(let cy2=by2+margin;cy2<by2+bh2-margin&&cy2<h-1;cy2++)
+            for(let cx2=bx2+margin;cx2<bx2+bw2-margin&&cx2<w-1;cx2++){
+              if(inB(cx2,cy2))map[cy2][cx2]=rng()<0.3?T.PARK:T.SIDEWALK;
+            }
+          // Entrance to courtyard
+          const entrySide=Math.floor(rng()*4);
+          if(entrySide===0&&inB(bx2+Math.floor(bw2/2),by2)) map[by2][bx2+Math.floor(bw2/2)]=T.BLDG_DOOR;
+          else if(entrySide===1&&inB(bx2+Math.floor(bw2/2),by2+bh2-1)) map[by2+bh2-1][bx2+Math.floor(bw2/2)]=T.BLDG_DOOR;
+          else if(entrySide===2&&inB(bx2,by2+Math.floor(bh2/2))) map[by2+Math.floor(bh2/2)][bx2]=T.BLDG_DOOR;
+          else if(inB(bx2+bw2-1,by2+Math.floor(bh2/2))) map[by2+Math.floor(bh2/2)][bx2+bw2-1]=T.BLDG_DOOR;
+        } else if(choice<0.35&&bw2>=5&&bh2>=5){
+          // L-shape: remove a corner chunk
+          const corner=Math.floor(rng()*4);
+          const cw=2+Math.floor(rng()*Math.min(3,bw2-3));
+          const ch=2+Math.floor(rng()*Math.min(3,bh2-3));
+          let lx=bx2,ly=by2;
+          if(corner===1||corner===3) lx=bx2+bw2-cw;
+          if(corner===2||corner===3) ly=by2+bh2-ch;
+          for(let cy2=ly;cy2<ly+ch;cy2++)
+            for(let cx2=lx;cx2<lx+cw;cx2++)
+              if(inB(cx2,cy2)&&map[cy2][cx2]===T.BUILDING) map[cy2][cx2]=T.SIDEWALK;
+        } else if(choice<0.45){
+          // Alley: cut through the block
+          if(rng()<0.5){
+            // Horizontal alley
+            const ay2=by2+1+Math.floor(rng()*(bh2-2));
+            for(let cx2=bx2;cx2<bx2+bw2&&cx2<w-1;cx2++)
+              if(inB(cx2,ay2)&&map[ay2][cx2]===T.BUILDING) map[ay2][cx2]=T.SIDEWALK;
+          } else {
+            // Vertical alley
+            const ax2=bx2+1+Math.floor(rng()*(bw2-2));
+            for(let cy2=by2;cy2<by2+bh2&&cy2<h-1;cy2++)
+              if(inB(ax2,cy2)&&map[cy2][ax2]===T.BUILDING) map[cy2][ax2]=T.SIDEWALK;
+          }
         }
+      }
+    }
+
+    // --- Windows and doors on building edges facing streets ---
+    for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<w-2;x2++){
+      if(map[y2][x2]!==T.BUILDING)continue;
+      const adjStreet=[[0,1],[0,-1],[1,0],[-1,0]].some(([dy2,dx2])=>{
+        const t2=map[y2+dy2][x2+dx2];
+        return t2===T.SIDEWALK||t2===T.ROAD||t2===T.PARK;
+      });
+      if(!adjStreet)continue;
+      const belowIsWalk=y2+1<h-1&&(map[y2+1][x2]===T.SIDEWALK||map[y2+1][x2]===T.ROAD);
+      if(belowIsWalk&&rng()<0.22){map[y2][x2]=T.BLDG_DOOR;continue;}
+      if(rng()<0.35)map[y2][x2]=T.BLDG_WINDOW;
+    }
+
+    // --- Lampposts along sidewalks (every ~8 tiles) ---
+    for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<w-2;x2++){
+      if(map[y2][x2]===T.SIDEWALK){
+        const adjRoad=[[0,1],[0,-1],[1,0],[-1,0]].some(([dy2,dx2])=>inB(x2+dx2,y2+dy2)&&map[y2+dy2][x2+dx2]===T.ROAD);
+        if(adjRoad&&rng()<0.06) map[y2][x2]=T.LAMPPOST;
+      }
+    }
+
+    // ========== NYC-SPECIFIC FEATURES ==========
+    if(biome==='city_nyc'){
+      // --- Central Park: a big green area in one of the middle zones ---
+      const parkZone=Math.max(1,Math.floor(avenues.length*0.4));
+      const parkLeft=avenues[parkZone]?avenues[parkZone].x+avenues[parkZone].w+1:Math.floor(w*0.35);
+      const parkRight=avenues[parkZone+1]?avenues[parkZone+1].x-1:Math.min(w-4,parkLeft+14);
+      const parkW=parkRight-parkLeft;
+      if(parkW>=8){
+        const parkTop=Math.floor(h*0.12);
+        const parkBot=Math.floor(h*0.88);
+        // Fill with park tiles
+        for(let py=parkTop;py<=parkBot;py++){
+          // Organic edges: sine-wave boundaries
+          const edgeL=parkLeft+Math.round(Math.sin(py*0.4)*1.5);
+          const edgeR=parkRight+Math.round(Math.sin(py*0.3+2)*1.5);
+          for(let px=edgeL;px<=edgeR;px++){
+            if(!inB(px,py))continue;
+            const r=rng();
+            if(r<0.06) map[py][px]=T.FLOWER;
+            else if(r<0.12) map[py][px]=T.TREE;
+            else if(r<0.17) map[py][px]=T.BUSH;
+            else map[py][px]=T.PARK;
+          }
+        }
+        // Winding paths through the park
+        for(let p=0;p<3;p++){
+          let px=parkLeft+2+Math.floor(rng()*(parkW-4));
+          let py=parkTop+2;
+          while(py<parkBot-2){
+            if(inB(px,py)) map[py][px]=T.PATH;
+            py++;
+            px+=Math.floor(rng()*3)-1;
+            px=Math.max(parkLeft+1,Math.min(parkRight-1,px));
+          }
+        }
+        // Pond in the middle
+        const pondCX=Math.floor((parkLeft+parkRight)/2);
+        const pondCY=Math.floor(h*0.5);
+        for(let dy=-2;dy<=2;dy++)for(let dx=-3;dx<=3;dx++){
+          if(dx*dx+dy*dy<8&&inB(pondCX+dx,pondCY+dy))
+            map[pondCY+dy][pondCX+dx]=T.WATER;
+        }
+        // Bridge across pond
+        if(inB(pondCX,pondCY)) map[pondCY][pondCX]=T.BRIDGE;
+        if(inB(pondCX+1,pondCY)) map[pondCY][pondCX+1]=T.BRIDGE;
+      }
+
+      // --- Broadway diagonal ---
+      let bdx=3,bdy=h-5;
+      while(bdx<w-3&&bdy>3){
+        if(inB(bdx,bdy)&&map[bdy][bdx]!==T.WATER&&map[bdy][bdx]!==T.PARK){
+          map[bdy][bdx]=T.ROAD;
+          if(inB(bdx+1,bdy)&&map[bdy][bdx+1]!==T.WATER&&map[bdy][bdx+1]!==T.PARK)
+            map[bdy][bdx+1]=T.ROAD;
+          // Sidewalk edges
+          if(inB(bdx-1,bdy)&&map[bdy][bdx-1]===T.BUILDING) map[bdy][bdx-1]=T.SIDEWALK;
+          if(inB(bdx+2,bdy)&&map[bdy][bdx+2]===T.BUILDING) map[bdy][bdx+2]=T.SIDEWALK;
+        }
+        bdx+=rng()<0.7?1:0; bdy--;
+        if(rng()<0.15) bdx++; // occasional extra eastward jog
+      }
+
+      // --- Plazas (Times Square, Washington Square, etc.) ---
+      const numPlazas=2+Math.floor(rng()*2);
+      for(let pp=0;pp<numPlazas;pp++){
+        const plX=5+Math.floor(rng()*(w-12));
+        const plY=5+Math.floor(rng()*(h-12));
+        const plSize=3+Math.floor(rng()*3);
+        for(let dy=-plSize;dy<=plSize;dy++)for(let dx=-plSize;dx<=plSize;dx++){
+          // Circular shape
+          if(dx*dx+dy*dy>plSize*plSize+2)continue;
+          const px2=plX+dx,py2=plY+dy;
+          if(!inB(px2,py2))continue;
+          if(map[py2][px2]===T.WATER||map[py2][px2]===T.RIVER)continue;
+          const r=rng();
+          if(Math.abs(dx)<=1&&Math.abs(dy)<=1) map[py2][px2]=T.SIDEWALK;
+          else if(r<0.15) map[py2][px2]=T.LAMPPOST;
+          else if(r<0.3) map[py2][px2]=T.PARK;
+          else map[py2][px2]=T.SIDEWALK;
+        }
+      }
+
+      // --- Taxis on major avenues ---
+      for(const av of avenues){
+        for(let vy=2;vy<h-2;vy++){
+          if(rng()<0.04){
+            const tx2=av.x+Math.floor(rng()*av.w);
+            if(inB(tx2,vy)&&map[vy][tx2]===T.ROAD) map[vy][tx2]=T.TAXI;
+          }
+        }
+      }
+    }
+
+    // ========== BUDAPEST-SPECIFIC FEATURES ==========
+    if(biome==='city_budapest'){
+      // --- The Danube: wide, slightly curved, VERTICAL river through center ---
+      const riverCX=Math.floor(w*0.48+rng()*w*0.04);
+      const riverWidth=5+Math.floor(rng()*2); // 5-6 tiles wide
+      for(let ry2=1;ry2<h-1;ry2++){
+        // Gentle curve
+        const curve=Math.round(Math.sin(ry2*0.08)*2.5+Math.sin(ry2*0.15)*1);
+        const rl=riverCX+curve-Math.floor(riverWidth/2);
+        const rr=rl+riverWidth-1;
+        for(let rx2=rl;rx2<=rr;rx2++){
+          if(inB(rx2,ry2)) map[ry2][rx2]=T.RIVER;
+        }
+        // Bank sidewalks
+        if(inB(rl-1,ry2)&&map[ry2][rl-1]!==T.RIVER) map[ry2][rl-1]=T.SIDEWALK;
+        if(inB(rr+1,ry2)&&map[ry2][rr+1]!==T.RIVER) map[ry2][rr+1]=T.SIDEWALK;
+      }
+
+      // --- Bridges: Chain Bridge (wide), + 2 narrower ones ---
+      const bridgeYs=[Math.floor(h*0.25),Math.floor(h*0.5),Math.floor(h*0.75)];
+      const bridgeWidths=[3,2,2]; // Chain Bridge is wider
+      for(let bi=0;bi<3;bi++){
+        const bby=bridgeYs[bi];
+        const bbw=bridgeWidths[bi];
+        for(let bdy=-Math.floor(bbw/2);bdy<=Math.floor(bbw/2);bdy++){
+          const bridgeRow=bby+bdy;
+          if(bridgeRow<1||bridgeRow>=h-1)continue;
+          for(let bx=1;bx<w-1;bx++){
+            if(map[bridgeRow][bx]===T.RIVER) map[bridgeRow][bx]=T.BRIDGE;
+          }
+          // Approach sidewalks near the banks
+          for(let bx=1;bx<w-1;bx++){
+            if(map[bridgeRow][bx]===T.BUILDING) map[bridgeRow][bx]=T.SIDEWALK;
+          }
+        }
+      }
+
+      // --- Buda side (left of river): organic, hilly, castle ---
+      // Make Buda streets more winding — erase some of the grid and add organic paths
+      const budaRight=riverCX-Math.floor(riverWidth/2)-2;
+      for(let by2=2;by2<h-2;by2++){
+        for(let bx2=2;bx2<budaRight;bx2++){
+          if(map[by2][bx2]===T.ROAD&&rng()<0.25){
+            // Break some grid roads to make it organic
+            map[by2][bx2]=T.BUILDING;
+          }
+        }
+      }
+      // Carve winding paths on Buda side
+      for(let wp=0;wp<5;wp++){
+        let wx=2+Math.floor(rng()*Math.max(1,budaRight-4));
+        let wy=2+Math.floor(rng()*(h-4));
+        const wLen=15+Math.floor(rng()*20);
+        for(let ws=0;ws<wLen;ws++){
+          if(inB(wx,wy)&&(map[wy][wx]===T.BUILDING||map[wy][wx]===T.BLDG_WINDOW)){
+            map[wy][wx]=T.SIDEWALK;
+          }
+          const dir=Math.floor(rng()*4);
+          wx+=[0,0,-1,1][dir]; wy+=[-1,1,0,0][dir];
+          wx=Math.max(2,Math.min(budaRight,wx));
+          wy=Math.max(2,Math.min(h-3,wy));
+        }
+      }
+      // Castle hill: elevated block in upper-left Buda
+      const castleX=Math.max(3,Math.floor(budaRight*0.3));
+      const castleY=Math.max(3,Math.floor(h*0.15));
+      const castleW=6+Math.floor(rng()*3),castleH=4+Math.floor(rng()*2);
+      // Rock base (hill)
+      for(let dy=-1;dy<=castleH;dy++)for(let dx=-1;dx<=castleW;dx++){
+        if(inB(castleX+dx,castleY+dy)) map[castleY+dy][castleX+dx]=T.ROCK;
+      }
+      // Castle building on top
+      for(let dy=0;dy<castleH;dy++)for(let dx=0;dx<castleW;dx++){
+        if(inB(castleX+dx,castleY+dy)){
+          const edge=(dy===0||dy===castleH-1||dx===0||dx===castleW-1);
+          if(edge) map[castleY+dy][castleX+dx]=rng()<0.4?T.BLDG_WINDOW:T.BUILDING;
+          else map[castleY+dy][castleX+dx]=T.PARK;
+        }
+      }
+      // Castle entrance (south side)
+      const cEntX=castleX+Math.floor(castleW/2);
+      if(inB(cEntX,castleY+castleH-1)) map[castleY+castleH-1][cEntX]=T.BLDG_DOOR;
+      if(inB(cEntX,castleY+castleH)) map[castleY+castleH][cEntX]=T.SIDEWALK;
+      // Winding path up to castle
+      let cpx=cEntX,cpy=castleY+castleH+1;
+      for(let cs=0;cs<12;cs++){
+        if(inB(cpx,cpy)&&map[cpy][cpx]!==T.RIVER&&map[cpy][cpx]!==T.BRIDGE){
+          map[cpy][cpx]=T.PATH;
+        }
+        cpy++;
+        cpx+=(rng()<0.3?1:rng()<0.6?-1:0);
+        cpx=Math.max(2,Math.min(budaRight,cpx));
+      }
+      // More green space on Buda side
+      for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<Math.min(budaRight,w-2);x2++){
+        if(map[y2][x2]===T.SIDEWALK&&rng()<0.12) map[y2][x2]=T.PARK;
+      }
+
+      // --- Pest side (right of river): grid-like, Parliament, Ruin Bar ---
+      const pestLeft=riverCX+Math.floor(riverWidth/2)+3;
+
+      // Parliament: large building footprint on the river bank
+      const parlY=Math.floor(h*0.35);
+      const parlX=pestLeft;
+      for(let dy=0;dy<4;dy++)for(let dx=0;dx<8;dx++){
+        if(inB(parlX+dx,parlY+dy)){
+          const edge=(dy===0||dy===3||dx===0||dx===7);
+          map[parlY+dy][parlX+dx]=edge?T.BLDG_WINDOW:T.BUILDING;
+        }
+      }
+      // Parliament entrance and promenade
+      if(inB(parlX+4,parlY+3)) map[parlY+3][parlX+4]=T.BLDG_DOOR;
+      for(let dx=0;dx<8;dx++){
+        if(inB(parlX+dx,parlY+4)) map[parlY+4][parlX+dx]=T.SIDEWALK;
+        if(inB(parlX+dx,parlY+5)) map[parlY+5][parlX+dx]=T.ROAD;
+      }
+
+      // Ruin bar area: cluster of small buildings with park between them
+      const rbX=pestLeft+8+Math.floor(rng()*6);
+      const rbY=Math.floor(h*0.6)+Math.floor(rng()*4);
+      for(let dy=-3;dy<=3;dy++)for(let dx=-4;dx<=4;dx++){
+        if(!inB(rbX+dx,rbY+dy))continue;
+        const r=rng();
+        if(r<0.15) map[rbY+dy][rbX+dx]=T.FLOWER;
+        else if(r<0.3) map[rbY+dy][rbX+dx]=T.PARK;
+        else if(r<0.4) map[rbY+dy][rbX+dx]=T.LAMPPOST;
+        else map[rbY+dy][rbX+dx]=T.SIDEWALK;
+      }
+      // Ruin bar "buildings" — small scattered structures
+      for(let rb=0;rb<4;rb++){
+        const rbx2=rbX-3+Math.floor(rng()*6);
+        const rby2=rbY-2+Math.floor(rng()*4);
+        if(inB(rbx2,rby2)){
+          map[rby2][rbx2]=T.BUILDING;
+          if(inB(rbx2+1,rby2)) map[rby2][rbx2+1]=T.BLDG_WINDOW;
+          if(inB(rbx2,rby2+1)) map[rby2+1][rbx2]=T.BLDG_DOOR;
+        }
+      }
+
+      // Margaret Island: oval park in the Danube
+      const miY=Math.floor(h*0.4);
+      const miX=riverCX;
+      for(let dy=-4;dy<=4;dy++)for(let dx=-2;dx<=2;dx++){
+        if(dx*dx*2.5+dy*dy*0.8>12)continue;
+        if(!inB(miX+dx,miY+dy))continue;
+        const r=rng();
+        if(r<0.1) map[miY+dy][miX+dx]=T.FLOWER;
+        else if(r<0.18) map[miY+dy][miX+dx]=T.TREE;
+        else map[miY+dy][miX+dx]=T.PARK;
+      }
+      // Bridge connections to Margaret Island
+      for(let dx=-3;dx>=-riverWidth;dx--){
+        if(inB(miX+dx,miY)&&map[miY][miX+dx]===T.RIVER) map[miY][miX+dx]=T.BRIDGE;
+      }
+      for(let dx=3;dx<=riverWidth;dx++){
+        if(inB(miX+dx,miY)&&map[miY][miX+dx]===T.RIVER) map[miY][miX+dx]=T.BRIDGE;
+      }
+
+      // Thermal bath near a bridge
+      const bathY=bridgeYs[2]+3;
+      const bathX=pestLeft+2;
+      for(let dy=-1;dy<=2;dy++)for(let dx=-1;dx<=2;dx++){
+        if(inB(bathX+dx,bathY+dy)) map[bathY+dy][bathX+dx]=T.WATER;
+      }
+      // Park surround
+      for(let dy=-2;dy<=3;dy++)for(let dx=-2;dx<=3;dx++){
+        if(!inB(bathX+dx,bathY+dy))continue;
+        if(map[bathY+dy][bathX+dx]===T.BUILDING||map[bathY+dy][bathX+dx]===T.BLDG_WINDOW)
+          map[bathY+dy][bathX+dx]=T.PARK;
       }
     }
   }
@@ -1720,12 +2042,43 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
   const zoneW=Math.floor((w-2)/(numGates+1));
   for(let g=0;g<numGates;g++){
     const gx=2+zoneW*(g+1);
-    const gateY=3+Math.floor(rng()*(h-8))+1;
-    for(let y=1;y<h-1;y++){
-      if(Math.abs(y-gateY)>0){map[y][gx]=wall;if(gx+1<w-1)map[y][gx+1]=wall;}
+    let gateY=3+Math.floor(rng()*(h-8))+1;
+    if(isCity){
+      // For cities: find a cross street near gx for the gate, so the barrier feels like a blocked road
+      // Place gate on the nearest road tile, and fill the column with buildings only where not road
+      let bestRoadY=-1,bestDist=999;
+      for(let sy3=3;sy3<h-3;sy3++){
+        if(map[sy3][gx]===T.ROAD||map[sy3][gx]===T.SIDEWALK){
+          const d=Math.abs(sy3-gateY);
+          if(d<bestDist){bestDist=d;bestRoadY=sy3;}
+        }
+      }
+      if(bestRoadY>=0) gateY=bestRoadY;
+      for(let y=1;y<h-1;y++){
+        if(Math.abs(y-gateY)>0){
+          // Don't overwrite river/bridge tiles
+          if(map[y][gx]===T.RIVER||map[y][gx]===T.BRIDGE)continue;
+          if(map[y][gx]===T.WATER)continue;
+          map[y][gx]=T.BUILDING;
+          if(gx+1<w-1&&map[y][gx+1]!==T.RIVER&&map[y][gx+1]!==T.BRIDGE&&map[y][gx+1]!==T.WATER)
+            map[y][gx+1]=T.BUILDING;
+        }
+      }
+      // Clear a few tiles around the gate for approach on roads
+      for(let dy3=-1;dy3<=1;dy3++){
+        const gy3=gateY+dy3;
+        if(gy3>0&&gy3<h-1){
+          if(gx-1>0) map[gy3][gx-1]=T.ROAD;
+          if(gx+2<w-1) map[gy3][gx+2]=T.ROAD;
+        }
+      }
+    } else {
+      for(let y=1;y<h-1;y++){
+        if(Math.abs(y-gateY)>0){map[y][gx]=wall;if(gx+1<w-1)map[y][gx+1]=wall;}
+      }
     }
     map[gateY][gx]=T.GATE;
-    if(gx+1<w-1)map[gateY][gx+1]=T.PATH;
+    if(gx+1<w-1)map[gateY][gx+1]=isCity?T.ROAD:T.PATH;
     gatePositions.push({x:gx,y:gateY});
   }
   
@@ -2060,8 +2413,8 @@ const LEVEL_DEFS=[
   {id:4,nameKey:'level4',diff:4,bgColor:'#607d8b',biome:'mountain',w:72,h:52,gates:5,dogs:5,npcs:8,seed:512},
   {id:5,nameKey:'level5',diff:5,bgColor:'#0277bd',biome:'lake',w:80,h:56,gates:5,dogs:5,npcs:9,seed:789},
   {id:6,nameKey:'level6',diff:6,bgColor:'#3e2723',biome:'castle',w:90,h:60,gates:6,dogs:6,npcs:10,seed:1024},
-  {id:7,nameKey:'level7',diff:3,bgColor:'#4a5568',biome:'city_nyc',w:60,h:45,gates:4,dogs:4,npcs:8,seed:2048},
-  {id:8,nameKey:'level8',diff:4,bgColor:'#c5a36e',biome:'city_budapest',w:65,h:48,gates:5,dogs:5,npcs:9,seed:3072}
+  {id:7,nameKey:'level7',diff:3,bgColor:'#4a5568',biome:'city_nyc',w:72,h:52,gates:4,dogs:5,npcs:9,seed:2048},
+  {id:8,nameKey:'level8',diff:4,bgColor:'#c5a36e',biome:'city_budapest',w:78,h:56,gates:5,dogs:5,npcs:10,seed:3072}
 ];
 
 // Generate all levels
