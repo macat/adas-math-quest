@@ -5,1572 +5,2050 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Ada's Math Quest 🐕</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+/* ========== RESET & BASE ========== */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#1a1a2e}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input{font-family:inherit;outline:none}
 
-:root {
-  --forest-dark: #1a472a;
-  --forest: #2d6a4f;
-  --meadow: #52b788;
-  --leaf: #95d5b2;
-  --sky: #a8dadc;
-  --sky-light: #e0f4f5;
-  --sun: #ffd166;
-  --flower-pink: #ff6b9d;
-  --flower-purple: #c77dff;
-  --bark: #8b5e3c;
-  --earth: #6b4226;
-  --cream: #fefae0;
-  --white: #ffffff;
-  --danger: #ef476f;
-  --success: #06d6a0;
-  --gold: #ffd166;
-  --text: #2d3436;
-  --text-light: #636e72;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Nunito', sans-serif;
-  background: linear-gradient(180deg, #87CEEB 0%, #a8dadc 30%, #52b788 60%, #2d6a4f 100%);
-  min-height: 100vh;
-  overflow-x: hidden;
-  color: var(--text);
+/* ========== CSS VARIABLES ========== */
+:root{
+  --tile:48px;
+  --primary:#4CAF50;
+  --primary-dark:#388E3C;
+  --accent:#FF9800;
+  --accent-dark:#F57C00;
+  --danger:#f44336;
+  --sky:#87CEEB;
+  --meadow:#7cb342;
+  --forest:#2e7d32;
+  --mountain:#78909c;
+  --lake:#0288d1;
+  --castle:#6d4c41;
+  --text:#333;
+  --text-light:#666;
+  --bg:#fafafa;
+  --card:#fff;
+  --shadow:0 4px 20px rgba(0,0,0,0.15);
+  --radius:16px;
 }
 
-h1, h2, h3 { font-family: 'Fredoka', sans-serif; }
+/* ========== SCREENS ========== */
+.screen{display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center}
+.screen.active{display:flex}
 
-/* Screen transitions */
-.screen { display: none; min-height: 100vh; position: relative; animation: fade-in 0.3s ease; }
-.screen.active { display: flex; flex-direction: column; align-items: center; }
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+/* ========== TITLE SCREEN ========== */
+#title-screen{
+  background:linear-gradient(180deg,#87CEEB 0%,#c8e6c9 50%,#81c784 100%);
+  gap:16px;
+  padding:20px;
+  text-align:center;
+  overflow-y:auto;
+}
+.title-logo{font-size:clamp(2rem,6vw,3.5rem);font-weight:900;color:#2e7d32;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(0,0,0,0.1);margin-top:20px}
+.title-sub{font-size:clamp(0.9rem,2.5vw,1.2rem);color:#4a7c59;font-weight:600;margin-bottom:8px}
+.title-dogs{font-size:2.5rem;letter-spacing:8px;animation:bounce-dogs 2s ease-in-out infinite}
+@keyframes bounce-dogs{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 
-/* Dog rescue celebration */
-.rescue-banner {
-  position: fixed; top: 0; left: 0; right: 0;
-  background: linear-gradient(135deg, var(--success), var(--meadow));
-  color: white; text-align: center; padding: 1rem;
-  font-family: 'Fredoka', sans-serif; font-size: 1.3rem;
-  z-index: 90; animation: banner-slide 2s ease forwards;
+.char-select{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.char-btn{
+  width:72px;height:72px;border-radius:16px;font-size:2.2rem;
+  background:#fff;border:3px solid #ddd;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
-@keyframes banner-slide {
-  0% { transform: translateY(-100%); }
-  15% { transform: translateY(0); }
-  85% { transform: translateY(0); }
-  100% { transform: translateY(-100%); }
-}
+.char-btn:hover,.char-btn.selected{border-color:var(--primary);background:#e8f5e9;transform:scale(1.1);box-shadow:0 4px 16px rgba(76,175,80,0.3)}
 
-/* ==================== FLOATING NATURE ELEMENTS ==================== */
-.nature-bg {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none; z-index: 0; overflow: hidden;
+.name-input{
+  padding:10px 20px;border-radius:12px;border:2px solid #c8e6c9;
+  font-size:1.1rem;text-align:center;width:220px;
+  background:#fff;color:var(--text);
 }
-.cloud {
-  position: absolute; font-size: 3rem; opacity: 0.6;
-  animation: float-cloud linear infinite;
-}
-@keyframes float-cloud {
-  from { transform: translateX(-100px); }
-  to { transform: translateX(calc(100vw + 100px)); }
-}
-.butterfly {
-  position: absolute; font-size: 1.5rem;
-  animation: flutter 3s ease-in-out infinite;
-}
-@keyframes flutter {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  25% { transform: translate(10px, -15px) rotate(5deg); }
-  50% { transform: translate(-5px, -25px) rotate(-3deg); }
-  75% { transform: translate(15px, -10px) rotate(4deg); }
-}
+.name-input:focus{border-color:var(--primary)}
 
-/* ==================== START SCREEN ==================== */
-#start-screen {
-  justify-content: center; gap: 1.5rem; padding: 2rem;
-  background: linear-gradient(180deg, #87CEEB 0%, #b8e0d2 50%, #52b788 100%);
+.lang-row{display:flex;gap:8px;margin:4px 0}
+.lang-btn{
+  padding:6px 16px;border-radius:20px;font-size:0.85rem;font-weight:600;
+  background:#fff;color:var(--text);border:2px solid #ddd;transition:all .2s;
 }
-.title-card {
-  background: rgba(255,255,255,0.95); border-radius: 2rem; padding: 2.5rem 3rem;
-  text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  max-width: 500px; width: 90%; position: relative; z-index: 1;
-}
-.title-card h1 {
-  font-size: 2.5rem; color: var(--forest-dark);
-  text-shadow: 2px 2px 0 var(--leaf);
-  margin-bottom: 0.5rem;
-}
-.title-dogs { font-size: 3rem; margin: 0.5rem 0; }
-.title-subtitle {
-  font-size: 1.1rem; color: var(--text-light); margin-bottom: 1rem;
-}
-.start-input {
-  display: flex; flex-direction: column; gap: 0.8rem; margin: 1rem 0;
-}
-.start-input label { font-weight: 700; font-size: 0.95rem; text-align: left; }
-.start-input input, .start-input select {
-  padding: 0.7rem 1rem; border-radius: 1rem; border: 2px solid var(--leaf);
-  font-size: 1rem; font-family: 'Nunito', sans-serif;
-  background: var(--cream); outline: none; transition: border-color 0.2s;
-}
-.start-input input:focus, .start-input select:focus {
-  border-color: var(--meadow);
-}
-.btn {
-  padding: 0.9rem 2.5rem; border-radius: 2rem; border: none;
-  font-family: 'Fredoka', sans-serif; font-size: 1.2rem; font-weight: 600;
-  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
-  display: inline-flex; align-items: center; gap: 0.5rem;
-}
-.btn:active { transform: scale(0.95); }
-.btn-primary {
-  background: linear-gradient(135deg, var(--meadow), var(--forest));
-  color: white; box-shadow: 0 4px 15px rgba(45,106,79,0.4);
-}
-.btn-primary:hover { box-shadow: 0 6px 20px rgba(45,106,79,0.5); transform: translateY(-2px); }
-.btn-gold {
-  background: linear-gradient(135deg, var(--sun), #f4a261);
-  color: var(--earth); box-shadow: 0 4px 15px rgba(255,209,102,0.5);
-}
-.btn-small { padding: 0.5rem 1.2rem; font-size: 0.95rem; }
+.lang-btn:hover,.lang-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 
-/* ==================== MAP SCREEN ==================== */
-#map-screen {
-  background: linear-gradient(180deg, #87CEEB 0%, #a8dadc 20%, #d8f3dc 50%, #52b788 100%);
-  padding: 1rem; gap: 1rem;
+.play-btn{
+  padding:14px 48px;border-radius:30px;font-size:1.3rem;font-weight:800;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;letter-spacing:1px;
+  box-shadow:0 4px 20px rgba(76,175,80,0.4);transition:all .2s;
+  margin:8px 0;
 }
-.map-header {
-  background: rgba(255,255,255,0.92); border-radius: 1.5rem; padding: 1rem 1.5rem;
-  display: flex; justify-content: space-between; align-items: center;
-  width: 95%; max-width: 700px; z-index: 1;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-}
-.map-header h2 { font-size: 1.3rem; color: var(--forest-dark); }
-.map-info { display: flex; gap: 1rem; align-items: center; font-size: 0.9rem; }
-.map-info span { display: flex; align-items: center; gap: 0.3rem; }
+.play-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(76,175,80,0.5)}
 
-.map-container {
-  background: rgba(255,255,255,0.85); border-radius: 2rem; padding: 1.5rem;
-  width: 95%; max-width: 700px; min-height: 400px;
-  position: relative; z-index: 1;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
-  align-content: start;
+/* ========== LEVEL SELECT ========== */
+#level-screen{
+  background:linear-gradient(180deg,#87CEEB 0%,#c8e6c9 60%,#a5d6a7 100%);
+  padding:20px;gap:16px;overflow-y:auto;
 }
-.dog-spot {
-  background: var(--cream); border-radius: 1.5rem; padding: 1.2rem;
-  text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-  border: 3px dashed var(--leaf); position: relative;
+.level-title{font-size:1.6rem;font-weight:800;color:#2e7d32;text-align:center}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;max-width:500px;width:100%;padding:0 10px}
+.level-card{
+  background:#fff;border-radius:16px;padding:16px 12px;text-align:center;
+  box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:all .2s;cursor:pointer;
+  border:3px solid transparent;position:relative;overflow:hidden;
 }
-.dog-spot:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-.dog-spot.rescued {
-  border: 3px solid var(--success); background: linear-gradient(135deg, #d8f3dc, #b7e4c7);
-  cursor: default;
-}
-.dog-spot.rescued .dog-emoji { animation: happy-bounce 0.6s ease; }
-.dog-spot.locked { opacity: 0.6; cursor: not-allowed; border-color: #ccc; }
-.dog-spot .dog-emoji { font-size: 2.5rem; display: block; margin-bottom: 0.3rem; }
-.dog-spot .dog-name { font-weight: 700; font-size: 0.95rem; color: var(--forest-dark); }
-.dog-spot .dog-status { font-size: 0.8rem; color: var(--text-light); margin-top: 0.2rem; }
-.dog-spot .quest-count {
-  position: absolute; top: -8px; right: -8px;
-  background: var(--danger); color: white; border-radius: 50%;
-  width: 24px; height: 24px; font-size: 0.75rem; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
-.dog-spot.rescued .quest-count { background: var(--success); }
-
-@keyframes happy-bounce {
-  0%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-15px) rotate(-5deg); }
-  60% { transform: translateY(-8px) rotate(5deg); }
+.level-card:hover:not(.locked){transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,0.15)}
+.level-card.locked{opacity:0.5;cursor:not-allowed;filter:grayscale(0.5)}
+.level-card.locked::after{content:'🔒';position:absolute;top:8px;right:8px;font-size:1.2rem}
+.level-card.completed{border-color:var(--primary)}
+.level-card .level-icon{font-size:2rem;margin-bottom:4px}
+.level-card .level-name{font-size:0.95rem;font-weight:700;color:var(--text)}
+.level-card .level-info{font-size:0.75rem;color:var(--text-light);margin-top:4px}
+.level-card .stars{color:#FFD700;font-size:1rem;margin-top:4px}
+.level-card .best-time{font-size:0.7rem;color:var(--text-light)}
+.back-btn{
+  padding:8px 24px;border-radius:20px;font-size:0.9rem;font-weight:600;
+  background:#fff;color:var(--text);border:2px solid #ddd;
 }
 
-.map-footer {
-  display: flex; gap: 1rem; z-index: 1; flex-wrap: wrap; justify-content: center;
+/* ========== STORY / CUTSCENE ========== */
+#story-screen{
+  background:#000;padding:30px;gap:20px;
+  text-align:center;
+}
+.story-text{
+  color:#fff;font-size:clamp(1rem,3vw,1.3rem);line-height:1.7;
+  max-width:600px;opacity:0;animation:fade-in 1.5s forwards;
+}
+@keyframes fade-in{to{opacity:1}}
+.story-emoji{font-size:3rem;margin-bottom:10px;animation:fade-in 1s forwards}
+.story-continue{
+  padding:10px 30px;border-radius:20px;font-size:1rem;font-weight:600;
+  background:var(--primary);color:#fff;opacity:0;animation:fade-in 2s 1.5s forwards;
 }
 
-/* ==================== QUEST SCREEN ==================== */
-#quest-screen {
-  background: linear-gradient(180deg, #fefae0 0%, #d8f3dc 50%, #95d5b2 100%);
-  padding: 1.5rem; gap: 1rem;
+/* ========== GAME SCREEN ========== */
+#game-screen{
+  background:#333;flex-direction:column;
 }
-.quest-header {
-  background: rgba(255,255,255,0.95); border-radius: 1.5rem; padding: 1rem 1.5rem;
-  width: 95%; max-width: 600px; display: flex; justify-content: space-between;
-  align-items: center; z-index: 1; box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+.game-hud{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 12px;background:rgba(0,0,0,0.7);color:#fff;
+  font-size:0.8rem;font-weight:600;width:100%;z-index:10;
+  min-height:42px;gap:8px;flex-shrink:0;
 }
-.quest-header h3 { font-size: 1.1rem; color: var(--forest-dark); }
-.quest-progress {
-  display: flex; gap: 0.4rem; align-items: center;
-}
-.quest-dot {
-  width: 14px; height: 14px; border-radius: 50%; background: #ddd;
-  transition: background 0.3s, transform 0.3s;
-}
-.quest-dot.done { background: var(--success); transform: scale(1.15); }
-.quest-dot.current { background: var(--sun); transform: scale(1.25); box-shadow: 0 0 8px var(--sun); }
-.quest-dot.wrong { background: var(--danger); }
-
-.quest-card {
-  background: rgba(255,255,255,0.97); border-radius: 2rem; padding: 2rem;
-  width: 95%; max-width: 600px; text-align: center; z-index: 1;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-  min-height: 300px; display: flex; flex-direction: column;
-  justify-content: center; align-items: center; gap: 1.5rem;
-  position: relative; overflow: hidden;
-}
-.quest-story {
-  font-size: 1rem; color: var(--text-light); font-style: italic;
-  padding: 0.5rem 1rem; background: var(--cream); border-radius: 1rem;
-  border-left: 4px solid var(--sun);
-}
-.quest-question {
-  font-size: 1.8rem; font-family: 'Fredoka', sans-serif;
-  color: var(--forest-dark); line-height: 1.4;
-}
-.quest-question .blank {
-  display: inline-block; min-width: 60px; border-bottom: 3px dashed var(--meadow);
-  color: var(--meadow); font-weight: 700;
+.hud-left,.hud-right{display:flex;align-items:center;gap:10px}
+.hud-dogs{color:#FFD700}
+.hud-timer{font-variant-numeric:tabular-nums}
+.hud-level{color:#a5d6a7;font-size:0.75rem}
+.hud-btn{
+  padding:4px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;
+  background:rgba(255,255,255,0.15);color:#fff;
 }
 
-/* Answer input area */
-.answer-area { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 400px; }
-.answer-input-row { display: flex; gap: 0.8rem; justify-content: center; align-items: center; }
-.answer-input {
-  width: 120px; padding: 0.8rem; font-size: 1.8rem; text-align: center;
-  border-radius: 1rem; border: 3px solid var(--leaf);
-  font-family: 'Fredoka', sans-serif; background: var(--cream);
-  outline: none; transition: border-color 0.2s;
+.game-viewport{
+  flex:1;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
 }
-.answer-input:focus { border-color: var(--meadow); }
-.answer-input.correct { border-color: var(--success); background: #d8f3dc; }
-.answer-input.wrong { border-color: var(--danger); background: #ffe0e6; animation: shake 0.4s; }
-
-/* Multiple choice */
-.choices-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;
-  width: 100%; max-width: 350px;
+.game-map{
+  display:grid;
+  position:absolute;
+  transition:transform 0.15s ease-out;
 }
-.choice-btn {
-  padding: 1rem; border-radius: 1.2rem; border: 3px solid var(--leaf);
-  background: var(--cream); font-size: 1.3rem; font-family: 'Fredoka', sans-serif;
-  cursor: pointer; transition: all 0.2s; color: var(--forest-dark);
-}
-.choice-btn:hover { border-color: var(--meadow); background: #e8f5e9; transform: scale(1.03); }
-.choice-btn.correct { border-color: var(--success); background: #d8f3dc; }
-.choice-btn.wrong { border-color: var(--danger); background: #ffe0e6; }
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-8px); }
-  40% { transform: translateX(8px); }
-  60% { transform: translateX(-6px); }
-  80% { transform: translateX(6px); }
+.tile{
+  width:var(--tile);height:var(--tile);
+  display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--tile) * 0.6);
+  position:relative;
+  transition:background 0.3s;
 }
 
-/* Sparkles overlay */
-.sparkles {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none; z-index: 10;
-}
-.sparkle {
-  position: absolute; font-size: 1.5rem; animation: sparkle-pop 0.8s ease forwards;
-}
-@keyframes sparkle-pop {
-  0% { transform: scale(0) rotate(0deg); opacity: 1; }
-  50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
-  100% { transform: scale(0) rotate(360deg); opacity: 0; }
+/* Tile types */
+.tile-wall{background:#5d4037}
+.tile-path{background:#c8e6c9}
+.tile-grass{background:#a5d6a7}
+.tile-tree{background:#66bb6a}
+.tile-water{background:#4fc3f7}
+.tile-bridge{background:#bcaaa4}
+.tile-gate{background:#ffe082;border:2px solid #f9a825}
+.tile-gate.solved{background:#c8e6c9;border-color:#66bb6a}
+.tile-start{background:#c8e6c9}
+.tile-end{background:#fff9c4;border:2px dashed #fbc02d}
+.tile-rock{background:#90a4ae}
+.tile-flower{background:#c8e6c9}
+.tile-dark-tree{background:#2e7d32}
+.tile-mountain{background:#78909c}
+.tile-snow{background:#eceff1}
+.tile-lava{background:#e65100}
+.tile-castle-wall{background:#5d4037}
+.tile-castle-floor{background:#d7ccc8}
+
+/* Player */
+.player-sprite{
+  position:absolute;z-index:5;
+  font-size:calc(var(--tile) * 0.75);
+  transition:left 0.15s ease-out,top 0.15s ease-out;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
-/* Correct/wrong flash */
-.flash-message {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-  font-family: 'Fredoka', sans-serif; font-size: 1.6rem; font-weight: 700;
-  padding: 0.5rem 1.5rem; border-radius: 1rem; z-index: 11;
-  animation: flash-pop 0.8s ease forwards; pointer-events: none;
-}
-.flash-correct { background: var(--success); color: white; }
-.flash-wrong { background: var(--danger); color: white; }
-@keyframes flash-pop {
-  0% { transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
-  50% { transform: translate(-50%,-50%) scale(1.1); opacity: 1; }
-  100% { transform: translate(-50%,-70%) scale(1); opacity: 0; }
+/* Dog followers */
+.dog-follower{
+  position:absolute;z-index:4;
+  font-size:calc(var(--tile) * 0.55);
+  transition:left 0.25s ease-out,top 0.25s ease-out;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,0.2));
 }
 
-/* Word problem styling */
-.word-problem {
-  font-size: 1.15rem; line-height: 1.6; text-align: left;
-  background: linear-gradient(135deg, #fefae0, #fff8e1);
-  padding: 1rem 1.5rem; border-radius: 1rem;
-  border-left: 4px solid var(--sun); max-width: 100%;
-  font-family: 'Nunito', sans-serif; color: var(--text);
+/* Gate markers */
+.gate-marker{
+  position:absolute;font-size:calc(var(--tile) * 0.5);
+  z-index:3;pointer-events:none;
+  animation:gate-pulse 2s ease-in-out infinite;
+}
+@keyframes gate-pulse{0%,100%{transform:scale(1);opacity:0.9}50%{transform:scale(1.15);opacity:1}}
+.gate-marker.solved{animation:none;opacity:0.5}
+
+/* Dog markers on map */
+.dog-marker{
+  position:absolute;z-index:3;
+  font-size:calc(var(--tile) * 0.65);
+  animation:dog-wiggle 3s ease-in-out infinite;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,0.2));
+}
+@keyframes dog-wiggle{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.dog-marker.rescued{animation:none;display:none}
+
+/* D-Pad for mobile */
+.dpad{
+  position:absolute;bottom:16px;left:16px;z-index:20;
+  display:grid;grid-template-columns:52px 52px 52px;grid-template-rows:52px 52px 52px;gap:2px;
+  opacity:0.7;
+}
+.dpad-btn{
+  width:52px;height:52px;border-radius:10px;
+  background:rgba(255,255,255,0.25);color:#fff;
+  font-size:1.3rem;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,0.15);
+}
+.dpad-btn:active{background:rgba(255,255,255,0.5)}
+.dpad-empty{visibility:hidden}
+
+/* ========== QUEST MODAL ========== */
+.quest-overlay{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:16px;
+}
+.quest-overlay.active{display:flex}
+.quest-box{
+  background:#fff;border-radius:20px;padding:20px 24px;
+  max-width:520px;width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:0 8px 40px rgba(0,0,0,0.3);
+  animation:quest-pop 0.3s ease-out;
+}
+@keyframes quest-pop{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+
+.quest-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.quest-icon{font-size:2rem}
+.quest-title{font-size:1.1rem;font-weight:800;color:var(--text)}
+.quest-progress{
+  display:flex;gap:4px;margin-bottom:16px;
+}
+.quest-dot{
+  width:28px;height:6px;border-radius:3px;background:#e0e0e0;
+  transition:background 0.3s;
+}
+.quest-dot.done{background:var(--primary)}
+.quest-dot.current{background:var(--accent);animation:dot-pulse 1s ease-in-out infinite}
+@keyframes dot-pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.quest-dot.wrong{background:var(--danger)}
+
+.quest-story{
+  font-size:0.85rem;color:var(--text-light);
+  background:#f5f5f5;border-radius:12px;padding:10px 14px;
+  margin-bottom:16px;line-height:1.5;
+  border-left:3px solid var(--accent);
 }
 
-/* ==================== LEVEL COMPLETE ==================== */
-.level-complete-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5); z-index: 100;
-  display: none; justify-content: center; align-items: center;
-  padding: 2rem;
-}
-.level-complete-overlay.show { display: flex; }
-.level-complete-card {
-  background: white; border-radius: 2rem; padding: 2.5rem;
-  text-align: center; max-width: 450px; width: 90%;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
-  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-@keyframes pop-in {
-  from { transform: scale(0.5); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-.level-complete-card h2 { font-size: 2rem; color: var(--forest-dark); margin-bottom: 0.5rem; }
-.level-complete-card .stars { font-size: 2.5rem; margin: 0.5rem 0; }
-.level-complete-card .stats { margin: 1rem 0; font-size: 1rem; color: var(--text-light); }
-.level-complete-card .stats div { margin: 0.3rem 0; }
-.stat-val { font-weight: 700; color: var(--forest-dark); }
-
-/* ==================== FINAL SCREEN ==================== */
-#final-screen {
-  background: linear-gradient(180deg, #ffd166 0%, #f4a261 20%, #52b788 60%, #2d6a4f 100%);
-  padding: 2rem; gap: 1.5rem; justify-content: center;
-}
-.final-card {
-  background: rgba(255,255,255,0.97); border-radius: 2rem; padding: 2rem;
-  text-align: center; max-width: 600px; width: 95%; z-index: 1;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-}
-.final-card h1 { font-size: 2.2rem; color: var(--forest-dark); margin-bottom: 0.5rem; }
-.final-dogs {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem;
-  margin: 1.5rem 0; padding: 1rem;
-  background: linear-gradient(135deg, #d8f3dc, #b7e4c7);
-  border-radius: 1.5rem;
-}
-.final-dog {
-  text-align: center; padding: 0.5rem;
-  animation: final-bounce 1s ease infinite;
-}
-.final-dog:nth-child(2n) { animation-delay: 0.15s; }
-.final-dog:nth-child(3n) { animation-delay: 0.3s; }
-.final-dog .dog-emoji { font-size: 2.5rem; display: block; }
-.final-dog .dog-name { font-size: 0.8rem; font-weight: 700; color: var(--forest-dark); }
-.final-dog .dog-thanks { font-size: 0.7rem; color: var(--text-light); }
-@keyframes final-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+.quest-question{
+  font-size:1.15rem;font-weight:700;color:var(--text);
+  text-align:center;margin-bottom:16px;line-height:1.4;
 }
 
-.final-stats {
-  background: var(--cream); border-radius: 1rem; padding: 1rem;
-  margin: 1rem 0;
+/* Quest answer types */
+.quest-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.choice-btn{
+  padding:12px;border-radius:12px;font-size:1.05rem;font-weight:700;
+  background:#f5f5f5;color:var(--text);border:2px solid #e0e0e0;
+  transition:all .15s;
 }
-.final-stats h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--forest-dark); }
-.records-list { list-style: none; text-align: left; }
-.records-list li {
-  padding: 0.4rem 0; border-bottom: 1px solid #eee;
-  display: flex; justify-content: space-between;
+.choice-btn:hover{background:#e8f5e9;border-color:var(--primary)}
+.choice-btn.correct{background:#c8e6c9;border-color:var(--primary);color:var(--primary-dark)}
+.choice-btn.wrong{background:#ffcdd2;border-color:var(--danger);color:var(--danger)}
+
+.quest-input-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.quest-number-input{
+  width:100px;padding:10px;border-radius:12px;border:2px solid #e0e0e0;
+  font-size:1.3rem;font-weight:700;text-align:center;
+}
+.quest-number-input:focus{border-color:var(--primary)}
+.quest-submit-btn{
+  padding:10px 24px;border-radius:12px;font-size:1rem;font-weight:700;
+  background:var(--primary);color:#fff;
 }
 
-/* ==================== LANGUAGE SELECTOR ==================== */
-.lang-selector {
-  position: fixed; top: 1rem; right: 1rem; z-index: 50;
-  display: flex; gap: 0.3rem; background: rgba(255,255,255,0.9);
-  padding: 0.3rem; border-radius: 1rem;
+.quest-tf-row{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
+.tf-btn{
+  padding:12px 32px;border-radius:12px;font-size:1.1rem;font-weight:700;
+  border:2px solid #e0e0e0;background:#f5f5f5;color:var(--text);
+  transition:all .15s;min-width:100px;
 }
-.lang-btn {
-  padding: 0.3rem 0.6rem; border: none; border-radius: 0.7rem;
-  cursor: pointer; font-size: 0.85rem; background: transparent;
-  font-family: 'Nunito', sans-serif; font-weight: 600;
-  transition: background 0.2s;
-}
-.lang-btn.active { background: var(--meadow); color: white; }
-.lang-btn:hover:not(.active) { background: var(--leaf); }
+.tf-btn:hover{background:#e8f5e9;border-color:var(--primary)}
+.tf-btn.correct{background:#c8e6c9;border-color:var(--primary);color:var(--primary-dark)}
+.tf-btn.wrong{background:#ffcdd2;border-color:var(--danger);color:var(--danger)}
 
-/* Timer display */
-.timer {
-  font-family: 'Fredoka', sans-serif; font-size: 1.1rem;
-  color: var(--forest-dark); display: flex; align-items: center; gap: 0.3rem;
+/* Pattern / sequence display */
+.pattern-display{
+  display:flex;gap:8px;justify-content:center;align-items:center;
+  margin-bottom:16px;flex-wrap:wrap;
+}
+.pattern-item{
+  width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;font-weight:800;
+}
+.pattern-num{background:#e3f2fd;color:#1565c0;border:2px solid #90caf9}
+.pattern-blank{background:#fff3e0;color:var(--accent);border:2px dashed var(--accent);font-size:1.5rem}
+
+/* Match pairs */
+.match-container{display:flex;gap:16px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.match-col{display:flex;flex-direction:column;gap:6px}
+.match-item{
+  padding:8px 14px;border-radius:10px;font-size:0.95rem;font-weight:700;
+  border:2px solid #e0e0e0;background:#f5f5f5;color:var(--text);
+  cursor:pointer;transition:all .15s;text-align:center;min-width:80px;
+}
+.match-item:hover{border-color:var(--primary);background:#e8f5e9}
+.match-item.selected{border-color:var(--accent);background:#fff3e0;color:var(--accent-dark)}
+.match-item.matched{border-color:var(--primary);background:#c8e6c9;color:var(--primary-dark);cursor:default}
+.match-item.wrong-match{border-color:var(--danger);background:#ffcdd2;animation:shake 0.4s}
+
+/* Visual counting */
+.visual-grid{
+  display:flex;gap:6px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.visual-group{
+  display:flex;gap:3px;flex-wrap:wrap;justify-content:center;
+  background:#f5f5f5;border-radius:12px;padding:10px;
+  border:2px solid #e0e0e0;max-width:180px;
+}
+.visual-item{font-size:1.4rem}
+
+/* Comparison */
+.compare-row{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:12px}
+.compare-expr{
+  padding:12px 16px;border-radius:12px;font-size:1.05rem;font-weight:700;
+  background:#f5f5f5;border:2px solid #e0e0e0;color:var(--text);
+  cursor:pointer;transition:all .15s;min-width:100px;text-align:center;
+}
+.compare-expr:hover{border-color:var(--primary);background:#e8f5e9}
+.compare-expr.correct{background:#c8e6c9;border-color:var(--primary)}
+.compare-expr.wrong{background:#ffcdd2;border-color:var(--danger)}
+.compare-vs{font-size:1.2rem;font-weight:800;color:var(--text-light)}
+
+/* Feedback */
+.quest-feedback{
+  text-align:center;padding:8px;border-radius:10px;
+  font-weight:700;font-size:0.95rem;margin-bottom:8px;
+  display:none;
+}
+.quest-feedback.show{display:block;animation:fade-in 0.3s}
+.quest-feedback.correct-fb{background:#c8e6c9;color:#2e7d32}
+.quest-feedback.wrong-fb{background:#ffcdd2;color:#c62828}
+
+/* Shake animation */
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ========== LEVEL COMPLETE ========== */
+#complete-screen{
+  background:linear-gradient(180deg,#87CEEB 0%,#c8e6c9 60%,#81c784 100%);
+  padding:20px;gap:12px;text-align:center;overflow-y:auto;
+}
+.complete-title{font-size:1.8rem;font-weight:900;color:#2e7d32}
+.complete-stars{font-size:2.5rem;letter-spacing:6px}
+.complete-time{font-size:1rem;color:var(--text-light)}
+.complete-record{font-size:0.85rem;color:#f57c00;font-weight:600}
+.complete-dogs{
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+  margin:8px 0;
+}
+.complete-dog{
+  background:#fff;border-radius:16px;padding:10px;text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);min-width:80px;
+  animation:pop-in 0.5s ease-out backwards;
+}
+.complete-dog .dog-emoji{font-size:2rem}
+.complete-dog .dog-name{font-size:0.75rem;font-weight:600;color:var(--text)}
+
+/* ========== VICTORY SCREEN ========== */
+#victory-screen{
+  background:linear-gradient(180deg,#FFD54F 0%,#81c784 40%,#4caf50 100%);
+  padding:20px;gap:16px;text-align:center;overflow-y:auto;
+}
+.victory-title{font-size:2rem;font-weight:900;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,0.2)}
+.victory-message{font-size:1.1rem;color:#fff;max-width:500px;line-height:1.5}
+.victory-dogs{
+  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+  max-width:600px;
+}
+.victory-dog{
+  background:rgba(255,255,255,0.9);border-radius:16px;padding:12px;
+  text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);
+  animation:pop-in 0.5s ease-out backwards;
+}
+.victory-dog .dog-emoji{font-size:2.5rem}
+.victory-dog .dog-name{font-size:0.8rem;font-weight:700;color:var(--text)}
+.victory-dog .dog-thanks{font-size:0.7rem;color:var(--primary-dark)}
+@keyframes pop-in{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+.victory-btn{
+  padding:12px 36px;border-radius:24px;font-size:1.1rem;font-weight:700;
+  background:#fff;color:var(--primary-dark);box-shadow:var(--shadow);
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 600px) {
-  .title-card h1 { font-size: 1.8rem; }
-  .map-container { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; padding: 1rem; }
-  .quest-question { font-size: 1.4rem; }
-  .quest-card { padding: 1.5rem; }
-  .choices-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-  .choice-btn { padding: 0.7rem; font-size: 1.1rem; }
+/* ========== SPARKLE ========== */
+.sparkle{
+  position:fixed;pointer-events:none;z-index:200;
+  font-size:1.5rem;
+  animation:sparkle-fly 1s ease-out forwards;
+}
+@keyframes sparkle-fly{
+  0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-60px) scale(0.3)}
+}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:480px){
+  :root{--tile:40px}
+  .quest-box{padding:16px}
+  .quest-question{font-size:1rem}
+}
+@media(min-width:768px){
+  :root{--tile:56px}
+  .dpad{display:none}
+}
+@media(min-width:1024px){
+  :root{--tile:60px}
 }
 </style>
 </head>
 <body>
 
-<!-- Language selector -->
-<div class="lang-selector">
-  <button class="lang-btn active" data-lang="en">EN</button>
-  <button class="lang-btn" data-lang="de">DE</button>
-  <button class="lang-btn" data-lang="hu">HU</button>
+<!-- ===== TITLE SCREEN ===== -->
+<div id="title-screen" class="screen active">
+  <div class="title-dogs">🐕 🐩 🦮 🐾 🐶</div>
+  <div class="title-logo" data-i18n="title">Ada's Math Quest</div>
+  <div class="title-sub" data-i18n="subtitle">Save the lost dogs!</div>
+
+  <div style="font-size:0.85rem;font-weight:600;color:#4a7c59;margin-top:8px" data-i18n="pick_char">Pick your character:</div>
+  <div class="char-select" id="char-select"></div>
+
+  <input class="name-input" id="player-name" value="Ada" placeholder="Your name" maxlength="20">
+
+  <div class="lang-row" id="lang-row"></div>
+
+  <button class="play-btn" id="play-btn" data-i18n="play">Play!</button>
 </div>
 
-<!-- Floating nature background -->
-<div class="nature-bg" id="nature-bg"></div>
+<!-- ===== LEVEL SELECT ===== -->
+<div id="level-screen" class="screen">
+  <button class="back-btn" id="back-title" data-i18n="back">← Back</button>
+  <div class="level-title" data-i18n="choose_level">Choose a Level</div>
+  <div class="level-grid" id="level-grid"></div>
+</div>
 
-<!-- ==================== START SCREEN ==================== -->
-<div class="screen active" id="start-screen">
-  <div class="title-card">
-    <div class="title-dogs">🐕 🐶 🐾 🦮 🐕‍🦺</div>
-    <h1 data-i18n="title">Ada's Math Quest</h1>
-    <p class="title-subtitle" data-i18n="subtitle">Help rescue the lost dogs in the magical forest!</p>
-    <div class="start-input">
-      <label data-i18n="nameLabel">Your name:</label>
-      <input type="text" id="player-name" value="Ada" maxlength="20">
-      <label data-i18n="levelLabel">Choose level:</label>
-      <select id="level-select"></select>
+<!-- ===== STORY CUTSCENE ===== -->
+<div id="story-screen" class="screen">
+  <div class="story-emoji" id="story-emoji"></div>
+  <div class="story-text" id="story-text"></div>
+  <button class="story-continue" id="story-continue" data-i18n="continue">Continue →</button>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="game-screen" class="screen">
+  <div class="game-hud">
+    <div class="hud-left">
+      <span class="hud-level" id="hud-level"></span>
+      <span class="hud-dogs" id="hud-dogs">🐕 0/0</span>
     </div>
-    <button class="btn btn-primary" id="start-btn">
-      <span data-i18n="startBtn">Start Adventure!</span> 🌟
-    </button>
-    <div style="margin-top:1rem;">
-      <button class="btn btn-gold btn-small" id="records-btn">
-        <span data-i18n="recordsBtn">🏆 Records</span>
-      </button>
+    <div class="hud-right">
+      <span class="hud-timer" id="hud-timer">⏱ 0:00</span>
+      <button class="hud-btn" id="hud-pause" data-i18n="pause">⏸</button>
     </div>
+  </div>
+  <div class="game-viewport" id="game-viewport">
+    <div class="game-map" id="game-map"></div>
+  </div>
+  <!-- D-Pad for mobile -->
+  <div class="dpad" id="dpad">
+    <div class="dpad-empty"></div>
+    <button class="dpad-btn" data-dir="up">▲</button>
+    <div class="dpad-empty"></div>
+    <button class="dpad-btn" data-dir="left">◀</button>
+    <div class="dpad-empty"></div>
+    <button class="dpad-btn" data-dir="right">▶</button>
+    <div class="dpad-empty"></div>
+    <button class="dpad-btn" data-dir="down">▼</button>
+    <div class="dpad-empty"></div>
   </div>
 </div>
 
-<!-- ==================== MAP SCREEN ==================== -->
-<div class="screen" id="map-screen">
-  <div class="map-header">
-    <h2 id="map-title"></h2>
-    <div class="map-info">
-      <span>🐕 <span id="dogs-saved">0</span>/<span id="dogs-total">0</span></span>
-      <span class="timer">⏱️ <span id="level-timer">0:00</span></span>
+<!-- ===== QUEST OVERLAY ===== -->
+<div class="quest-overlay" id="quest-overlay">
+  <div class="quest-box" id="quest-box">
+    <div class="quest-header">
+      <span class="quest-icon" id="quest-icon">🔒</span>
+      <span class="quest-title" id="quest-title"></span>
     </div>
-  </div>
-  <div class="map-container" id="map-container"></div>
-  <div class="map-footer">
-    <button class="btn btn-small btn-gold" id="back-to-menu" data-i18n="backToMenu">← Menu</button>
-  </div>
-</div>
-
-<!-- ==================== QUEST SCREEN ==================== -->
-<div class="screen" id="quest-screen">
-  <div class="quest-header">
-    <h3 id="quest-dog-name"></h3>
     <div class="quest-progress" id="quest-progress"></div>
-  </div>
-  <div class="quest-card" id="quest-card">
     <div class="quest-story" id="quest-story"></div>
     <div class="quest-question" id="quest-question"></div>
-    <div class="answer-area" id="answer-area"></div>
-    <div class="sparkles" id="sparkles"></div>
-  </div>
-  <div style="z-index:1;">
-    <button class="btn btn-small" id="skip-quest" style="background:#ddd;color:#666;" data-i18n="skip">Skip →</button>
+    <div id="quest-answer-area"></div>
+    <div class="quest-feedback" id="quest-feedback"></div>
   </div>
 </div>
 
-<!-- ==================== FINAL SCREEN ==================== -->
-<div class="screen" id="final-screen">
-  <div class="final-card">
-    <h1 data-i18n="finalTitle">🎉 All Dogs Rescued! 🎉</h1>
-    <p id="final-message"></p>
-    <div class="final-dogs" id="final-dogs"></div>
-    <div class="final-stats">
-      <h3 data-i18n="yourRecords">🏆 Your Records</h3>
-      <ul class="records-list" id="final-records"></ul>
-    </div>
-    <button class="btn btn-primary" id="play-again-btn">
-      <span data-i18n="playAgain">Play Again!</span> 🐾
-    </button>
-  </div>
+<!-- ===== LEVEL COMPLETE ===== -->
+<div id="complete-screen" class="screen">
+  <div class="complete-title" id="complete-title" data-i18n="level_complete">Level Complete!</div>
+  <div class="complete-stars" id="complete-stars"></div>
+  <div class="complete-time" id="complete-time"></div>
+  <div class="complete-record" id="complete-record"></div>
+  <div class="complete-dogs" id="complete-dogs"></div>
+  <button class="play-btn" id="next-level-btn" data-i18n="next_level">Next Level →</button>
+  <button class="back-btn" id="complete-back" data-i18n="back_to_levels">Back to Levels</button>
 </div>
 
-<!-- ==================== LEVEL COMPLETE OVERLAY ==================== -->
-<div class="level-complete-overlay" id="level-complete">
-  <div class="level-complete-card">
-    <h2 id="lc-title"></h2>
-    <div class="stars" id="lc-stars"></div>
-    <div class="stats" id="lc-stats"></div>
-    <button class="btn btn-primary" id="lc-continue" data-i18n="continue">Continue →</button>
-  </div>
+<!-- ===== VICTORY SCREEN ===== -->
+<div id="victory-screen" class="screen">
+  <div class="victory-title" id="victory-title"></div>
+  <div class="victory-message" id="victory-message"></div>
+  <div class="victory-dogs" id="victory-dogs"></div>
+  <button class="victory-btn" id="victory-btn" data-i18n="play_again">Play Again! 🐾</button>
 </div>
 
 <script>
-// ================================================================
-// INTERNATIONALIZATION
-// ================================================================
+// ================================================
+// ADA'S MATH QUEST — Grid Labyrinth Adventure
+// ================================================
+
+// ========== i18n ==========
 const I18N = {
   en: {
     title: "Ada's Math Quest",
-    subtitle: "Help rescue the lost dogs in the magical forest!",
-    nameLabel: "Your name:",
-    levelLabel: "Choose level:",
-    startBtn: "Start Adventure!",
-    recordsBtn: "🏆 Records",
-    backToMenu: "← Menu",
-    skip: "Skip →",
+    subtitle: "Save the lost dogs!",
+    pick_char: "Pick your character:",
+    play: "Play! 🎮",
+    back: "← Back",
+    choose_level: "Choose a Level",
     continue: "Continue →",
-    finalTitle: "🎉 All Dogs Rescued! 🎉",
-    playAgain: "Play Again!",
-    yourRecords: "🏆 Your Records",
-    levelNames: [
-      "🌱 Sunny Meadow",
-      "🌿 Whispering Woods",
-      "🌲 Deep Forest",
-      "🏔️ Mountain Trail",
-      "🌊 Crystal Lake",
-      "🏰 Dragon's Den"
-    ],
-    levelDescs: [
-      "Easy addition & subtraction up to 20",
-      "Addition & subtraction up to 50 + patterns",
-      "Up to 100 + multiplication (×2, ×5, ×10)",
-      "Mixed operations + harder patterns",
-      "All operations + sequences",
-      "Boss level — everything mixed!"
-    ],
-    rescueMe: "Rescue me!",
-    rescued: "Rescued! 🎉",
-    locked: "Locked 🔒",
-    questsLeft: "quests left",
-    saving: "Saving",
-    whatNext: "What comes next?",
-    fillBlank: "Fill in the blank:",
-    whichBigger: "Which is bigger?",
-    solve: "Solve:",
-    correct: "Correct! 🌟",
-    tryAgain: "Try again! 💪",
-    levelComplete: "Level Complete!",
-    allDogsLevel: "All dogs in this level are saved!",
+    pause: "⏸",
+    level_complete: "Level Complete! 🎉",
+    next_level: "Next Level →",
+    back_to_levels: "Back to Levels",
+    play_again: "Play Again! 🐾",
+    correct: ["Great job! ✨", "Awesome! 🌟", "Perfect! 💫", "You got it! 🎉", "Brilliant! ⭐"],
+    wrong: ["Try again! 💪", "Almost! 🤔", "Not quite! 🌈", "Keep trying! 💫"],
+    quest_gate: "Solve to open!",
+    quest_bridge: "Fix the bridge!",
+    quest_bear: "Wake the bear!",
+    quest_river: "Cross the river!",
+    quest_rock: "Move the rock!",
+    task_of: "Task {n} of {total}",
+    dogs_saved: "dogs saved",
     time: "Time",
-    mistakes: "Mistakes",
-    bestTime: "Best time",
-    newRecord: "🏆 New Record!",
-    thankYou: "Thank you, {name}!",
-    allSavedMsg: "{name}, you saved all the dogs! They're so happy! 🐾❤️",
-    noRecords: "No records yet!",
-    level: "Level",
-    dogNames: ["Buddy","Luna","Max","Bella","Rocky","Daisy","Charlie","Coco","Rex","Milo","Lola","Zeus","Rosie","Duke","Ruby","Bruno","Nala","Jack","Pepper","Teddy","Winnie","Oscar","Fifi","Scout","Ginger"],
-    stories: [
-      "{dog} is hiding behind a big oak tree! Solve this to help find them!",
-      "{dog} got lost chasing butterflies! Quick, solve this!",
-      "{dog} is stuck near the river! Math will build a bridge!",
-      "{dog} is scared of a friendly bear! Show them it's safe!",
-      "{dog} needs to cross a flower field! Help them find the way!",
-      "{dog} found a mysterious cave! Solve the riddle to open it!",
-      "A squirrel stole {dog}'s bone! Win it back with math!",
-      "{dog} is playing with frogs by the pond! Solve to bring them home!",
-    ],
-    wordProblems: [
-      "{name} found {a} puppies in the park. Then {b} more ran over. How many puppies are there now?",
-      "{dog} had {a} treats. They ate {b} of them. How many treats are left?",
-      "There are {a} dogs in the meadow and {b} dogs by the river. How many dogs are there in total?",
-      "{dog} buried {a} bones. They dug up {b}. How many are still buried?",
-      "{name} gave {a} treats to each of {b} dogs. How many treats in total?",
-    ],
+    best: "Best",
+    new_record: "🏆 New Record!",
+    stars3: "Perfect! No mistakes!",
+    stars2: "Great job!",
+    stars1: "Good effort!",
+    victory_title: "🎉 All Dogs Saved! 🎉",
+    victory_msg: "Thank you, {name}! You saved all the dogs! They are so happy!",
+    thank_you: "Thank you, {name}! 🐾",
+    true_btn: "True ✓",
+    false_btn: "False ✗",
+    submit: "Check →",
+    equal_btn: "Equal =",
+    stories: {
+      1: {emoji:"🌸", text:"The dogs got lost in the sunny meadow! Butterflies told you where to find them. Solve puzzles at each gate to rescue them!"},
+      2: {emoji:"🌲", text:"Deep in the whispering woods, more dogs need your help! The wise owl showed you a secret path. Watch out for tricky puzzles!"},
+      3: {emoji:"🦋", text:"The deep forest is dark and mysterious. Bears guard the bridges! Solve their riddles to pass through and save the dogs!"},
+      4: {emoji:"🏔️", text:"High up on the mountain trail, brave dogs are waiting for rescue. The path is long but you can do it!"},
+      5: {emoji:"🌊", text:"At the crystal lake, dogs are stranded on islands. Build bridges with your math skills to reach them all!"},
+      6: {emoji:"🏰", text:"The Dragon's Den! The last dogs are trapped inside. This is the hardest challenge yet — but you're ready!"}
+    },
+    obstacles: {
+      gate: "A magical gate blocks the path! 🔮",
+      bridge: "The bridge is broken! Fix it with math! 🌉",
+      bear: "A friendly bear is sleeping on the path! 🐻",
+      river: "A river blocks the way! 🌊",
+      rock: "A big rock is in the way! 🪨"
+    },
+    word_templates: [
+      "{name} found {a} puppies in the park. Then {b} more ran over. How many puppies in total?",
+      "There were {total} dogs playing. {b} went home. How many are left?",
+      "{name} has {a} treats. She gives {b} to the puppies. How many treats does she have left?",
+      "There are {a} big dogs and {b} small dogs. How many dogs altogether?",
+      "{total} butterflies were in the garden. {b} flew away. How many stayed?"
+    ]
   },
   de: {
     title: "Adas Mathe-Abenteuer",
-    subtitle: "Hilf die verlorenen Hunde im Zauberwald zu retten!",
-    nameLabel: "Dein Name:",
-    levelLabel: "Wähle ein Level:",
-    startBtn: "Abenteuer starten!",
-    recordsBtn: "🏆 Rekorde",
-    backToMenu: "← Menü",
-    skip: "Überspringen →",
+    subtitle: "Rette die verlorenen Hunde!",
+    pick_char: "Wähle deinen Charakter:",
+    play: "Spielen! 🎮",
+    back: "← Zurück",
+    choose_level: "Wähle ein Level",
     continue: "Weiter →",
-    finalTitle: "🎉 Alle Hunde gerettet! 🎉",
-    playAgain: "Nochmal spielen!",
-    yourRecords: "🏆 Deine Rekorde",
-    levelNames: [
-      "🌱 Sonnige Wiese",
-      "🌿 Flüsterwald",
-      "🌲 Tiefer Wald",
-      "🏔️ Bergpfad",
-      "🌊 Kristallsee",
-      "🏰 Drachenhöhle"
-    ],
-    levelDescs: [
-      "Einfache Addition & Subtraktion bis 20",
-      "Addition & Subtraktion bis 50 + Muster",
-      "Bis 100 + Multiplikation (×2, ×5, ×10)",
-      "Gemischte Aufgaben + schwierigere Muster",
-      "Alle Rechenarten + Zahlenreihen",
-      "Boss-Level — alles gemischt!"
-    ],
-    rescueMe: "Rette mich!",
-    rescued: "Gerettet! 🎉",
-    locked: "Gesperrt 🔒",
-    questsLeft: "Aufgaben übrig",
-    saving: "Rette",
-    whatNext: "Was kommt als nächstes?",
-    fillBlank: "Fülle die Lücke:",
-    whichBigger: "Was ist größer?",
-    solve: "Löse:",
-    correct: "Richtig! 🌟",
-    tryAgain: "Versuch's nochmal! 💪",
-    levelComplete: "Level geschafft!",
-    allDogsLevel: "Alle Hunde in diesem Level sind gerettet!",
+    pause: "⏸",
+    level_complete: "Level geschafft! 🎉",
+    next_level: "Nächstes Level →",
+    back_to_levels: "Zurück zur Levelauswahl",
+    play_again: "Nochmal spielen! 🐾",
+    correct: ["Super! ✨", "Toll! 🌟", "Perfekt! 💫", "Richtig! 🎉", "Klasse! ⭐"],
+    wrong: ["Versuch es nochmal! 💪", "Fast! 🤔", "Nicht ganz! 🌈", "Weiter versuchen! 💫"],
+    quest_gate: "Löse die Aufgabe!",
+    quest_bridge: "Repariere die Brücke!",
+    quest_bear: "Wecke den Bären!",
+    quest_river: "Überquere den Fluss!",
+    quest_rock: "Bewege den Felsen!",
+    task_of: "Aufgabe {n} von {total}",
+    dogs_saved: "Hunde gerettet",
     time: "Zeit",
-    mistakes: "Fehler",
-    bestTime: "Bestzeit",
-    newRecord: "🏆 Neuer Rekord!",
-    thankYou: "Danke, {name}!",
-    allSavedMsg: "{name}, du hast alle Hunde gerettet! Sie sind so glücklich! 🐾❤️",
-    noRecords: "Noch keine Rekorde!",
-    level: "Level",
-    dogNames: ["Buddy","Luna","Max","Bella","Rocky","Daisy","Charlie","Coco","Rex","Milo","Lola","Zeus","Rosie","Duke","Ruby","Bruno","Nala","Jack","Pfeffer","Teddy","Winnie","Oskar","Fifi","Scout","Ingwer"],
-    stories: [
-      "{dog} versteckt sich hinter einer großen Eiche! Löse die Aufgabe!",
-      "{dog} hat sich beim Schmetterlingsjagen verlaufen! Schnell, rechne!",
-      "{dog} steckt am Fluss fest! Mathe baut eine Brücke!",
-      "{dog} hat Angst vor einem freundlichen Bären! Zeig, dass er nett ist!",
-      "{dog} muss über ein Blumenfeld! Hilf den Weg zu finden!",
-      "{dog} fand eine geheimnisvolle Höhle! Löse das Rätsel!",
-      "Ein Eichhörnchen hat {dog}s Knochen gestohlen! Gewinn ihn mit Mathe zurück!",
-      "{dog} spielt mit Fröschen am Teich! Löse die Aufgabe!",
-    ],
-    wordProblems: [
-      "{name} fand {a} Welpen im Park. Dann kamen noch {b} dazu. Wie viele Welpen sind es jetzt?",
-      "{dog} hatte {a} Leckerlis und aß {b} davon. Wie viele sind noch übrig?",
-      "Auf der Wiese sind {a} Hunde und am Fluss {b}. Wie viele Hunde gibt es insgesamt?",
-      "{dog} hat {a} Knochen vergraben und {b} wieder ausgegraben. Wie viele sind noch vergraben?",
-      "{name} gab jedem von {b} Hunden {a} Leckerlis. Wie viele Leckerlis insgesamt?",
-    ],
+    best: "Beste",
+    new_record: "🏆 Neuer Rekord!",
+    stars3: "Perfekt! Keine Fehler!",
+    stars2: "Toll gemacht!",
+    stars1: "Gut gemacht!",
+    victory_title: "🎉 Alle Hunde gerettet! 🎉",
+    victory_msg: "Danke, {name}! Du hast alle Hunde gerettet! Sie sind so glücklich!",
+    thank_you: "Danke, {name}! 🐾",
+    true_btn: "Richtig ✓",
+    false_btn: "Falsch ✗",
+    submit: "Prüfen →",
+    equal_btn: "Gleich =",
+    stories: {
+      1: {emoji:"🌸", text:"Die Hunde haben sich auf der sonnigen Wiese verlaufen! Schmetterlinge zeigen dir den Weg. Löse die Rätsel an jedem Tor!"},
+      2: {emoji:"🌲", text:"Tief im flüsternden Wald brauchen noch mehr Hunde deine Hilfe! Die weise Eule zeigt dir einen Geheimweg!"},
+      3: {emoji:"🦋", text:"Der tiefe Wald ist dunkel und geheimnisvoll. Bären bewachen die Brücken! Löse ihre Rätsel!"},
+      4: {emoji:"🏔️", text:"Hoch oben auf dem Bergpfad warten mutige Hunde auf Rettung. Der Weg ist lang, aber du schaffst das!"},
+      5: {emoji:"🌊", text:"Am Kristallsee sind Hunde auf Inseln gestrandet. Baue Brücken mit deinen Mathe-Fähigkeiten!"},
+      6: {emoji:"🏰", text:"Die Drachenhöhle! Die letzten Hunde sind gefangen. Das ist die schwerste Herausforderung!"}
+    },
+    obstacles: {
+      gate: "Ein magisches Tor versperrt den Weg! 🔮",
+      bridge: "Die Brücke ist kaputt! Repariere sie mit Mathe! 🌉",
+      bear: "Ein freundlicher Bär schläft auf dem Weg! 🐻",
+      river: "Ein Fluss versperrt den Weg! 🌊",
+      rock: "Ein großer Felsen ist im Weg! 🪨"
+    },
+    word_templates: [
+      "{name} hat {a} Welpen im Park gefunden. Dann kamen {b} dazu. Wie viele Welpen sind es insgesamt?",
+      "Es spielten {total} Hunde. {b} gingen nach Hause. Wie viele sind noch da?",
+      "{name} hat {a} Leckerlis. Sie gibt {b} an die Welpen. Wie viele Leckerlis hat sie noch?",
+      "Es gibt {a} große Hunde und {b} kleine Hunde. Wie viele Hunde insgesamt?",
+      "{total} Schmetterlinge waren im Garten. {b} flogen weg. Wie viele blieben?"
+    ]
   },
   hu: {
-    title: "Ada Matekkalandja",
-    subtitle: "Segíts megmenteni az elveszett kutyákat a varázslatos erdőben!",
-    nameLabel: "A neved:",
-    levelLabel: "Válassz pályát:",
-    startBtn: "Kaland indítása!",
-    recordsBtn: "🏆 Rekordok",
-    backToMenu: "← Menü",
-    skip: "Kihagyás →",
+    title: "Ada Matek Kalandja",
+    subtitle: "Mentsd meg az elveszett kutyákat!",
+    pick_char: "Válaszd ki a karaktered:",
+    play: "Játék! 🎮",
+    back: "← Vissza",
+    choose_level: "Válassz pályát",
     continue: "Tovább →",
-    finalTitle: "🎉 Minden kutya megmentve! 🎉",
-    playAgain: "Újra játszom!",
-    yourRecords: "🏆 Rekordok",
-    levelNames: [
-      "🌱 Napfényes rét",
-      "🌿 Susogó erdő",
-      "🌲 Sűrű rengeteg",
-      "🏔️ Hegyi ösvény",
-      "🌊 Kristálytó",
-      "🏰 Sárkánybarlang"
-    ],
-    levelDescs: [
-      "Könnyű összeadás és kivonás 20-ig",
-      "Összeadás és kivonás 50-ig + minták",
-      "100-ig + szorzás (×2, ×5, ×10)",
-      "Vegyes műveletek + nehezebb minták",
-      "Minden művelet + számsorok",
-      "Főnök szint — minden keverve!"
-    ],
-    rescueMe: "Ments meg!",
-    rescued: "Megmentve! 🎉",
-    locked: "Zárolva 🔒",
-    questsLeft: "feladat hátra",
-    saving: "Mentsd meg",
-    whatNext: "Mi jön ezután?",
-    fillBlank: "Töltsd ki az üres helyet:",
-    whichBigger: "Melyik a nagyobb?",
-    solve: "Oldd meg:",
-    correct: "Helyes! 🌟",
-    tryAgain: "Próbáld újra! 💪",
-    levelComplete: "Pálya teljesítve!",
-    allDogsLevel: "Minden kutya megmentve ezen a pályán!",
+    pause: "⏸",
+    level_complete: "Pálya teljesítve! 🎉",
+    next_level: "Következő pálya →",
+    back_to_levels: "Vissza a pályákhoz",
+    play_again: "Újra játszom! 🐾",
+    correct: ["Szuper! ✨", "Ügyes! 🌟", "Tökéletes! 💫", "Helyes! 🎉", "Klassz! ⭐"],
+    wrong: ["Próbáld újra! 💪", "Majdnem! 🤔", "Nem egészen! 🌈", "Próbáld tovább! 💫"],
+    quest_gate: "Oldd meg a feladatot!",
+    quest_bridge: "Javítsd meg a hidat!",
+    quest_bear: "Ébreszd fel a medvét!",
+    quest_river: "Kelj át a folyón!",
+    quest_rock: "Mozdítsd el a sziklát!",
+    task_of: "{n}. feladat a {total}-ból",
+    dogs_saved: "kutya megmentve",
     time: "Idő",
-    mistakes: "Hibák",
-    bestTime: "Legjobb idő",
-    newRecord: "🏆 Új rekord!",
-    thankYou: "Köszönöm, {name}!",
-    allSavedMsg: "{name}, megmentetted az összes kutyát! Nagyon boldogok! 🐾❤️",
-    noRecords: "Még nincsenek rekordok!",
-    level: "Szint",
-    dogNames: ["Bodri","Lujzi","Morzsi","Bella","Buksi","Virág","Csoki","Keksz","Rex","Mili","Lola","Zsiga","Rózsi","Herceg","Rubin","Brúnó","Nála","Jacky","Bors","Maci","Vini","Oszkár","Fifi","Szöcsi","Gyömbér"],
-    stories: [
-      "{dog} egy nagy tölgyfa mögött bújik! Oldd meg a feladatot!",
-      "{dog} lepkéket kergetett és eltévedt! Gyorsan, számolj!",
-      "{dog} a folyónál ragadt! A matek hidat épít!",
-      "{dog} fél egy barátságos medvétől! Mutasd meg, hogy kedves!",
-      "{dog}-nak át kell kelnie a virágmezőn! Segíts megtalálni az utat!",
-      "{dog} egy titokzatos barlangot talált! Oldd meg a rejtvényt!",
-      "Egy mókus ellopta {dog} csontját! Nyerd vissza matekkal!",
-      "{dog} békákkal játszik a tónál! Oldd meg a feladatot!",
-    ],
-    wordProblems: [
-      "{name} talált {a} kiskutyát a parkban. Aztán még {b} odaszaladt. Hány kiskutya van most?",
-      "{dog}-nak volt {a} jutalomfalatja és megevett {b}-t. Hány maradt?",
-      "A réten {a} kutya van, a folyónál {b}. Összesen hány kutya van?",
-      "{dog} elásott {a} csontot és kiásott {b}-t. Hány van még elásva?",
-      "{name} adott {b} kutyának {a}-{a} jutalomfalatot. Összesen hány jutalomfalat?",
-    ],
+    best: "Legjobb",
+    new_record: "🏆 Új rekord!",
+    stars3: "Tökéletes! Hiba nélkül!",
+    stars2: "Szép munka!",
+    stars1: "Jó próbálkozás!",
+    victory_title: "🎉 Minden kutya megmentve! 🎉",
+    victory_msg: "Köszönjük, {name}! Megmentetted az összes kutyát! Nagyon boldogok!",
+    thank_you: "Köszönöm, {name}! 🐾",
+    true_btn: "Igaz ✓",
+    false_btn: "Hamis ✗",
+    submit: "Ellenőrzés →",
+    equal_btn: "Egyenlő =",
+    stories: {
+      1: {emoji:"🌸", text:"A kutyák eltévedtek a napos réten! A pillangók megmutatják az utat. Oldd meg a rejtvényeket!"},
+      2: {emoji:"🌲", text:"Mélyen a suttogó erdőben még több kutyának van szüksége a segítségedre! A bölcs bagoly mutatja a titkos utat!"},
+      3: {emoji:"🦋", text:"A mély erdő sötét és titokzatos. Medvék őrzik a hidakat! Oldd meg a rejtvényeiket!"},
+      4: {emoji:"🏔️", text:"Fent a hegyi ösvényen bátor kutyák várják a megmentést. Az út hosszú, de te meg tudod csinálni!"},
+      5: {emoji:"🌊", text:"A kristálytónál kutyák rekedtek a szigeteken. Építs hidakat a matek tudásoddal!"},
+      6: {emoji:"🏰", text:"A sárkány barlangja! Az utolsó kutyák csapdába estek. Ez a legnehezebb kihívás!"}
+    },
+    obstacles: {
+      gate: "Egy varázslatos kapu zárja el az utat! 🔮",
+      bridge: "A híd elromlott! Javítsd meg matekkal! 🌉",
+      bear: "Egy barátságos medve alszik az úton! 🐻",
+      river: "Egy folyó zárja el az utat! 🌊",
+      rock: "Egy nagy szikla van az útban! 🪨"
+    },
+    word_templates: [
+      "{name} talált {a} kiskutyát a parkban. Aztán még {b} odaszaladt. Hány kiskutya van összesen?",
+      "{total} kutya játszott. {b} hazament. Hány maradt?",
+      "{name}-nak van {a} jutalomfalatja. {b}-t odaadja a kiskutyáknak. Hány jutalomfalatja maradt?",
+      "Van {a} nagy kutya és {b} kis kutya. Hány kutya van összesen?",
+      "{total} pillangó volt a kertben. {b} elrepült. Hány maradt?"
+    ]
   }
 };
 
-let lang = 'en';
-function t(key) { return I18N[lang][key] || I18N['en'][key] || key; }
-function setLang(newLang) {
-  lang = newLang;
-  localStorage.setItem('amq_lang', lang);
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (I18N[lang][key]) el.textContent = I18N[lang][key];
-  });
-  document.title = t('title') + ' 🐕';
-  populateLevelSelect();
-}
+let lang = localStorage.getItem('amq-lang') || 'en';
+function t(key) { return I18N[lang]?.[key] || I18N.en[key] || key; }
+function tRand(key) { const arr = t(key); return Array.isArray(arr) ? arr[Math.floor(Math.random()*arr.length)] : arr; }
 
-// ================================================================
-// DOG EMOJIS AND LEVEL CONFIG
-// ================================================================
-const DOG_EMOJIS = ['🐕','🐶','🦮','🐕‍🦺','🐩','🌭','🐾'];
-
-const LEVELS = [
-  { id: 1, dogCount: 3, questsPerDog: 3, maxNum: 20,  ops: ['+','-'], patterns: false, mult: false, div: false, wordProb: false },
-  { id: 2, dogCount: 4, questsPerDog: 3, maxNum: 50,  ops: ['+','-'], patterns: true,  mult: false, div: false, wordProb: true  },
-  { id: 3, dogCount: 4, questsPerDog: 4, maxNum: 100, ops: ['+','-'], patterns: true,  mult: true,  div: false, wordProb: true  },
-  { id: 4, dogCount: 5, questsPerDog: 4, maxNum: 100, ops: ['+','-','×'], patterns: true, mult: true, div: true,  wordProb: true  },
-  { id: 5, dogCount: 5, questsPerDog: 5, maxNum: 100, ops: ['+','-','×','÷'], patterns: true, mult: true, div: true, wordProb: true },
-  { id: 6, dogCount: 6, questsPerDog: 5, maxNum: 100, ops: ['+','-','×','÷'], patterns: true, mult: true, div: true, wordProb: true },
+// ========== CHARACTERS ==========
+const CHARACTERS = [
+  {id:'girl', emoji:'👧', name:'Girl'},
+  {id:'boy', emoji:'👦', name:'Boy'},
+  {id:'dog', emoji:'🐕', name:'Dog'},
+  {id:'cat', emoji:'🐱', name:'Cat'},
+  {id:'bunny', emoji:'🐰', name:'Bunny'},
+  {id:'fox', emoji:'🦊', name:'Fox'},
 ];
 
-// ================================================================
-// GAME STATE
-// ================================================================
-let gameState = {
-  playerName: 'Ada',
-  currentLevel: 0,
-  dogs: [],
-  currentDogIdx: -1,
-  currentQuestIdx: 0,
-  quests: [],
-  mistakes: 0,
-  levelStartTime: 0,
-  timerInterval: null,
+// ========== DOG DATA ==========
+const DOG_POOL = [
+  {emoji:'🐕',name:'Buddy'},{emoji:'🐩',name:'Rosie'},{emoji:'🦮',name:'Max'},
+  {emoji:'🐶',name:'Bella'},{emoji:'🐕‍🦺',name:'Rocky'},{emoji:'🐾',name:'Luna'},
+  {emoji:'🐕',name:'Charlie'},{emoji:'🐩',name:'Daisy'},{emoji:'🦮',name:'Milo'},
+  {emoji:'🐶',name:'Coco'},{emoji:'🐕‍🦺',name:'Rex'},{emoji:'🐾',name:'Lola'},
+  {emoji:'🐕',name:'Duke'},{emoji:'🐩',name:'Sasha'},{emoji:'🦮',name:'Bear'},
+  {emoji:'🐶',name:'Pepper'},{emoji:'🐕‍🦺',name:'Zeus'},{emoji:'🐾',name:'Nala'},
+  {emoji:'🐕',name:'Bruno'},{emoji:'🐩',name:'Ginger'},{emoji:'🦮',name:'Toby'},
+  {emoji:'🐶',name:'Ruby'},{emoji:'🐕‍🦺',name:'Thor'},{emoji:'🐾',name:'Kira'},
+  {emoji:'🐕',name:'Oscar'},{emoji:'🐩',name:'Willow'},{emoji:'🦮',name:'Finn'},
+];
+
+// ========== TILE TYPES ==========
+const T = {
+  W: 'wall', P: 'path', G: 'grass', T: 'tree', R: 'water',
+  B: 'bridge', A: 'gate', S: 'start', E: 'end', K: 'rock',
+  F: 'flower', D: 'dark-tree', M: 'mountain', N: 'snow',
+  L: 'lava', C: 'castle-wall', O: 'castle-floor'
+};
+const WALKABLE = new Set([T.P, T.G, T.B, T.A, T.S, T.E, T.F, T.O]);
+
+const TILE_EMOJI = {
+  [T.W]:'', [T.P]:'', [T.G]:'', [T.T]:'🌳', [T.R]:'🌊', [T.B]:'🌉',
+  [T.A]:'⛩️', [T.S]:'🚩', [T.E]:'⭐', [T.K]:'🪨', [T.F]:['🌸','🌺','🌻','🌼','🌷'][0],
+  [T.D]:'🌲', [T.M]:'⛰️', [T.N]:'❄️', [T.L]:'🔥', [T.C]:'🧱', [T.O]:''
 };
 
-// ================================================================
-// RECORDS (IndexedDB with localStorage fallback)
-// ================================================================
-let db = null;
-const DB_NAME = 'AdaMathQuest';
-const STORE_NAME = 'records';
+// ========== LEVEL DEFINITIONS ==========
+// Map: 2D array of tile types. Gates referenced by index.
+// Gates: {row,col,type,dogIdx,tasks} — type is the obstacle kind
+const OBSTACLE_TYPES = ['gate','bridge','bear','river','rock'];
+const OBSTACLE_ICONS = {gate:'⛩️',bridge:'🌉',bear:'🐻',river:'🌊',rock:'🪨'};
 
-function openDB() {
-  return new Promise((resolve) => {
-    try {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'level' });
-        }
-      };
-      req.onsuccess = (e) => { db = e.target.result; resolve(true); };
-      req.onerror = () => resolve(false);
-    } catch(e) { resolve(false); }
+</script>
+
+// ========== LEVEL MAP GENERATOR ==========
+function buildLevels() {
+  const W=T.W,P=T.P,G=T.G,Tr=T.T,R=T.R,B=T.B,A=T.A,S=T.S,E=T.E,K=T.K,F=T.F,D=T.D,M=T.M,N=T.N,L=T.L,C=T.C,O=T.O;
+
+  return [
+    // Level 1: Sunny Meadow (10x10)
+    {
+      name:{en:"Sunny Meadow",de:"Sonnige Wiese",hu:"Napos rét"},
+      icon:"🌸",
+      bg:"linear-gradient(180deg,#87CEEB 0%,#a5d6a7 100%)",
+      tasks:3, difficulty:1,
+      map:[
+        [Tr,Tr,G, G, G, G, G, Tr,Tr,Tr],
+        [Tr,S, P, P, F, G, G, G, Tr,Tr],
+        [G, G, G, P, G, G, Tr, G, G, Tr],
+        [G, F, G, P, P, A, P, P, G, G ],
+        [Tr,G, G, G, G, G, G, P, G, Tr],
+        [G, G, Tr,G, F, G, G, P, G, G ],
+        [G, G, G, G, G, A, P, P, G, Tr],
+        [Tr,G, G, G, G, P, G, G, G, G ],
+        [G, G, F, G, G, P, P, A, P, E ],
+        [Tr,Tr,G, G, Tr,G, G, Tr,G, Tr],
+      ],
+      start:{r:1,c:1},
+      end:{r:8,c:9},
+      gates:[
+        {r:3,c:5,type:'gate',tasks:3},
+        {r:6,c:5,type:'gate',tasks:3},
+        {r:8,c:7,type:'gate',tasks:3},
+      ]
+    },
+    // Level 2: Whispering Woods (12x10)
+    {
+      name:{en:"Whispering Woods",de:"Flüsterwald",hu:"Suttogó erdő"},
+      icon:"🌲",
+      bg:"linear-gradient(180deg,#87CEEB 0%,#66bb6a 100%)",
+      tasks:3, difficulty:2,
+      map:[
+        [D, D, D, G, G, D, D, D, D, D, D, D ],
+        [D, S, P, P, G, D, G, G, G, D, D, D ],
+        [D, G, D, P, G, G, G, D, G, G, D, D ],
+        [G, G, D, P, P, A, P, P, G, G, G, D ],
+        [D, G, G, G, D, G, G, P, D, G, G, G ],
+        [D, D, G, G, D, G, G, P, G, G, D, G ],
+        [G, G, G, D, G, F, A, P, G, D, G, G ],
+        [G, F, G, G, G, G, P, P, P, A, P, G ],
+        [D, G, G, D, D, G, P, D, D, G, P, G ],
+        [D, D, D, D, D, G, A, P, P, P, P, E ],
+      ],
+      start:{r:1,c:1},
+      end:{r:9,c:11},
+      gates:[
+        {r:3,c:5,type:'bridge',tasks:3},
+        {r:6,c:6,type:'bear',tasks:3},
+        {r:7,c:9,type:'gate',tasks:4},
+        {r:9,c:6,type:'rock',tasks:3},
+      ]
+    },
+    // Level 3: Deep Forest (12x12)
+    {
+      name:{en:"Deep Forest",de:"Tiefer Wald",hu:"Mély erdő"},
+      icon:"🦋",
+      bg:"linear-gradient(180deg,#558b2f 0%,#2e7d32 100%)",
+      tasks:4, difficulty:3,
+      map:[
+        [D, D, D, D, D, D, D, D, D, D, D, D ],
+        [D, S, P, P, F, D, D, G, G, D, D, D ],
+        [D, D, D, P, D, D, G, G, D, D, D, D ],
+        [D, G, D, A, D, G, G, D, D, G, G, D ],
+        [D, G, G, P, G, G, D, D, G, G, D, D ],
+        [D, D, G, P, P, P, A, P, P, G, D, D ],
+        [D, D, D, G, G, D, D, D, P, D, D, D ],
+        [D, G, G, G, D, D, D, D, P, G, D, D ],
+        [D, G, D, D, D, G, G, A, P, G, G, D ],
+        [D, G, G, D, G, G, G, P, D, D, G, D ],
+        [D, D, G, G, G, F, G, P, P, A, P, E ],
+        [D, D, D, D, D, D, D, D, D, D, D, D ],
+      ],
+      start:{r:1,c:1},
+      end:{r:10,c:11},
+      gates:[
+        {r:3,c:3,type:'bear',tasks:4},
+        {r:5,c:6,type:'bridge',tasks:4},
+        {r:8,c:7,type:'gate',tasks:4},
+        {r:10,c:9,type:'rock',tasks:4},
+      ]
+    },
+    // Level 4: Mountain Trail (14x12)
+    {
+      name:{en:"Mountain Trail",de:"Bergpfad",hu:"Hegyi ösvény"},
+      icon:"🏔️",
+      bg:"linear-gradient(180deg,#90a4ae 0%,#78909c 100%)",
+      tasks:4, difficulty:4,
+      map:[
+        [K, K, M, M, K, K, K, M, M, K, K, K, K, K ],
+        [K, S, P, P, K, G, G, K, K, G, K, K, K, K ],
+        [K, K, K, P, G, G, K, K, G, G, K, K, K, K ],
+        [K, G, K, A, K, G, G, K, G, G, K, G, K, K ],
+        [K, G, G, P, P, P, K, K, G, K, K, G, K, K ],
+        [K, K, G, G, K, P, G, K, G, G, G, G, K, K ],
+        [K, K, K, G, K, A, P, P, P, G, K, K, K, K ],
+        [K, G, G, G, K, G, K, K, P, K, K, G, K, K ],
+        [K, G, K, K, K, G, K, K, P, P, A, P, K, K ],
+        [K, G, G, K, G, G, K, K, G, K, K, P, K, K ],
+        [K, K, G, G, G, F, K, K, G, K, A, P, P, E ],
+        [K, K, K, K, K, K, K, K, K, K, K, K, K, K ],
+      ],
+      start:{r:1,c:1},
+      end:{r:10,c:13},
+      gates:[
+        {r:3,c:3,type:'rock',tasks:4},
+        {r:6,c:5,type:'bear',tasks:4},
+        {r:8,c:10,type:'bridge',tasks:5},
+        {r:10,c:10,type:'gate',tasks:4},
+      ]
+    },
+    // Level 5: Crystal Lake (14x12)
+    {
+      name:{en:"Crystal Lake",de:"Kristallsee",hu:"Kristálytó"},
+      icon:"🌊",
+      bg:"linear-gradient(180deg,#4fc3f7 0%,#0288d1 100%)",
+      tasks:5, difficulty:5,
+      map:[
+        [G, Tr,G, R, R, R, R, R, G, Tr,G, G, G, G ],
+        [G, S, P, P, R, R, R, R, G, G, G, Tr,G, G ],
+        [G, Tr,G, P, R, R, R, R, G, G, G, G, Tr,G ],
+        [G, G, G, A, P, B, P, G, G, Tr,G, G, G, G ],
+        [G, Tr,G, G, R, R, P, G, G, G, G, G, G, G ],
+        [G, G, G, G, R, R, P, P, A, P, G, G, Tr,G ],
+        [G, G, Tr,G, R, R, R, R, G, P, G, G, G, G ],
+        [G, G, G, G, R, R, R, R, G, P, P, A, P, G ],
+        [G, Tr,G, G, G, R, R, G, G, Tr,G, G, P, G ],
+        [G, G, G, G, G, R, G, G, G, G, G, G, P, G ],
+        [G, G, Tr,G, G, G, G, G, A, P, P, P, P, G ],
+        [G, G, G, G, Tr,G, G, G, P, Tr,G, G, E, G ],
+      ],
+      start:{r:1,c:1},
+      end:{r:11,c:12},
+      gates:[
+        {r:3,c:3,type:'river',tasks:4},
+        {r:5,c:8,type:'bridge',tasks:5},
+        {r:7,c:11,type:'gate',tasks:5},
+        {r:10,c:8,type:'bear',tasks:5},
+      ]
+    },
+    // Level 6: Dragon's Den (16x14)
+    {
+      name:{en:"Dragon's Den",de:"Drachenhöhle",hu:"Sárkány barlangja"},
+      icon:"🏰",
+      bg:"linear-gradient(180deg,#5d4037 0%,#3e2723 100%)",
+      tasks:5, difficulty:6,
+      map:[
+        [C, C, C, C, C, C, C, C, C, C, C, C, C, C, C, C ],
+        [C, S, O, O, C, O, O, C, C, O, O, C, C, C, C, C ],
+        [C, C, C, O, C, O, C, C, O, O, C, C, C, C, C, C ],
+        [C, O, C, A, C, O, O, C, O, C, C, O, O, C, C, C ],
+        [C, O, O, O, O, O, C, C, O, C, O, O, C, C, C, C ],
+        [C, C, O, C, C, A, O, O, O, C, O, C, C, C, C, C ],
+        [C, C, O, C, C, O, C, C, O, C, O, C, C, C, C, C ],
+        [C, O, O, O, C, O, C, C, A, O, O, O, C, C, C, C ],
+        [C, O, C, O, C, O, C, C, O, C, C, O, C, C, C, C ],
+        [C, O, C, O, O, A, O, O, O, C, C, O, C, C, C, C ],
+        [C, O, C, C, C, O, C, C, O, C, O, O, O, C, C, C ],
+        [C, O, O, O, C, O, C, C, A, O, O, C, O, C, C, C ],
+        [C, C, C, O, C, O, C, C, C, C, C, C, O, O, E, C ],
+        [C, C, C, C, C, C, C, C, C, C, C, C, C, C, C, C ],
+      ],
+      start:{r:1,c:1},
+      end:{r:12,c:14},
+      gates:[
+        {r:3,c:3,type:'gate',tasks:5},
+        {r:5,c:5,type:'rock',tasks:5},
+        {r:7,c:8,type:'bear',tasks:5},
+        {r:9,c:5,type:'bridge',tasks:5},
+        {r:11,c:8,type:'gate',tasks:5},
+      ]
+    },
+  ];
+}
+
+
+// ========== MATH QUEST GENERATOR ==========
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=rand(0,i);[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+function pick(arr){return arr[rand(0,arr.length-1)]}
+
+// Difficulty ranges
+const DIFF = {
+  1:{max:20,ops:['+','-'],multMax:0,seqLen:4},
+  2:{max:50,ops:['+','-'],multMax:0,seqLen:5},
+  3:{max:100,ops:['+','-','×'],multMax:10,seqLen:5},
+  4:{max:100,ops:['+','-','×'],multMax:10,seqLen:6},
+  5:{max:100,ops:['+','-','×','÷'],multMax:12,seqLen:6},
+  6:{max:100,ops:['+','-','×','÷'],multMax:12,seqLen:7},
+};
+
+function genArithmetic(diff){
+  const d=DIFF[diff];
+  const op=pick(d.ops);
+  let a,b,answer;
+  if(op==='+'){
+    a=rand(1,Math.floor(d.max*0.6));b=rand(1,d.max-a);answer=a+b;
+  }else if(op==='-'){
+    answer=rand(0,Math.floor(d.max*0.5));b=rand(1,Math.floor(d.max*0.5));a=answer+b;
+  }else if(op==='×'){
+    a=rand(2,d.multMax);b=rand(2,d.multMax);answer=a*b;
+  }else{// ÷
+    b=rand(2,d.multMax);answer=rand(1,10);a=b*answer;
+  }
+  return {a,b,op,answer};
+}
+
+// Quest type generators — each returns {type,question,answer,options?,extra?}
+const QUEST_TYPES = {
+  // 1. Multiple choice
+  multipleChoice(diff){
+    const{a,b,op,answer}=genArithmetic(diff);
+    const q=`${a} ${op} ${b} = ?`;
+    const opts=new Set([answer]);
+    while(opts.size<4){opts.add(answer+rand(-5,5))}
+    const options=shuffle([...opts].filter(x=>x>=0));
+    if(!options.includes(answer)){options[rand(0,3)]=answer}
+    return{type:'multipleChoice',question:q,answer,options};
+  },
+
+  // 2. Number input
+  numberInput(diff){
+    const{a,b,op,answer}=genArithmetic(diff);
+    return{type:'numberInput',question:`${a} ${op} ${b} = ?`,answer};
+  },
+
+  // 3. Fill the blank
+  fillBlank(diff){
+    const{a,b,op,answer}=genArithmetic(diff);
+    const side=rand(0,1); // 0=left blank, 1=right blank
+    let q,ans;
+    if(op==='+'){
+      if(side===0){q=`__ ${op} ${b} = ${answer}`;ans=a}
+      else{q=`${a} ${op} __ = ${answer}`;ans=b}
+    }else if(op==='-'){
+      if(side===0){q=`__ ${op} ${b} = ${a-b}`;ans=a}
+      else{q=`${a} ${op} __ = ${a-b}`;ans=b}
+    }else if(op==='×'){
+      if(side===0){q=`__ ${op} ${b} = ${answer}`;ans=a}
+      else{q=`${a} ${op} __ = ${answer}`;ans=b}
+    }else{
+      if(side===0){q=`__ ${op} ${b} = ${answer}`;ans=a}
+      else{q=`${a} ${op} __ = ${answer}`;ans=b}
+    }
+    return{type:'numberInput',question:q,answer:ans};
+  },
+
+  // 4. Pattern / sequence
+  pattern(diff){
+    const d=DIFF[diff];
+    const len=d.seqLen;
+    const step=rand(2,diff<=2?5:10);
+    const start=rand(1,20);
+    const seq=[];
+    for(let i=0;i<len;i++)seq.push(start+step*i);
+    const blankIdx=rand(Math.floor(len/2),len-1);
+    const answer=seq[blankIdx];
+    const display=seq.map((v,i)=>i===blankIdx?'__':v);
+    return{type:'pattern',question:'',answer,sequence:display,fullSeq:seq};
+  },
+
+  // 5. True/False
+  trueFalse(diff){
+    const{a,b,op,answer}=genArithmetic(diff);
+    const isTrue=rand(0,1)===1;
+    const shown=isTrue?answer:answer+pick([-3,-2,-1,1,2,3]);
+    const q=`${a} ${op} ${b} = ${shown}`;
+    return{type:'trueFalse',question:q,answer:isTrue};
+  },
+
+  // 6. Comparison
+  comparison(diff){
+    const r1=genArithmetic(diff);
+    const r2=genArithmetic(diff);
+    const val1=r1.answer, val2=r2.answer;
+    const expr1=`${r1.a} ${r1.op} ${r1.b}`;
+    const expr2=`${r2.a} ${r2.op} ${r2.b}`;
+    let answer;
+    if(val1>val2)answer='left';
+    else if(val2>val1)answer='right';
+    else answer='equal';
+    return{type:'comparison',question:'',answer,expr1,expr2,val1,val2};
+  },
+
+  // 7. Visual counting
+  visualCounting(diff){
+    const d=DIFF[diff];
+    const maxN=Math.min(d.max,20);
+    const groupA=rand(2,Math.floor(maxN/2));
+    const groupB=rand(1,maxN-groupA);
+    const total=groupA+groupB;
+    const askTotal=rand(0,1)===1;
+    let question,answer;
+    if(askTotal){
+      question=t('obstacles').gate; // placeholder, overridden in render
+      answer=total;
+    }else{
+      answer=Math.abs(groupA-groupB);
+    }
+    return{type:'visualCounting',question:'',answer,groupA,groupB,askTotal,total};
+  },
+
+  // 8. Word problem
+  wordProblem(diff){
+    const d=DIFF[diff];
+    const templates=t('word_templates');
+    const tmpl=pick(templates);
+    const playerName=game.playerName||'Ada';
+    let a,b,total,answer;
+    if(tmpl.includes('{total}')){
+      total=rand(10,Math.min(d.max,50));b=rand(1,total-1);a=total-b;answer=a;
+    }else{
+      a=rand(2,Math.floor(d.max*0.4));b=rand(1,Math.floor(d.max*0.4));total=a+b;answer=total;
+    }
+    if(tmpl.includes('left')||tmpl.includes('maradt')||tmpl.includes('noch')){
+      answer=total-b;
+    }
+    const q=tmpl.replace(/{name}/g,playerName).replace(/{a}/g,a).replace(/{b}/g,b).replace(/{total}/g,total);
+    return{type:'numberInput',question:q,answer};
+  },
+
+  // 9. Match pairs (simplified — pick 3 pairs, match left to right)
+  matchPairs(diff){
+    const pairs=[];
+    for(let i=0;i<3;i++){
+      const{a,b,op,answer}=genArithmetic(diff);
+      pairs.push({expr:`${a} ${op} ${b}`,val:answer});
+    }
+    return{type:'matchPairs',question:'',answer:null,pairs};
+  },
+};
+
+function generateQuestTasks(diff,count){
+  // Determine which types to use based on difficulty
+  const available=['multipleChoice','numberInput','fillBlank','trueFalse','pattern'];
+  if(diff>=2)available.push('comparison','wordProblem');
+  if(diff>=3)available.push('visualCounting');
+  if(diff>=4)available.push('matchPairs');
+
+  const tasks=[];
+  const used=new Set();
+  for(let i=0;i<count;i++){
+    // Try to use different types
+    let candidates=available.filter(t=>!used.has(t));
+    if(candidates.length===0){candidates=available;used.clear()}
+    const type=pick(candidates);
+    used.add(type);
+    tasks.push(QUEST_TYPES[type](diff));
+  }
+  return tasks;
+}
+
+
+// ========== GAME STATE ==========
+const game = {
+  playerName: 'Ada',
+  playerChar: CHARACTERS[0],
+  currentLevel: 0,
+  levels: null,
+  // In-level state
+  map: null,
+  playerPos: {r:0,c:0},
+  gates: [],
+  dogs: [],
+  rescuedDogs: [],
+  followerPositions: [],
+  timerStart: 0,
+  timerInterval: null,
+  elapsed: 0,
+  mistakes: 0,
+  // Quest state
+  questActive: false,
+  currentGate: null,
+  currentTasks: [],
+  currentTaskIdx: 0,
+  taskMistakes: [],
+  // All rescued dogs across all levels
+  allRescuedDogs: [],
+  // DB
+  db: null,
+};
+
+// ========== IndexedDB ==========
+function openDB(){
+  return new Promise((resolve)=>{
+    const req=indexedDB.open('AdaMathQuest',1);
+    req.onupgradeneeded=(e)=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains('records'))db.createObjectStore('records',{keyPath:'level'});
+      if(!db.objectStoreNames.contains('progress'))db.createObjectStore('progress',{keyPath:'key'});
+    };
+    req.onsuccess=(e)=>{game.db=e.target.result;resolve()};
+    req.onerror=()=>resolve();
+  });
+}
+function saveRecord(level,time,stars){
+  if(!game.db)return;
+  const tx=game.db.transaction('records','readwrite');
+  const store=tx.objectStore('records');
+  store.get(level).onsuccess=(e)=>{
+    const old=e.target.result;
+    if(!old||time<old.time){
+      store.put({level,time,stars,date:Date.now()});
+    }
+  };
+}
+function getRecord(level){
+  return new Promise((resolve)=>{
+    if(!game.db)return resolve(null);
+    const tx=game.db.transaction('records','readonly');
+    tx.objectStore('records').get(level).onsuccess=(e)=>resolve(e.target.result||null);
+  });
+}
+function saveProgress(maxLevel){
+  if(!game.db)return;
+  const tx=game.db.transaction('progress','readwrite');
+  tx.objectStore('progress').put({key:'maxLevel',value:maxLevel});
+}
+function getProgress(){
+  return new Promise((resolve)=>{
+    if(!game.db)return resolve(0);
+    const tx=game.db.transaction('progress','readonly');
+    tx.objectStore('progress').get('maxLevel').onsuccess=(e)=>resolve(e.target.result?.value||0);
   });
 }
 
-async function getRecord(level) {
-  if (db) {
-    return new Promise((resolve) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.get(level);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => resolve(null);
-    });
-  }
-  const data = localStorage.getItem(`amq_record_${level}`);
-  return data ? JSON.parse(data) : null;
-}
-
-async function saveRecord(level, time, mistakes) {
-  const record = { level, time, mistakes, date: new Date().toISOString(), name: gameState.playerName };
-  if (db) {
-    return new Promise((resolve) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      store.put(record);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    });
-  }
-  localStorage.setItem(`amq_record_${level}`, JSON.stringify(record));
-}
-
-async function getAllRecords() {
-  if (db) {
-    return new Promise((resolve) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => resolve([]);
-    });
-  }
-  const records = [];
-  for (let i = 1; i <= 6; i++) {
-    const data = localStorage.getItem(`amq_record_${i}`);
-    if (data) records.push(JSON.parse(data));
-  }
-  return records;
-}
-
-// ================================================================
-// QUESTION GENERATORS
-// ================================================================
-function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) { const j = rand(0, i); [a[i], a[j]] = [a[j], a[i]]; }
-  return a;
-}
-
-function genArithmetic(cfg) {
-  const op = pick(cfg.ops.filter(o => {
-    if (o === '×' && !cfg.mult) return false;
-    if (o === '÷' && !cfg.div) return false;
-    return true;
-  }));
-
-  let a, b, answer;
-  if (op === '+') {
-    answer = rand(2, cfg.maxNum);
-    a = rand(1, answer - 1);
-    b = answer - a;
-  } else if (op === '-') {
-    a = rand(2, cfg.maxNum);
-    b = rand(1, a - 1);
-    answer = a - b;
-  } else if (op === '×') {
-    const factors = [2, 3, 4, 5, 10];
-    b = pick(factors);
-    a = rand(1, Math.floor(cfg.maxNum / b));
-    answer = a * b;
-  } else { // ÷
-    const divisors = [2, 3, 4, 5, 10];
-    b = pick(divisors);
-    answer = rand(1, Math.floor(cfg.maxNum / b));
-    a = answer * b;
-  }
-
-  // Randomly decide: show as normal or missing-number
-  const isMissing = Math.random() < 0.35;
-  if (isMissing) {
-    const missingPos = Math.random() < 0.5 ? 'left' : 'right';
-    if (missingPos === 'left' && (op === '+' || op === '×')) {
-      return { type: 'input', question: `__ ${op} ${b} = ${answer}`, answer: a, hint: t('fillBlank') };
-    } else {
-      return { type: 'input', question: `${a} ${op} __ = ${answer}`, answer: b, hint: t('fillBlank') };
-    }
-  }
-  return { type: 'input', question: `${a} ${op} ${b} = ?`, answer, hint: t('solve') };
-}
-
-function genPattern(cfg) {
-  const patternTypes = [];
-  patternTypes.push('addSeq');
-  if (cfg.maxNum >= 50) patternTypes.push('multSeq');
-  if (cfg.mult) patternTypes.push('timesTable');
-
-  const pType = pick(patternTypes);
-  let seq, answer, blankIdx;
-
-  if (pType === 'addSeq') {
-    const step = rand(2, Math.min(10, Math.floor(cfg.maxNum / 6)));
-    const start = rand(1, Math.min(20, cfg.maxNum - step * 5));
-    seq = [];
-    for (let i = 0; i < 6; i++) seq.push(start + step * i);
-    blankIdx = rand(3, 5);
-    answer = seq[blankIdx];
-  } else if (pType === 'multSeq') {
-    const base = rand(2, 5);
-    seq = [];
-    for (let i = 1; i <= 6; i++) seq.push(base * i);
-    blankIdx = rand(3, 5);
-    answer = seq[blankIdx];
-  } else {
-    const mult = pick([2, 3, 5, 10]);
-    seq = [];
-    for (let i = 1; i <= 6; i++) seq.push(mult * i);
-    blankIdx = rand(2, 5);
-    answer = seq[blankIdx];
-  }
-
-  const display = seq.map((n, i) => i === blankIdx ? '__' : n).join(', ');
-  return { type: 'input', question: display, answer, hint: t('whatNext') };
-}
-
-function genComparison(cfg) {
-  // Generate two simple arithmetic expressions and ask which is bigger
-  function makeExpr() {
-    const op = pick(['+', '-']);
-    if (op === '+') {
-      const a = rand(1, Math.floor(cfg.maxNum / 2));
-      const b = rand(1, Math.floor(cfg.maxNum / 2));
-      return { expr: `${a} + ${b}`, val: a + b };
-    } else {
-      const a = rand(Math.floor(cfg.maxNum / 4) + 2, cfg.maxNum);
-      const b = rand(1, a - 1);
-      return { expr: `${a} - ${b}`, val: a - b };
-    }
-  }
-
-  let left, right;
-  // Keep regenerating until we get different values
-  let attempts = 0;
-  do {
-    left = makeExpr();
-    right = makeExpr();
-    attempts++;
-  } while (left.val === right.val && attempts < 20);
-
-  // Fallback: ensure different
-  if (left.val === right.val) {
-    right = { expr: `${left.val + 1} + 1`, val: left.val + 2 };
-  }
-
-  const answer = left.val > right.val ? left.expr : right.expr;
-  return {
-    type: 'choice',
-    question: t('whichBigger'),
-    choices: [left.expr, right.expr],
-    answer,
-    hint: t('whichBigger')
-  };
-}
-
-function genWordProblem(cfg) {
-  const templates = t('wordProblems');
-  const tmpl = pick(templates);
-  const dogName = pick(t('dogNames'));
-
-  let a, b, answer;
-  // Detect what operation the template needs
-  if (tmpl.includes('total') || tmpl.includes('insgesamt') || tmpl.includes('összesen') || tmpl.includes('now') || tmpl.includes('jetzt') || tmpl.includes('most')) {
-    if (tmpl.includes('each') || tmpl.includes('jedem') || tmpl.includes('kutyának')) {
-      // multiplication
-      a = rand(2, 5);
-      b = rand(2, 5);
-      answer = a * b;
-    } else {
-      a = rand(1, Math.floor(cfg.maxNum / 2));
-      b = rand(1, Math.floor(cfg.maxNum / 2));
-      answer = a + b;
-    }
-  } else {
-    // subtraction
-    a = rand(5, cfg.maxNum);
-    b = rand(1, a - 1);
-    answer = a - b;
-  }
-
-  const text = tmpl.replace(/\{name\}/g, gameState.playerName).replace(/\{dog\}/g, dogName)
-    .replace(/\{a\}/g, a).replace(/\{b\}/g, b);
-
-  return { type: 'input', question: text, answer, hint: '🐶', isWord: true };
-}
-
-function generateQuest(levelCfg) {
-  const types = ['arithmetic'];
-  if (levelCfg.patterns) types.push('pattern');
-  if (levelCfg.maxNum >= 50) types.push('comparison');
-  if (levelCfg.wordProb) types.push('word');
-
-  // Weight arithmetic higher
-  const weighted = ['arithmetic', 'arithmetic', ...types];
-  const chosen = pick(weighted);
-
-  switch (chosen) {
-    case 'pattern': return genPattern(levelCfg);
-    case 'comparison': return genComparison(levelCfg);
-    case 'word': return genWordProblem(levelCfg);
-    default: return genArithmetic(levelCfg);
-  }
-}
-
-// ================================================================
-// SOUND EFFECTS (Web Audio API — no files needed)
-// ================================================================
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let audioCtx;
-function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
-
-function playCorrectSound() {
-  try {
-    ensureAudio();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    o.type = 'sine';
-    o.frequency.setValueAtTime(523, audioCtx.currentTime); // C5
-    o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1); // E5
-    o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2); // G5
-    g.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-    o.start(audioCtx.currentTime);
-    o.stop(audioCtx.currentTime + 0.4);
-  } catch(e) {}
-}
-
-function playWrongSound() {
-  try {
-    ensureAudio();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    o.type = 'square';
-    o.frequency.setValueAtTime(200, audioCtx.currentTime);
-    o.frequency.setValueAtTime(180, audioCtx.currentTime + 0.15);
-    g.gain.setValueAtTime(0.12, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    o.start(audioCtx.currentTime);
-    o.stop(audioCtx.currentTime + 0.3);
-  } catch(e) {}
-}
-
-function playRescueSound() {
-  try {
-    ensureAudio();
-    const notes = [523, 587, 659, 784, 880];
-    notes.forEach((freq, i) => {
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.connect(g); g.connect(audioCtx.destination);
-      o.type = 'sine';
-      o.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
-      g.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.1);
-      g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.2);
-      o.start(audioCtx.currentTime + i * 0.1);
-      o.stop(audioCtx.currentTime + i * 0.1 + 0.2);
-    });
-  } catch(e) {}
-}
-
-// ================================================================
-// NATURE BACKGROUND
-// ================================================================
-function initNature() {
-  const bg = document.getElementById('nature-bg');
-  bg.innerHTML = '';
-  // Clouds
-  for (let i = 0; i < 4; i++) {
-    const cloud = document.createElement('div');
-    cloud.className = 'cloud';
-    cloud.textContent = '☁️';
-    cloud.style.top = rand(2, 20) + '%';
-    cloud.style.animationDuration = rand(20, 40) + 's';
-    cloud.style.animationDelay = -rand(0, 30) + 's';
-    cloud.style.fontSize = (2 + Math.random() * 2) + 'rem';
-    bg.appendChild(cloud);
-  }
-  // Butterflies
-  const butterflies = ['🦋', '🦋', '🌸'];
-  for (let i = 0; i < 5; i++) {
-    const bf = document.createElement('div');
-    bf.className = 'butterfly';
-    bf.textContent = pick(butterflies);
-    bf.style.top = rand(10, 80) + '%';
-    bf.style.left = rand(5, 90) + '%';
-    bf.style.animationDelay = -rand(0, 3) + 's';
-    bf.style.animationDuration = (2 + Math.random() * 2) + 's';
-    bg.appendChild(bf);
-  }
-}
-
-// ================================================================
-// UI HELPERS
-// ================================================================
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+// ========== SCREEN MANAGEMENT ==========
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-function formatTime(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function showSparkles(container) {
-  const sparkleEl = container || document.getElementById('sparkles');
-  sparkleEl.innerHTML = '';
-  const emojis = ['⭐', '✨', '🌟', '💫', '🎉', '🐾'];
-  for (let i = 0; i < 8; i++) {
-    const s = document.createElement('div');
-    s.className = 'sparkle';
-    s.textContent = pick(emojis);
-    s.style.left = rand(10, 90) + '%';
-    s.style.top = rand(10, 90) + '%';
-    s.style.animationDelay = (Math.random() * 0.3) + 's';
-    sparkleEl.appendChild(s);
-  }
-  // Flash message
-  const flash = document.createElement('div');
-  flash.className = 'flash-message flash-correct';
-  flash.textContent = t('correct');
-  sparkleEl.appendChild(flash);
-  setTimeout(() => sparkleEl.innerHTML = '', 1200);
-}
-
-function showRescueBanner(dogName, emoji) {
-  const banner = document.createElement('div');
-  banner.className = 'rescue-banner';
-  banner.textContent = `${emoji} ${dogName} ${t('rescued')}`;
-  document.body.appendChild(banner);
-  setTimeout(() => banner.remove(), 2200);
-}
-
-function populateLevelSelect() {
-  const sel = document.getElementById('level-select');
-  sel.innerHTML = '';
-  LEVELS.forEach((lv, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${t('levelNames')[i]} — ${t('levelDescs')[i]}`;
-    sel.appendChild(opt);
+// ========== i18n UPDATE ==========
+function updateI18N(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    const val=t(key);
+    if(val)el.textContent=val;
   });
 }
 
-// ================================================================
-// START GAME
-// ================================================================
-function startLevel(levelIdx) {
-  const lvlCfg = LEVELS[levelIdx];
-  gameState.currentLevel = levelIdx;
-  gameState.playerName = document.getElementById('player-name').value || 'Ada';
-  gameState.mistakes = 0;
-  gameState.levelStartTime = Date.now();
+// ========== SOUND ==========
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+function playSound(type){
+  try{
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);
+    g.gain.value=0.08;
+    if(type==='correct'){o.frequency.value=523;o.type='sine';g.gain.value=0.1;o.start();o.frequency.linearRampToValueAtTime(659,audioCtx.currentTime+0.1);o.stop(audioCtx.currentTime+0.2)}
+    else if(type==='wrong'){o.frequency.value=200;o.type='square';g.gain.value=0.06;o.start();o.stop(audioCtx.currentTime+0.25)}
+    else if(type==='rescue'){o.frequency.value=440;o.type='sine';g.gain.value=0.1;o.start();o.frequency.linearRampToValueAtTime(880,audioCtx.currentTime+0.3);o.stop(audioCtx.currentTime+0.4)}
+    else if(type==='complete'){o.frequency.value=523;o.type='sine';g.gain.value=0.12;o.start();o.frequency.linearRampToValueAtTime(1047,audioCtx.currentTime+0.5);o.stop(audioCtx.currentTime+0.6)}
+    else if(type==='step'){o.frequency.value=300;o.type='sine';g.gain.value=0.03;o.start();o.stop(audioCtx.currentTime+0.05)}
+  }catch(e){}
+}
 
-  // Generate dogs for this level
-  const usedNames = new Set();
-  const dogNames = t('dogNames');
-  gameState.dogs = [];
-  for (let i = 0; i < lvlCfg.dogCount; i++) {
-    let name;
-    do { name = pick(dogNames); } while (usedNames.has(name));
-    usedNames.add(name);
-    gameState.dogs.push({
-      name,
-      emoji: DOG_EMOJIS[i % DOG_EMOJIS.length],
-      rescued: false,
-      questsTotal: lvlCfg.questsPerDog,
-      questsDone: 0,
-    });
+// ========== SPARKLE EFFECT ==========
+function sparkle(x,y){
+  const emojis=['✨','⭐','🌟','💫','🎉'];
+  for(let i=0;i<5;i++){
+    const s=document.createElement('div');
+    s.className='sparkle';
+    s.textContent=pick(emojis);
+    s.style.left=(x+rand(-30,30))+'px';
+    s.style.top=(y+rand(-20,20))+'px';
+    s.style.animationDelay=(i*0.1)+'s';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),1200);
   }
-
-  // Start timer
-  if (gameState.timerInterval) clearInterval(gameState.timerInterval);
-  gameState.timerInterval = setInterval(updateTimer, 1000);
-
-  renderMap();
-  showScreen('map-screen');
 }
 
-function updateTimer() {
-  const elapsed = Math.floor((Date.now() - gameState.levelStartTime) / 1000);
-  document.getElementById('level-timer').textContent = formatTime(elapsed);
-}
-
-// ================================================================
-// MAP RENDERING
-// ================================================================
-function renderMap() {
-  const lvlCfg = LEVELS[gameState.currentLevel];
-  const container = document.getElementById('map-container');
-  container.innerHTML = '';
-
-  document.getElementById('map-title').textContent = t('levelNames')[gameState.currentLevel];
-  const savedCount = gameState.dogs.filter(d => d.rescued).length;
-  document.getElementById('dogs-saved').textContent = savedCount;
-  document.getElementById('dogs-total').textContent = gameState.dogs.length;
-
-  // Nature decorations interspersed with dogs
-  const decos = ['🌳', '🌲', '🌻', '🌺', '🍄', '🦋', '🐻', '🌸', '🐿️', '🦔', '🍃', '🌼'];
-
-  gameState.dogs.forEach((dog, i) => {
-    container.appendChild(createDogSpot(dog, i));
-    // Add nature deco after every 2nd dog
-    if (i % 2 === 1 && i < gameState.dogs.length - 1) {
-      const deco = document.createElement('div');
-      deco.style.cssText = `text-align:center;font-size:2rem;padding:0.5rem;opacity:0.4;align-self:center;user-select:none;`;
-      deco.textContent = pick(decos) + ' ' + pick(decos);
-      container.appendChild(deco);
-    }
+// ========== INIT TITLE SCREEN ==========
+function initTitle(){
+  // Characters
+  const cs=document.getElementById('char-select');
+  cs.innerHTML='';
+  CHARACTERS.forEach((ch,i)=>{
+    const btn=document.createElement('button');
+    btn.className='char-btn'+(i===0?' selected':'');
+    btn.textContent=ch.emoji;
+    btn.title=ch.name;
+    btn.onclick=()=>{
+      cs.querySelectorAll('.char-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      game.playerChar=ch;
+    };
+    cs.appendChild(btn);
   });
+
+  // Languages
+  const lr=document.getElementById('lang-row');
+  lr.innerHTML='';
+  [{code:'en',label:'English 🇬🇧'},{code:'de',label:'Deutsch 🇩🇪'},{code:'hu',label:'Magyar 🇭🇺'}].forEach(l=>{
+    const btn=document.createElement('button');
+    btn.className='lang-btn'+(l.code===lang?' active':'');
+    btn.textContent=l.label;
+    btn.onclick=()=>{
+      lang=l.code;
+      localStorage.setItem('amq-lang',lang);
+      lr.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      updateI18N();
+    };
+    lr.appendChild(btn);
+  });
+
+  document.getElementById('play-btn').onclick=()=>{
+    game.playerName=document.getElementById('player-name').value.trim()||'Ada';
+    audioCtx.resume();
+    showLevelSelect();
+  };
+
+  updateI18N();
 }
 
-function createDogSpot(dog, idx) {
-  const div = document.createElement('div');
-  div.className = 'dog-spot' + (dog.rescued ? ' rescued' : '');
+// ========== LEVEL SELECT ==========
+async function showLevelSelect(){
+  showScreen('level-screen');
+  const grid=document.getElementById('level-grid');
+  grid.innerHTML='';
+  const maxLevel=await getProgress();
 
-  const remaining = dog.questsTotal - dog.questsDone;
+  game.levels=buildLevels();
+  for(let i=0;i<game.levels.length;i++){
+    const lv=game.levels[i];
+    const card=document.createElement('div');
+    card.className='level-card'+(i<=maxLevel?'':' locked');
+    const rec=await getRecord(i);
+    if(rec)card.classList.add('completed');
 
-  div.innerHTML = `
-    <span class="dog-emoji">${dog.emoji}</span>
-    <div class="dog-name">${dog.name}</div>
-    <div class="dog-status">${dog.rescued ? t('rescued') : t('rescueMe')}</div>
-    ${!dog.rescued ? `<div class="quest-count">${remaining}</div>` : '<div class="quest-count">✓</div>'}
-  `;
-
-  if (!dog.rescued) {
-    div.addEventListener('click', () => startDogQuest(idx));
-  }
-
-  return div;
-}
-
-// ================================================================
-// QUEST FLOW
-// ================================================================
-function startDogQuest(dogIdx) {
-  const dog = gameState.dogs[dogIdx];
-  const lvlCfg = LEVELS[gameState.currentLevel];
-  gameState.currentDogIdx = dogIdx;
-  gameState.currentQuestIdx = 0;
-
-  // Generate remaining quests for this dog
-  const remaining = dog.questsTotal - dog.questsDone;
-  gameState.quests = [];
-  for (let i = 0; i < remaining; i++) {
-    gameState.quests.push(generateQuest(lvlCfg));
-  }
-
-  showScreen('quest-screen');
-  renderQuest();
-}
-
-function renderQuest() {
-  const dog = gameState.dogs[gameState.currentDogIdx];
-  const quest = gameState.quests[gameState.currentQuestIdx];
-  if (!quest) return;
-
-  // Header
-  document.getElementById('quest-dog-name').textContent = `${t('saving')} ${dog.emoji} ${dog.name}`;
-
-  // Progress dots
-  const progressEl = document.getElementById('quest-progress');
-  progressEl.innerHTML = '';
-  for (let i = 0; i < gameState.quests.length; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'quest-dot';
-    if (i < gameState.currentQuestIdx) dot.classList.add('done');
-    if (i === gameState.currentQuestIdx) dot.classList.add('current');
-    progressEl.appendChild(dot);
-  }
-
-  // Story
-  const storyEl = document.getElementById('quest-story');
-  const stories = t('stories');
-  storyEl.textContent = pick(stories).replace('{dog}', dog.name);
-
-  // Question
-  const questionEl = document.getElementById('quest-question');
-  if (quest.isWord) {
-    questionEl.innerHTML = `<div class="word-problem">${quest.question}</div>`;
-  } else {
-    const hintHtml = quest.hint && quest.hint !== '🐶' ? `<div style="font-size:0.9rem;color:var(--text-light);margin-bottom:0.3rem;">${quest.hint}</div>` : '';
-    questionEl.innerHTML = hintHtml + quest.question.replace(/__/g, '<span class="blank">?</span>');
-  }
-
-  // Answer area
-  const answerArea = document.getElementById('answer-area');
-  answerArea.innerHTML = '';
-
-  if (quest.type === 'input') {
-    const row = document.createElement('div');
-    row.className = 'answer-input-row';
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.className = 'answer-input';
-    input.inputMode = 'numeric';
-    input.pattern = '[0-9]*';
-    input.id = 'quest-answer';
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') checkAnswer();
-    });
-    row.appendChild(input);
-
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-primary btn-small';
-    btn.textContent = '✓';
-    btn.addEventListener('click', checkAnswer);
-    row.appendChild(btn);
-
-    answerArea.appendChild(row);
-    setTimeout(() => input.focus(), 100);
-
-  } else if (quest.type === 'choice') {
-    const grid = document.createElement('div');
-    grid.className = 'choices-grid';
-    const shuffled = shuffle(quest.choices);
-    shuffled.forEach(choice => {
-      const btn = document.createElement('button');
-      btn.className = 'choice-btn';
-      btn.textContent = choice;
-      btn.addEventListener('click', () => checkChoiceAnswer(btn, choice, quest));
-      grid.appendChild(btn);
-    });
-    answerArea.appendChild(grid);
-  }
-}
-
-function checkAnswer() {
-  const input = document.getElementById('quest-answer');
-  if (!input) return;
-  const val = parseInt(input.value, 10);
-  const quest = gameState.quests[gameState.currentQuestIdx];
-
-  if (isNaN(val)) return;
-
-  if (val === quest.answer) {
-    input.classList.add('correct');
-    showSparkles();
-    playCorrectSound();
-    onCorrectAnswer();
-  } else {
-    input.classList.add('wrong');
-    playWrongSound();
-    gameState.mistakes++;
-    // Mark current dot as wrong
-    const dots = document.querySelectorAll('.quest-dot');
-    if (dots[gameState.currentQuestIdx]) dots[gameState.currentQuestIdx].classList.add('wrong');
-    setTimeout(() => {
-      input.classList.remove('wrong');
-      input.value = '';
-      input.focus();
-      // Reset dot
-      if (dots[gameState.currentQuestIdx]) dots[gameState.currentQuestIdx].classList.remove('wrong');
-    }, 600);
-  }
-}
-
-function checkChoiceAnswer(btn, choice, quest) {
-  const btns = document.querySelectorAll('.choice-btn');
-  if (choice === quest.answer) {
-    btn.classList.add('correct');
-    showSparkles();
-    playCorrectSound();
-    btns.forEach(b => b.style.pointerEvents = 'none');
-    onCorrectAnswer();
-  } else {
-    btn.classList.add('wrong');
-    playWrongSound();
-    gameState.mistakes++;
-    setTimeout(() => btn.classList.remove('wrong'), 600);
-  }
-}
-
-function onCorrectAnswer() {
-  const dog = gameState.dogs[gameState.currentDogIdx];
-  dog.questsDone++;
-
-  // Mark dot as done
-  const dots = document.querySelectorAll('.quest-dot');
-  if (dots[gameState.currentQuestIdx]) {
-    dots[gameState.currentQuestIdx].classList.remove('current');
-    dots[gameState.currentQuestIdx].classList.add('done');
-  }
-
-  gameState.currentQuestIdx++;
-
-  if (gameState.currentQuestIdx >= gameState.quests.length) {
-    // Dog rescued!
-    dog.rescued = true;
-    playRescueSound();
-    showRescueBanner(dog.name, dog.emoji);
-    setTimeout(() => {
-      // Check if all dogs in level are rescued
-      if (gameState.dogs.every(d => d.rescued)) {
-        onLevelComplete();
-      } else {
-        renderMap();
-        showScreen('map-screen');
-      }
-    }, 800);
-  } else {
-    setTimeout(renderQuest, 800);
-  }
-}
-
-// Skip button
-document.getElementById('skip-quest').addEventListener('click', () => {
-  gameState.mistakes++;
-  gameState.currentQuestIdx++;
-  const dog = gameState.dogs[gameState.currentDogIdx];
-  dog.questsDone++;
-
-  if (gameState.currentQuestIdx >= gameState.quests.length) {
-    dog.rescued = true;
-    if (gameState.dogs.every(d => d.rescued)) {
-      onLevelComplete();
-    } else {
-      renderMap();
-      showScreen('map-screen');
+    card.innerHTML=`
+      <div class="level-icon">${lv.icon}</div>
+      <div class="level-name">${lv.name[lang]||lv.name.en}</div>
+      <div class="level-info">${lv.gates.length} 🐕</div>
+      ${rec?`<div class="stars">${'⭐'.repeat(rec.stars)}${'☆'.repeat(3-rec.stars)}</div>
+        <div class="best-time">${t('best')}: ${fmtTime(rec.time)}</div>`:''}
+    `;
+    if(i<=maxLevel){
+      card.onclick=()=>startLevel(i);
     }
-  } else {
-    renderQuest();
+    grid.appendChild(card);
   }
-});
 
-// ================================================================
-// LEVEL COMPLETE
-// ================================================================
-async function onLevelComplete() {
-  clearInterval(gameState.timerInterval);
-  const elapsed = Math.floor((Date.now() - gameState.levelStartTime) / 1000);
+  document.getElementById('back-title').onclick=()=>showScreen('title-screen');
+}
 
-  const overlay = document.getElementById('level-complete');
-  document.getElementById('lc-title').textContent = `🎉 ${t('levelComplete')} 🎉`;
+function fmtTime(ms){
+  const s=Math.floor(ms/1000);
+  const m=Math.floor(s/60);
+  return `${m}:${String(s%60).padStart(2,'0')}`;
+}
 
-  // Stars based on mistakes
-  const starCount = gameState.mistakes === 0 ? 3 : gameState.mistakes <= 3 ? 2 : 1;
-  document.getElementById('lc-stars').textContent = '⭐'.repeat(starCount) + '☆'.repeat(3 - starCount);
+// ========== START LEVEL ==========
+function startLevel(idx){
+  game.currentLevel=idx;
+  const lv=game.levels[idx];
 
-  // Check for record
-  const prev = await getRecord(gameState.currentLevel + 1);
-  const isNewRecord = !prev || elapsed < prev.time;
+  // Show story
+  const story=t('stories')[idx+1]||{emoji:'🐕',text:''};
+  document.getElementById('story-emoji').textContent=story.emoji;
+  document.getElementById('story-text').textContent=story.text;
+  showScreen('story-screen');
 
-  let statsHTML = `
-    <div>${t('time')}: <span class="stat-val">${formatTime(elapsed)}</span></div>
-    <div>${t('mistakes')}: <span class="stat-val">${gameState.mistakes}</span></div>
-  `;
-  if (isNewRecord) {
-    statsHTML += `<div style="margin-top:0.5rem;font-size:1.2rem;color:var(--gold);">${t('newRecord')}</div>`;
-    await saveRecord(gameState.currentLevel + 1, elapsed, gameState.mistakes);
-  } else {
-    statsHTML += `<div>${t('bestTime')}: <span class="stat-val">${formatTime(prev.time)}</span></div>`;
-  }
-  document.getElementById('lc-stats').innerHTML = statsHTML;
-
-  overlay.classList.add('show');
-
-  // If this was the last level, go to final screen
-  document.getElementById('lc-continue').onclick = () => {
-    overlay.classList.remove('show');
-    if (gameState.currentLevel >= LEVELS.length - 1) {
-      showFinalScreen();
-    } else {
-      // Auto-advance to next level
-      gameState.currentLevel++;
-      startLevel(gameState.currentLevel);
-    }
+  document.getElementById('story-continue').onclick=()=>{
+    initLevel(idx);
+    showScreen('game-screen');
   };
 }
 
-// ================================================================
-// FINAL SCREEN
-// ================================================================
-async function showFinalScreen() {
-  showScreen('final-screen');
+// ========== INIT LEVEL ==========
+function initLevel(idx){
+  const lv=game.levels[idx];
+  game.map=lv.map;
+  game.playerPos={...lv.start};
+  game.mistakes=0;
+  game.rescuedDogs=[];
+  game.followerPositions=[];
+  game.questActive=false;
 
-  document.getElementById('final-message').textContent =
-    t('allSavedMsg').replace('{name}', gameState.playerName);
+  // Assign dogs to gates
+  const dogPool=shuffle([...DOG_POOL]);
+  game.gates=lv.gates.map((g,i)=>({
+    ...g,
+    dog:dogPool[i%dogPool.length],
+    solved:false,
+    tasks:generateQuestTasks(lv.difficulty,g.tasks),
+  }));
+  game.dogs=game.gates.map(g=>({...g.dog,r:g.r-1,c:g.c,rescued:false}));
 
-  // Show all dogs from all levels
-  const dogsContainer = document.getElementById('final-dogs');
-  dogsContainer.innerHTML = '';
+  // Timer
+  game.timerStart=Date.now();
+  clearInterval(game.timerInterval);
+  game.timerInterval=setInterval(updateTimer,1000);
 
-  // Collect all dog names from all levels
-  const allDogNames = t('dogNames');
-  const totalDogs = LEVELS.reduce((sum, l) => sum + l.dogCount, 0);
+  // Set background
+  document.getElementById('game-screen').style.background=lv.bg;
+  document.getElementById('hud-level').textContent=`${lv.icon} ${lv.name[lang]||lv.name.en}`;
 
-  for (let i = 0; i < totalDogs; i++) {
-    const dogDiv = document.createElement('div');
-    dogDiv.className = 'final-dog';
-    dogDiv.style.animationDelay = (i * 0.1) + 's';
-    dogDiv.innerHTML = `
-      <span class="dog-emoji">${DOG_EMOJIS[i % DOG_EMOJIS.length]}</span>
-      <div class="dog-name">${allDogNames[i % allDogNames.length]}</div>
-      <div class="dog-thanks">${t('thankYou').replace('{name}', gameState.playerName)}</div>
-    `;
-    dogsContainer.appendChild(dogDiv);
-  }
+  renderMap();
+  renderPlayer();
+  renderDogs();
+  updateHUD();
+  centerCamera();
+}
 
-  // Records
-  const records = await getAllRecords();
-  const recordsList = document.getElementById('final-records');
-  recordsList.innerHTML = '';
-  if (records.length === 0) {
-    recordsList.innerHTML = `<li>${t('noRecords')}</li>`;
-  } else {
-    records.sort((a, b) => a.level - b.level);
-    records.forEach(r => {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <span>${t('level')} ${r.level}: ${t('levelNames')[r.level - 1] || ''}</span>
-        <span class="stat-val">${formatTime(r.time)}</span>
-      `;
-      recordsList.appendChild(li);
-    });
+// ========== RENDER MAP ==========
+function renderMap(){
+  const mapEl=document.getElementById('game-map');
+  const rows=game.map.length;
+  const cols=game.map[0].length;
+  mapEl.style.gridTemplateColumns=`repeat(${cols},var(--tile))`;
+  mapEl.style.gridTemplateRows=`repeat(${rows},var(--tile))`;
+  mapEl.innerHTML='';
+
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const tileType=game.map[r][c];
+      const div=document.createElement('div');
+      div.className=`tile tile-${tileType}`;
+      div.dataset.r=r;
+      div.dataset.c=c;
+
+      // Emoji content
+      let emoji=TILE_EMOJI[tileType]||'';
+      if(tileType===T.F)emoji=['🌸','🌺','🌻','🌼','🌷'][rand(0,4)];
+      if(tileType===T.G && rand(0,8)===0)emoji=pick(['🌿','🍃','']);
+      if(tileType===T.P && rand(0,15)===0)emoji=pick(['🦋','🐛','']);
+
+      // Gate overlay
+      const gate=game.gates.find(g=>g.r===r&&g.c===c);
+      if(gate){
+        emoji=gate.solved?'✅':OBSTACLE_ICONS[gate.type];
+        if(gate.solved)div.classList.add('solved');
+      }
+
+      if(emoji)div.textContent=emoji;
+      mapEl.appendChild(div);
+    }
   }
 }
 
-// ================================================================
-// EVENT LISTENERS
-// ================================================================
-document.getElementById('start-btn').addEventListener('click', () => {
-  const levelIdx = parseInt(document.getElementById('level-select').value, 10);
-  startLevel(levelIdx);
-});
+function renderPlayer(){
+  const mapEl=document.getElementById('game-map');
+  // Remove old player
+  mapEl.querySelectorAll('.player-sprite,.dog-follower').forEach(e=>e.remove());
 
-document.getElementById('back-to-menu').addEventListener('click', () => {
-  clearInterval(gameState.timerInterval);
-  showScreen('start-screen');
-});
+  const tile=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile'));
 
-document.getElementById('play-again-btn').addEventListener('click', () => {
-  showScreen('start-screen');
-});
+  // Player
+  const p=document.createElement('div');
+  p.className='player-sprite';
+  p.id='player';
+  p.textContent=game.playerChar.emoji;
+  p.style.left=(game.playerPos.c*tile)+'px';
+  p.style.top=(game.playerPos.r*tile)+'px';
+  p.style.width=tile+'px';
+  p.style.height=tile+'px';
+  p.style.display='flex';
+  p.style.alignItems='center';
+  p.style.justifyContent='center';
+  mapEl.appendChild(p);
 
-document.getElementById('records-btn').addEventListener('click', async () => {
-  const records = await getAllRecords();
-  if (records.length === 0) {
-    alert(t('noRecords'));
+  // Follower dogs
+  game.followerPositions.forEach((pos,i)=>{
+    const d=document.createElement('div');
+    d.className='dog-follower';
+    d.id='follower-'+i;
+    d.textContent=game.rescuedDogs[i].emoji;
+    d.style.left=(pos.c*tile)+'px';
+    d.style.top=(pos.r*tile)+'px';
+    d.style.width=tile+'px';
+    d.style.height=tile+'px';
+    d.style.display='flex';
+    d.style.alignItems='center';
+    d.style.justifyContent='center';
+    mapEl.appendChild(d);
+  });
+}
+
+function renderDogs(){
+  const mapEl=document.getElementById('game-map');
+  mapEl.querySelectorAll('.dog-marker').forEach(e=>e.remove());
+  const tile=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile'));
+
+  game.dogs.forEach((dog,i)=>{
+    if(dog.rescued)return;
+    const d=document.createElement('div');
+    d.className='dog-marker';
+    d.textContent=dog.emoji;
+    d.style.left=(dog.c*tile)+'px';
+    d.style.top=(dog.r*tile)+'px';
+    d.style.width=tile+'px';
+    d.style.height=tile+'px';
+    d.style.display='flex';
+    d.style.alignItems='center';
+    d.style.justifyContent='center';
+    d.style.animationDelay=(i*0.3)+'s';
+    mapEl.appendChild(d);
+  });
+}
+
+function updateHUD(){
+  const saved=game.rescuedDogs.length;
+  const total=game.gates.length;
+  document.getElementById('hud-dogs').textContent=`🐕 ${saved}/${total}`;
+}
+
+function updateTimer(){
+  game.elapsed=Date.now()-game.timerStart;
+  document.getElementById('hud-timer').textContent=`⏱ ${fmtTime(game.elapsed)}`;
+}
+
+function getTileSize(){
+  return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile'));
+}
+
+function centerCamera(smooth){
+  const viewport=document.getElementById('game-viewport');
+  const mapEl=document.getElementById('game-map');
+  const tile=getTileSize();
+  const vw=viewport.clientWidth;
+  const vh=viewport.clientHeight;
+  const px=game.playerPos.c*tile+tile/2;
+  const py=game.playerPos.r*tile+tile/2;
+  const tx=vw/2-px;
+  const ty=vh/2-py;
+  mapEl.style.transform=`translate(${tx}px,${ty}px)`;
+}
+
+// ========== PLAYER MOVEMENT ==========
+function movePlayer(dr,dc){
+  if(game.questActive)return;
+  const nr=game.playerPos.r+dr;
+  const nc=game.playerPos.c+dc;
+
+  // Bounds check
+  if(nr<0||nr>=game.map.length||nc<0||nc>=game.map[0].length)return;
+
+  const tileType=game.map[nr][nc];
+  if(!WALKABLE.has(tileType))return;
+
+  // Check for unsolved gate
+  const gate=game.gates.find(g=>g.r===nr&&g.c===nc&&!g.solved);
+  if(gate){
+    openQuest(gate);
     return;
   }
-  let msg = '🏆 Records:\n\n';
-  records.sort((a, b) => a.level - b.level);
-  records.forEach(r => {
-    msg += `${t('level')} ${r.level}: ${formatTime(r.time)} (${r.mistakes} ${t('mistakes').toLowerCase()})\n`;
-  });
-  alert(msg);
-});
 
-// Language buttons
-document.querySelectorAll('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => setLang(btn.dataset.lang));
-});
+  // Move
+  const oldPos={...game.playerPos};
+  game.playerPos={r:nr,c:nc};
 
-// Global keyboard handler for choice questions (press 1-4)
-document.addEventListener('keydown', (e) => {
-  const choiceBtns = document.querySelectorAll('.choice-btn');
-  if (choiceBtns.length > 0 && document.getElementById('quest-screen').classList.contains('active')) {
-    const idx = parseInt(e.key, 10) - 1;
-    if (idx >= 0 && idx < choiceBtns.length) {
-      choiceBtns[idx].click();
+  // Update followers
+  if(game.followerPositions.length>0){
+    for(let i=game.followerPositions.length-1;i>0;i--){
+      game.followerPositions[i]={...game.followerPositions[i-1]};
     }
+    game.followerPositions[0]={...oldPos};
+  }
+
+  // Animate
+  const tile=getTileSize();
+  const player=document.getElementById('player');
+  if(player){
+    player.style.left=(nc*tile)+'px';
+    player.style.top=(nr*tile)+'px';
+  }
+  game.followerPositions.forEach((pos,i)=>{
+    const f=document.getElementById('follower-'+i);
+    if(f){
+      f.style.left=(pos.c*tile)+'px';
+      f.style.top=(pos.r*tile)+'px';
+    }
+  });
+
+  playSound('step');
+  centerCamera(true);
+
+  // Check for end tile
+  const lv=game.levels[game.currentLevel];
+  if(nr===lv.end.r&&nc===lv.end.c&&game.rescuedDogs.length===game.gates.length){
+    levelComplete();
+  }
+}
+
+// Keyboard
+document.addEventListener('keydown',(e)=>{
+  if(game.questActive)return;
+  switch(e.key){
+    case'ArrowUp':case'w':case'W':movePlayer(-1,0);e.preventDefault();break;
+    case'ArrowDown':case's':case'S':movePlayer(1,0);e.preventDefault();break;
+    case'ArrowLeft':case'a':case'A':movePlayer(0,-1);e.preventDefault();break;
+    case'ArrowRight':case'd':case'D':movePlayer(0,1);e.preventDefault();break;
   }
 });
 
-// ================================================================
-// INIT
-// ================================================================
-async function init() {
+// D-Pad
+document.querySelectorAll('.dpad-btn').forEach(btn=>{
+  const dir=btn.dataset.dir;
+  const handler=(e)=>{
+    e.preventDefault();
+    if(dir==='up')movePlayer(-1,0);
+    else if(dir==='down')movePlayer(1,0);
+    else if(dir==='left')movePlayer(0,-1);
+    else if(dir==='right')movePlayer(0,1);
+  };
+  btn.addEventListener('touchstart',handler,{passive:false});
+  btn.addEventListener('mousedown',handler);
+});
+
+// Touch swipe
+let touchStartX=0,touchStartY=0;
+document.getElementById('game-viewport')?.addEventListener('touchstart',(e)=>{
+  touchStartX=e.touches[0].clientX;
+  touchStartY=e.touches[0].clientY;
+},{passive:true});
+document.getElementById('game-viewport')?.addEventListener('touchend',(e)=>{
+  const dx=e.changedTouches[0].clientX-touchStartX;
+  const dy=e.changedTouches[0].clientY-touchStartY;
+  const minSwipe=30;
+  if(Math.abs(dx)>Math.abs(dy)){
+    if(dx>minSwipe)movePlayer(0,1);
+    else if(dx<-minSwipe)movePlayer(0,-1);
+  }else{
+    if(dy>minSwipe)movePlayer(1,0);
+    else if(dy<-minSwipe)movePlayer(-1,0);
+  }
+},{passive:true});
+
+// Pause
+document.getElementById('hud-pause').onclick=()=>showLevelSelect();
+
+
+// ========== QUEST SYSTEM ==========
+function openQuest(gate){
+  game.questActive=true;
+  game.currentGate=gate;
+  game.currentTasks=gate.tasks;
+  game.currentTaskIdx=0;
+  game.taskMistakes=new Array(gate.tasks.length).fill(false);
+
+  const overlay=document.getElementById('quest-overlay');
+  overlay.classList.add('active');
+
+  // Set obstacle info
+  document.getElementById('quest-icon').textContent=OBSTACLE_ICONS[gate.type];
+  document.getElementById('quest-title').textContent=t('obstacles')[gate.type]||t('quest_gate');
+
+  renderQuestTask();
+}
+
+function renderQuestTask(){
+  const task=game.currentTasks[game.currentTaskIdx];
+  const total=game.currentTasks.length;
+  const idx=game.currentTaskIdx;
+
+  // Progress dots
+  const prog=document.getElementById('quest-progress');
+  prog.innerHTML='';
+  for(let i=0;i<total;i++){
+    const dot=document.createElement('div');
+    dot.className='quest-dot';
+    if(i<idx)dot.classList.add(game.taskMistakes[i]?'wrong':'done');
+    if(i===idx)dot.classList.add('current');
+    prog.appendChild(dot);
+  }
+
+  // Story
+  const storyEl=document.getElementById('quest-story');
+  const storyTexts={
+    en:["A friendly squirrel watches you solve this!","The forest birds are cheering for you!","A butterfly landed nearby — it believes in you!","The wise owl nods encouragingly!","Even the flowers are rooting for you!"],
+    de:["Ein freundliches Eichhörnchen schaut zu!","Die Waldvögel feuern dich an!","Ein Schmetterling glaubt an dich!","Die weise Eule nickt ermutigend!","Sogar die Blumen drücken dir die Daumen!"],
+    hu:["Egy barátságos mókus figyel!","Az erdei madarak szurkolnak!","Egy pillangó szállt le melletted — hisz benned!","A bölcs bagoly bátorítóan bólint!","Még a virágok is szurkolnak!"],
+  };
+  storyEl.textContent=pick(storyTexts[lang]||storyTexts.en);
+
+  // Question
+  const qEl=document.getElementById('quest-question');
+  const areaEl=document.getElementById('quest-answer-area');
+  const fbEl=document.getElementById('quest-feedback');
+  fbEl.className='quest-feedback';fbEl.style.display='none';
+  areaEl.innerHTML='';
+
+  switch(task.type){
+    case'multipleChoice':
+      qEl.textContent=task.question;
+      const choices=document.createElement('div');
+      choices.className='quest-choices';
+      task.options.forEach(opt=>{
+        const btn=document.createElement('button');
+        btn.className='choice-btn';
+        btn.textContent=opt;
+        btn.onclick=()=>handleAnswer(opt===task.answer,btn,choices);
+        choices.appendChild(btn);
+      });
+      areaEl.appendChild(choices);
+      break;
+
+    case'numberInput':
+      qEl.textContent=task.question;
+      const row=document.createElement('div');
+      row.className='quest-input-row';
+      const inp=document.createElement('input');
+      inp.type='number';inp.className='quest-number-input';inp.id='quest-input';
+      inp.inputMode='numeric';inp.autocomplete='off';
+      const sub=document.createElement('button');
+      sub.className='quest-submit-btn';sub.textContent=t('submit');
+      sub.onclick=()=>{
+        const val=parseInt(inp.value);
+        handleAnswer(val===task.answer,sub,row);
+      };
+      inp.addEventListener('keydown',(e)=>{
+        if(e.key==='Enter')sub.click();
+      });
+      row.appendChild(inp);row.appendChild(sub);
+      areaEl.appendChild(row);
+      setTimeout(()=>inp.focus(),100);
+      break;
+
+    case'trueFalse':
+      qEl.textContent=task.question;
+      const tfRow=document.createElement('div');
+      tfRow.className='quest-tf-row';
+      [true,false].forEach(val=>{
+        const btn=document.createElement('button');
+        btn.className='tf-btn';
+        btn.textContent=val?t('true_btn'):t('false_btn');
+        btn.onclick=()=>handleAnswer(val===task.answer,btn,tfRow);
+        tfRow.appendChild(btn);
+      });
+      areaEl.appendChild(tfRow);
+      break;
+
+    case'pattern':
+      qEl.innerHTML=`<span style="font-size:0.85rem;color:var(--text-light)">${{en:'What number goes in the blank?',de:'Welche Zahl fehlt?',hu:'Melyik szám hiányzik?'}[lang]||'What number goes in the blank?'}</span>`;
+      const patDisp=document.createElement('div');
+      patDisp.className='pattern-display';
+      task.sequence.forEach(v=>{
+        const item=document.createElement('div');
+        item.className='pattern-item '+(v==='__'?'pattern-blank':'pattern-num');
+        item.textContent=v==='__'?'?':v;
+        patDisp.appendChild(item);
+      });
+      areaEl.appendChild(patDisp);
+      const pRow=document.createElement('div');
+      pRow.className='quest-input-row';
+      const pInp=document.createElement('input');
+      pInp.type='number';pInp.className='quest-number-input';pInp.id='quest-input';
+      pInp.inputMode='numeric';
+      const pSub=document.createElement('button');
+      pSub.className='quest-submit-btn';pSub.textContent=t('submit');
+      pSub.onclick=()=>{
+        const val=parseInt(pInp.value);
+        handleAnswer(val===task.answer,pSub,pRow);
+      };
+      pInp.addEventListener('keydown',(e)=>{if(e.key==='Enter')pSub.click()});
+      pRow.appendChild(pInp);pRow.appendChild(pSub);
+      areaEl.appendChild(pRow);
+      setTimeout(()=>pInp.focus(),100);
+      break;
+
+    case'comparison':
+      qEl.innerHTML=`<span style="font-size:0.9rem">${{en:'Which is bigger? (or equal)',de:'Was ist größer? (oder gleich)',hu:'Melyik a nagyobb? (vagy egyenlő)'}[lang]||'Which is bigger?'}</span>`;
+      const cmpRow=document.createElement('div');
+      cmpRow.className='compare-row';
+      const leftBtn=document.createElement('button');
+      leftBtn.className='compare-expr';leftBtn.textContent=task.expr1;
+      const vsSpan=document.createElement('span');
+      vsSpan.className='compare-vs';vsSpan.textContent='VS';
+      const rightBtn=document.createElement('button');
+      rightBtn.className='compare-expr';rightBtn.textContent=task.expr2;
+      const eqBtn=document.createElement('button');
+      eqBtn.className='compare-expr';eqBtn.textContent=t('equal_btn');eqBtn.style.fontSize='0.9rem';
+
+      leftBtn.onclick=()=>handleCompare('left',task.answer,[leftBtn,rightBtn,eqBtn]);
+      rightBtn.onclick=()=>handleCompare('right',task.answer,[leftBtn,rightBtn,eqBtn]);
+      eqBtn.onclick=()=>handleCompare('equal',task.answer,[leftBtn,rightBtn,eqBtn]);
+
+      cmpRow.appendChild(leftBtn);cmpRow.appendChild(vsSpan);cmpRow.appendChild(rightBtn);
+      areaEl.appendChild(cmpRow);
+      const eqRow=document.createElement('div');
+      eqRow.style.textAlign='center';eqRow.style.marginTop='8px';
+      eqRow.appendChild(eqBtn);
+      areaEl.appendChild(eqRow);
+      break;
+
+    case'visualCounting':
+      const emojis=['🐶','🐾','🦴','🌸','⭐'];
+      const em=pick(emojis);
+      const vg=document.createElement('div');
+      vg.className='visual-grid';
+      const g1=document.createElement('div');g1.className='visual-group';
+      for(let i=0;i<task.groupA;i++){const s=document.createElement('span');s.className='visual-item';s.textContent=em;g1.appendChild(s)}
+      const g2=document.createElement('div');g2.className='visual-group';
+      for(let i=0;i<task.groupB;i++){const s=document.createElement('span');s.className='visual-item';s.textContent=em;g2.appendChild(s)}
+      vg.appendChild(g1);vg.appendChild(g2);
+      areaEl.appendChild(vg);
+
+      if(task.askTotal){
+        qEl.innerHTML=`<span>${{en:'How many in total?',de:'Wie viele insgesamt?',hu:'Hány van összesen?'}[lang]}</span>`;
+      }else{
+        qEl.innerHTML=`<span>${{en:'How many more in the first group?',de:'Wie viele mehr in der ersten Gruppe?',hu:'Mennyivel több van az első csoportban?'}[lang]}</span>`;
+      }
+
+      const vRow=document.createElement('div');
+      vRow.className='quest-input-row';
+      const vInp=document.createElement('input');
+      vInp.type='number';vInp.className='quest-number-input';vInp.id='quest-input';
+      vInp.inputMode='numeric';
+      const vSub=document.createElement('button');
+      vSub.className='quest-submit-btn';vSub.textContent=t('submit');
+      vSub.onclick=()=>{
+        handleAnswer(parseInt(vInp.value)===task.answer,vSub,vRow);
+      };
+      vInp.addEventListener('keydown',(e)=>{if(e.key==='Enter')vSub.click()});
+      vRow.appendChild(vInp);vRow.appendChild(vSub);
+      areaEl.appendChild(vRow);
+      setTimeout(()=>vInp.focus(),100);
+      break;
+
+    case'matchPairs':
+      qEl.innerHTML=`<span>${{en:'Match each expression to its answer!',de:'Ordne jede Rechnung dem Ergebnis zu!',hu:'Párosítsd a kifejezéseket az eredménnyel!'}[lang]}</span>`;
+      renderMatchPairs(task,areaEl);
+      break;
+  }
+}
+
+function renderMatchPairs(task,container){
+  const mc=document.createElement('div');
+  mc.className='match-container';
+  const leftCol=document.createElement('div');leftCol.className='match-col';
+  const rightCol=document.createElement('div');rightCol.className='match-col';
+
+  const exprs=task.pairs.map((p,i)=>({text:p.expr,idx:i,matched:false}));
+  const vals=shuffle(task.pairs.map((p,i)=>({text:String(p.val),idx:i,matched:false})));
+
+  let selectedLeft=null;
+  let matchCount=0;
+
+  exprs.forEach(item=>{
+    const btn=document.createElement('button');
+    btn.className='match-item';btn.textContent=item.text;btn.dataset.idx=item.idx;
+    btn.onclick=()=>{
+      if(item.matched)return;
+      leftCol.querySelectorAll('.match-item').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedLeft=item;
+    };
+    leftCol.appendChild(btn);
+  });
+
+  vals.forEach(item=>{
+    const btn=document.createElement('button');
+    btn.className='match-item';btn.textContent=item.text;btn.dataset.idx=item.idx;
+    btn.onclick=()=>{
+      if(item.matched||!selectedLeft)return;
+      if(parseInt(selectedLeft.idx)===parseInt(item.idx)){
+        // Correct match
+        btn.classList.add('matched');
+        const leftBtn=leftCol.querySelector(`[data-idx="${selectedLeft.idx}"]`);
+        if(leftBtn)leftBtn.classList.add('matched');
+        item.matched=true;
+        selectedLeft.matched=true;
+        exprs.find(e=>e.idx===selectedLeft.idx).matched=true;
+        selectedLeft=null;
+        matchCount++;
+        playSound('correct');
+        if(matchCount===task.pairs.length){
+          setTimeout(()=>handleAnswer(true,null,null),500);
+        }
+      }else{
+        // Wrong
+        btn.classList.add('wrong-match');
+        setTimeout(()=>btn.classList.remove('wrong-match'),400);
+        game.mistakes++;
+        game.taskMistakes[game.currentTaskIdx]=true;
+        playSound('wrong');
+      }
+    };
+    rightCol.appendChild(btn);
+  });
+
+  mc.appendChild(leftCol);mc.appendChild(rightCol);
+  container.appendChild(mc);
+}
+
+function handleCompare(chosen,answer,btns){
+  const correct=chosen===answer;
+  if(correct){
+    const correctBtn=chosen==='left'?btns[0]:chosen==='right'?btns[1]:btns[2];
+    correctBtn.classList.add('correct');
+  }else{
+    const wrongBtn=chosen==='left'?btns[0]:chosen==='right'?btns[1]:btns[2];
+    wrongBtn.classList.add('wrong');
+  }
+  btns.forEach(b=>b.disabled=true);
+  handleAnswer(correct,null,null);
+}
+
+function handleAnswer(correct,clickedEl,container){
+  const fbEl=document.getElementById('quest-feedback');
+
+  if(correct){
+    playSound('correct');
+    fbEl.textContent=tRand('correct');
+    fbEl.className='quest-feedback show correct-fb';
+    if(clickedEl)clickedEl.classList.add('correct');
+
+    // Sparkle on the quest box
+    const box=document.getElementById('quest-box');
+    const rect=box.getBoundingClientRect();
+    sparkle(rect.left+rect.width/2,rect.top+40);
+
+    setTimeout(()=>{
+      game.currentTaskIdx++;
+      if(game.currentTaskIdx>=game.currentTasks.length){
+        completeGate();
+      }else{
+        renderQuestTask();
+      }
+    },800);
+  }else{
+    playSound('wrong');
+    fbEl.textContent=tRand('wrong');
+    fbEl.className='quest-feedback show wrong-fb';
+    if(clickedEl){
+      clickedEl.classList.add('wrong');
+      clickedEl.style.animation='shake 0.4s';
+    }
+    game.mistakes++;
+    game.taskMistakes[game.currentTaskIdx]=true;
+
+    // Clear input for retry
+    setTimeout(()=>{
+      fbEl.style.display='none';
+      if(clickedEl){
+        clickedEl.classList.remove('wrong');
+        clickedEl.style.animation='';
+      }
+      const inp=document.getElementById('quest-input');
+      if(inp){inp.value='';inp.focus()}
+    },1000);
+  }
+}
+
+function completeGate(){
+  const gate=game.currentGate;
+  gate.solved=true;
+
+  // Rescue the dog
+  const dogIdx=game.gates.indexOf(gate);
+  const dog=game.dogs[dogIdx];
+  dog.rescued=true;
+  game.rescuedDogs.push(dog);
+
+  // Add to follower list
+  game.followerPositions.push({...game.playerPos});
+
+  // Close quest
+  game.questActive=false;
+  document.getElementById('quest-overlay').classList.remove('active');
+
+  playSound('rescue');
+
+  // Re-render
+  renderMap();
+  renderPlayer();
+  renderDogs();
+  updateHUD();
+
+  // Show rescue banner
+  showRescueBanner(dog);
+
+  // Check if all gates solved
+  if(game.rescuedDogs.length===game.gates.length){
+    // All dogs rescued — player needs to reach the end
+  }
+}
+
+function showRescueBanner(dog){
+  const banner=document.createElement('div');
+  banner.style.cssText=`
+    position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:50;
+    background:#fff;border-radius:16px;padding:12px 24px;
+    box-shadow:0 4px 24px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;
+    animation:quest-pop 0.3s ease-out;font-weight:700;font-size:1rem;
+  `;
+  banner.innerHTML=`<span style="font-size:1.8rem">${dog.emoji}</span> ${dog.name} ${{en:'rescued!',de:'gerettet!',hu:'megmentve!'}[lang]||'rescued!'} 🎉`;
+  document.body.appendChild(banner);
+  setTimeout(()=>{banner.style.transition='opacity 0.5s';banner.style.opacity='0';setTimeout(()=>banner.remove(),600)},2500);
+}
+
+// ========== LEVEL COMPLETE ==========
+async function levelComplete(){
+  clearInterval(game.timerInterval);
+  const elapsed=Date.now()-game.timerStart;
+  const stars=game.mistakes===0?3:game.mistakes<=2?2:1;
+
+  playSound('complete');
+
+  // Save record
+  const oldRec=await getRecord(game.currentLevel);
+  const isNewRecord=!oldRec||elapsed<oldRec.time;
+  saveRecord(game.currentLevel,elapsed,Math.max(stars,oldRec?.stars||0));
+
+  // Unlock next level
+  const maxLevel=await getProgress();
+  if(game.currentLevel>=maxLevel){
+    saveProgress(game.currentLevel+1);
+  }
+
+  // Add to all rescued
+  game.allRescuedDogs.push(...game.rescuedDogs);
+
+  // Show complete screen
+  showScreen('complete-screen');
+  document.getElementById('complete-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  document.getElementById('complete-time').textContent=`${t('time')}: ${fmtTime(elapsed)}`;
+  document.getElementById('complete-record').textContent=isNewRecord?t('new_record'):(oldRec?`${t('best')}: ${fmtTime(oldRec.time)}`:'');
+
+  const dogsEl=document.getElementById('complete-dogs');
+  dogsEl.innerHTML='';
+  game.rescuedDogs.forEach((dog,i)=>{
+    const d=document.createElement('div');
+    d.className='complete-dog';
+    d.style.animationDelay=(i*0.15)+'s';
+    d.innerHTML=`<div class="dog-emoji">${dog.emoji}</div><div class="dog-name">${dog.name}</div>`;
+    dogsEl.appendChild(d);
+  });
+
+  // Next level or victory
+  const nextBtn=document.getElementById('next-level-btn');
+  if(game.currentLevel<game.levels.length-1){
+    nextBtn.style.display='';
+    nextBtn.onclick=()=>startLevel(game.currentLevel+1);
+  }else{
+    nextBtn.style.display='none';
+    // Show victory after a beat
+    setTimeout(()=>showVictory(),500);
+  }
+
+  document.getElementById('complete-back').onclick=()=>showLevelSelect();
+}
+
+function showVictory(){
+  showScreen('victory-screen');
+  const name=game.playerName;
+  document.getElementById('victory-title').textContent=t('victory_title');
+  document.getElementById('victory-message').textContent=t('victory_msg').replace('{name}',name);
+
+  const dogsEl=document.getElementById('victory-dogs');
+  dogsEl.innerHTML='';
+  game.allRescuedDogs.forEach((dog,i)=>{
+    const d=document.createElement('div');
+    d.className='victory-dog';
+    d.style.animationDelay=(i*0.1)+'s';
+    d.innerHTML=`
+      <div class="dog-emoji">${dog.emoji}</div>
+      <div class="dog-name">${dog.name}</div>
+      <div class="dog-thanks">${t('thank_you').replace('{name}',name)}</div>
+    `;
+    dogsEl.appendChild(d);
+  });
+
+  document.getElementById('victory-btn').onclick=()=>{
+    game.allRescuedDogs=[];
+    showScreen('title-screen');
+  };
+}
+
+// ========== INIT ==========
+async function init(){
   await openDB();
-  // Restore saved language
-  const savedLang = localStorage.getItem('amq_lang');
-  if (savedLang && I18N[savedLang]) setLang(savedLang);
-  initNature();
-  populateLevelSelect();
+  initTitle();
 }
 
 init();
