@@ -715,11 +715,13 @@ let lang = 'en';
 function t(key) { return I18N[lang][key] || I18N['en'][key] || key; }
 function setLang(newLang) {
   lang = newLang;
+  localStorage.setItem('amq_lang', lang);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (I18N[lang][key]) el.textContent = I18N[lang][key];
   });
+  document.title = t('title') + ' 🐕';
   populateLevelSelect();
 }
 
@@ -1548,11 +1550,25 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
   btn.addEventListener('click', () => setLang(btn.dataset.lang));
 });
 
+// Global keyboard handler for choice questions (press 1-4)
+document.addEventListener('keydown', (e) => {
+  const choiceBtns = document.querySelectorAll('.choice-btn');
+  if (choiceBtns.length > 0 && document.getElementById('quest-screen').classList.contains('active')) {
+    const idx = parseInt(e.key, 10) - 1;
+    if (idx >= 0 && idx < choiceBtns.length) {
+      choiceBtns[idx].click();
+    }
+  }
+});
+
 // ================================================================
 // INIT
 // ================================================================
 async function init() {
   await openDB();
+  // Restore saved language
+  const savedLang = localStorage.getItem('amq_lang');
+  if (savedLang && I18N[savedLang]) setLang(savedLang);
   initNature();
   populateLevelSelect();
 }
