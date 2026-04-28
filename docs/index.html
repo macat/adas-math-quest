@@ -40,9 +40,25 @@ body {
 
 h1, h2, h3 { font-family: 'Fredoka', sans-serif; }
 
-/* ==================== SCREENS ==================== */
-.screen { display: none; min-height: 100vh; position: relative; }
+/* Screen transitions */
+.screen { display: none; min-height: 100vh; position: relative; animation: fade-in 0.3s ease; }
 .screen.active { display: flex; flex-direction: column; align-items: center; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Dog rescue celebration */
+.rescue-banner {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: linear-gradient(135deg, var(--success), var(--meadow));
+  color: white; text-align: center; padding: 1rem;
+  font-family: 'Fredoka', sans-serif; font-size: 1.3rem;
+  z-index: 90; animation: banner-slide 2s ease forwards;
+}
+@keyframes banner-slide {
+  0% { transform: translateY(-100%); }
+  15% { transform: translateY(0); }
+  85% { transform: translateY(0); }
+  100% { transform: translateY(-100%); }
+}
 
 /* ==================== FLOATING NATURE ELEMENTS ==================== */
 .nature-bg {
@@ -892,44 +908,39 @@ function genPattern(cfg) {
 }
 
 function genComparison(cfg) {
-  let leftExpr, rightExpr, leftVal, rightVal;
-
-  // Generate two expressions
-  const ops = ['+', '-'];
-  const op1 = pick(ops), op2 = pick(ops);
-
-  if (op1 === '+') {
-    const a = rand(1, Math.floor(cfg.maxNum / 2));
-    const b = rand(1, Math.floor(cfg.maxNum / 2));
-    leftVal = a + b;
-    leftExpr = `${a} + ${b}`;
-  } else {
-    const a = rand(Math.floor(cfg.maxNum / 3), cfg.maxNum);
-    const b = rand(1, a);
-    leftVal = a - b;
-    leftExpr = `${a} - ${b}`;
+  // Generate two simple arithmetic expressions and ask which is bigger
+  function makeExpr() {
+    const op = pick(['+', '-']);
+    if (op === '+') {
+      const a = rand(1, Math.floor(cfg.maxNum / 2));
+      const b = rand(1, Math.floor(cfg.maxNum / 2));
+      return { expr: `${a} + ${b}`, val: a + b };
+    } else {
+      const a = rand(Math.floor(cfg.maxNum / 4) + 2, cfg.maxNum);
+      const b = rand(1, a - 1);
+      return { expr: `${a} - ${b}`, val: a - b };
+    }
   }
 
-  if (op2 === '+') {
-    const a = rand(1, Math.floor(cfg.maxNum / 2));
-    const b = rand(1, Math.floor(cfg.maxNum / 2));
-    rightVal = a + b;
-    rightExpr = `${a} + ${b}`;
-  } else {
-    const a = rand(Math.floor(cfg.maxNum / 3), cfg.maxNum);
-    const b = rand(1, a);
-    rightVal = a - b;
-    rightExpr = `${a} - ${b}`;
+  let left, right;
+  // Keep regenerating until we get different values
+  let attempts = 0;
+  do {
+    left = makeExpr();
+    right = makeExpr();
+    attempts++;
+  } while (left.val === right.val && attempts < 20);
+
+  // Fallback: ensure different
+  if (left.val === right.val) {
+    right = { expr: `${left.val + 1} + 1`, val: left.val + 2 };
   }
 
-  // Ensure they're not equal (regenerate if needed)
-  if (leftVal === rightVal) rightVal++;
-
-  const answer = leftVal > rightVal ? leftExpr : rightExpr;
+  const answer = left.val > right.val ? left.expr : right.expr;
   return {
     type: 'choice',
     question: t('whichBigger'),
-    choices: [leftExpr, rightExpr],
+    choices: [left.expr, right.expr],
     answer,
     hint: t('whichBigger')
   };
@@ -1106,6 +1117,14 @@ function showSparkles(container) {
   flash.textContent = t('correct');
   sparkleEl.appendChild(flash);
   setTimeout(() => sparkleEl.innerHTML = '', 1200);
+}
+
+function showRescueBanner(dogName, emoji) {
+  const banner = document.createElement('div');
+  banner.className = 'rescue-banner';
+  banner.textContent = `${emoji} ${dogName} ${t('rescued')}`;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 2200);
 }
 
 function populateLevelSelect() {
@@ -1365,6 +1384,7 @@ function onCorrectAnswer() {
     // Dog rescued!
     dog.rescued = true;
     playRescueSound();
+    showRescueBanner(dog.name, dog.emoji);
     setTimeout(() => {
       // Check if all dogs in level are rescued
       if (gameState.dogs.every(d => d.rescued)) {
