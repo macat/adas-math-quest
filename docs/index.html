@@ -878,10 +878,11 @@ function drawBird(cx,x,y,f){ HQ.drawBird(cx,x,y,TS,f); }
 // ===== TILE SYSTEM — MUCH SMALLER TILES =====
 const T={GRASS:0,PATH:1,TREE:2,ROCK:3,WATER:4,FLOWER:5,GATE:6,BRIDGE:7,DOG:8,
 NPC_BUT:9,NPC_SQU:10,NPC_BEAR:11,NPC_BIRD:12,BUSH:13,DGRASS:14,TGRASS:15,
-MUSH:16,EXIT:17,START:18,FENCE:19,HOUSE:20,SIGN:21,DOG_GATE:22};
+MUSH:16,EXIT:17,START:18,FENCE:19,HOUSE:20,SIGN:21,DOG_GATE:22,
+ROAD:23,SIDEWALK:24,BUILDING:25,BLDG_WINDOW:26,BLDG_DOOR:27,PARK:28,LAMPPOST:29,TAXI:30,RIVER:31};
 const TS=24; // internal tile size for sprite art
 let RENDER_SCALE=2; // dynamic — recalculated on resize
-const WALKABLE=new Set([T.GRASS,T.PATH,T.FLOWER,T.DGRASS,T.TGRASS,T.MUSH,T.EXIT,T.START,T.BRIDGE,T.BUSH]);
+const WALKABLE=new Set([T.GRASS,T.PATH,T.FLOWER,T.DGRASS,T.TGRASS,T.MUSH,T.EXIT,T.START,T.BRIDGE,T.BUSH,T.SIDEWALK,T.PARK,T.BLDG_DOOR,T.ROAD]);
 const INTERACT=new Set([T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD,T.SIGN]);
 const tileCache={};
 let animF=0,globalFC=0;
@@ -995,6 +996,98 @@ function renderTile(type,v=0){
       x.fillStyle='#fff';x.fillRect(10,7,4,6);x.fillRect(8,10,8,3);break}
     case T.START:{x.fillStyle='#d4a574';x.fillRect(0,0,TS,TS);
       x.fillStyle='rgba(33,150,243,0.2)';x.fillRect(2,2,20,20);break}
+    case T.ROAD:{x.fillStyle='#555';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#666';x.fillRect(0,0,TS,1);
+      // Dashed center line
+      x.fillStyle='rgba(255,255,255,0.35)';
+      const dashOff=(v*8)%TS;
+      if(dashOff<12)x.fillRect(TS/2,0,1,TS);
+      // Subtle asphalt texture
+      x.fillStyle='rgba(0,0,0,0.06)';x.fillRect(3+v%5,5,4,2);x.fillRect(14+v%3,15,3,2);break}
+    case T.SIDEWALK:{x.fillStyle='#ccc';x.fillRect(0,0,TS,TS);
+      // Concrete grid lines
+      x.fillStyle='rgba(0,0,0,0.1)';
+      x.fillRect(0,TS/2,TS,1);x.fillRect(TS/2,0,1,TS);
+      // Subtle texture
+      x.fillStyle='rgba(0,0,0,0.03)';x.fillRect(2,2,8,8);break}
+    case T.BUILDING:{
+      x.fillStyle='#8d4e3a';x.fillRect(0,0,TS,TS);
+      // Brick pattern — rows of small rectangles with mortar
+      x.fillStyle='#a0583e';
+      for(let br=0;br<6;br++){
+        const boff=(br%2)*5;
+        for(let bc=0;bc<3;bc++){
+          x.fillRect(boff+bc*8+1,br*4+1,6,3);
+        }
+      }
+      // Mortar lines
+      x.fillStyle='#999';
+      for(let ml=0;ml<=6;ml++)x.fillRect(0,ml*4,TS,1);
+      break}
+    case T.BLDG_WINDOW:{
+      x.fillStyle='#8d4e3a';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#a0583e';
+      for(let br=0;br<6;br++){const boff=(br%2)*5;for(let bc=0;bc<3;bc++)x.fillRect(boff+bc*8+1,br*4+1,6,3);}
+      x.fillStyle='#999';for(let ml=0;ml<=6;ml++)x.fillRect(0,ml*4,TS,1);
+      // Window
+      const wlit=globalFC%120<80;
+      x.fillStyle=wlit?'#ffe082':'#64b5f6';
+      x.fillRect(7,6,10,10);
+      x.fillStyle='#5d4037';x.fillRect(7,6,10,1);x.fillRect(7,6,1,10);x.fillRect(16,6,1,10);x.fillRect(7,15,10,1);
+      x.fillRect(11,6,2,10);x.fillRect(7,10,10,1);
+      break}
+    case T.BLDG_DOOR:{
+      x.fillStyle='#8d4e3a';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#a0583e';
+      for(let br=0;br<4;br++){const boff=(br%2)*5;for(let bc=0;bc<3;bc++)x.fillRect(boff+bc*8+1,br*4+1,6,3);}
+      x.fillStyle='#999';for(let ml=0;ml<=4;ml++)x.fillRect(0,ml*4,TS,1);
+      // Arched door
+      x.fillStyle='#5d4037';x.fillRect(7,10,10,14);
+      x.fillStyle='#6d4c41';x.fillRect(8,11,8,13);
+      // Arch top
+      x.beginPath();x.fillStyle='#5d4037';x.arc(12,11,5,Math.PI,0);x.fill();
+      x.beginPath();x.fillStyle='#6d4c41';x.arc(12,11,4,Math.PI,0);x.fill();
+      // Door knob
+      x.fillStyle='#fdd835';x.fillRect(14,17,2,2);
+      break}
+    case T.PARK:{x.fillStyle='#66bb6a';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#81c784';x.fillRect(3,3,4,4);x.fillRect(14,12,5,5);
+      // Tiny flowers
+      const pfc=['#fff176','#f48fb1','#ce93d8'][v%3];
+      x.fillStyle=pfc;x.fillRect(6+v%4,8,2,2);x.fillRect(15,4+v%3,2,2);
+      // Grass blades
+      x.fillStyle='#558b2f';x.fillRect(2,TS-2,1,2);x.fillRect(10,TS-3,1,3);x.fillRect(19,TS-2,1,2);
+      break}
+    case T.LAMPPOST:{x.fillStyle='#ccc';x.fillRect(0,0,TS,TS);
+      x.fillStyle='rgba(0,0,0,0.1)';x.fillRect(0,TS/2,TS,1);x.fillRect(TS/2,0,1,TS);
+      // Pole
+      x.fillStyle='#333';x.fillRect(11,4,2,20);
+      // Lamp
+      const lampGlow=0.3+Math.sin(globalFC*0.04)*0.15;
+      x.fillStyle=`rgba(255,235,59,${lampGlow+0.4})`;
+      x.beginPath();x.arc(12,4,3,0,Math.PI*2);x.fill();
+      x.fillStyle='#333';x.fillRect(10,3,4,2);
+      break}
+    case T.TAXI:{x.fillStyle='#555';x.fillRect(0,0,TS,TS);
+      x.fillStyle='#666';x.fillRect(0,0,TS,1);
+      // Yellow cab
+      x.fillStyle='#fdd835';x.fillRect(6,8,12,8);
+      x.fillStyle='#f9a825';x.fillRect(6,8,12,2);
+      // Wheels
+      x.fillStyle='#333';x.fillRect(7,15,3,2);x.fillRect(14,15,3,2);
+      // Windows
+      x.fillStyle='#81d4fa';x.fillRect(8,10,4,3);x.fillRect(13,10,4,3);
+      break}
+    case T.RIVER:{
+      const rt=globalFC*0.025;
+      x.fillStyle=`rgb(${18+Math.floor(Math.sin(rt)*8)},${80+Math.floor(Math.sin(rt+0.5)*12)},${170+Math.floor(Math.sin(rt+1)*15)})`;
+      x.fillRect(0,0,TS,TS);
+      const rf=animF%10;
+      x.fillStyle='rgba(100,181,246,0.3)';
+      x.fillRect((rf*2+v*3)%TS,5,8,1);x.fillRect(((rf*3+8+v*5)%TS),13,6,1);x.fillRect(((rf*2+4+v*7)%TS),20,7,1);
+      x.fillStyle='rgba(255,255,255,0.15)';
+      x.fillRect(((rf*4+v*2)%TS),9,5,1);x.fillRect(((rf*3+12+v*4)%TS),17,4,1);
+      break}
     default:x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
   }
   tileCache[k]=c;return c;
@@ -1018,7 +1111,8 @@ npc_hint:['I saw a puppy near the gate ahead!','A lost dog is somewhere beyond t
 npc_hello:['Hello, adventurer!','What a beautiful day!','Keep going!','Did you hear barking?'],
 gate_blocked:'Solve the puzzle to pass!',cage_solve:'Solve to rescue!',
 thank_you:'Thank you, {0}!',quest_pattern:'Solve the pattern:',quest_solve:'Solve:',quest_truefalse:'True or False?',
-find_dogs:'Find {0} more dogs to open the exit!'},
+find_dogs:'Find {0} more dogs to open the exit!',
+level7:'New York City',level8:'Budapest'},
 de:{title_sub:'Rette die verlorenen Welpen!',play:'\u25b6 SPIELEN',choose_level:'Wähle ein Level',back:'\u2190 Zurück',
 talk:'Reden',math_challenge:'Mathe-Aufgabe!',continue:'Weiter \u2192',main_menu:'Hauptmenü',
 all_saved:'Alle Hunde gerettet!',correct:'Richtig! \u2728',wrong:'Nochmal!',hint:'Die Antwort ist ',
@@ -1031,7 +1125,8 @@ npc_hint:['Ich sah einen Welpen beim Tor!','Ein Hund versteckt sich hinter der B
 npc_hello:['Hallo!','Was für ein Tag!','Weiter so!','Hörst du Bellen?'],
 gate_blocked:'Löse das Rätsel um durchzukommen!',cage_solve:'Löse zum Retten!',
 thank_you:'Danke, {0}!',quest_pattern:'Löse die Reihe:',quest_solve:'Löse:',quest_truefalse:'Richtig oder Falsch?',
-find_dogs:'Finde noch {0} Hunde zum Ausgang!'},
+find_dogs:'Finde noch {0} Hunde zum Ausgang!',
+level7:'New York City',level8:'Budapest'},
 hu:{title_sub:'Mentsd meg a kiskutyákat!',play:'\u25b6 JÁTÉK',choose_level:'Válassz pályát',back:'\u2190 Vissza',
 talk:'Beszél',math_challenge:'Matek feladat!',continue:'Tovább \u2192',main_menu:'Főmenü',
 all_saved:'Minden kutya megmentve!',correct:'Helyes! \u2728',wrong:'Próbáld újra!',hint:'A válasz: ',
@@ -1044,7 +1139,8 @@ npc_hint:['Láttam egy kiskutyát a kapunál!','Egy kutya bújkál a híd mögö
 npc_hello:['Szia!','Milyen szép nap!','Csak így tovább!','Hallottad az ugatást?'],
 gate_blocked:'Oldd meg a feladatot!',cage_solve:'Oldd meg a mentéshez!',
 thank_you:'Köszönöm, {0}!',quest_pattern:'Oldd meg a sort:',quest_solve:'Oldd meg:',quest_truefalse:'Igaz vagy Hamis?',
-find_dogs:'Találj még {0} kutyát a kijárathoz!'}
+find_dogs:'Találj még {0} kutyát a kijárathoz!',
+level7:'New York City',level8:'Budapest'}
 };
 let LANG='en';
 function t(key,...args){let s=(I18N[LANG]||I18N.en)[key]||(I18N.en)[key]||key;
@@ -1100,7 +1196,9 @@ const STORY = {
       { portrait: '🐻', speaker: 'Bruno the Bear', text: 'The puppies used to play with my cubs every day. Now the Deep Forest is so lonely... I heard them whimpering behind the big rocks. Please hurry!' },
       { portrait: '🦅', speaker: 'Elara the Eagle', text: 'I can see cages on the mountain peaks from up here! The locks are much stronger at this altitude. Steel yourself — the Mountain Trail awaits.' },
       { portrait: '🐸', speaker: 'Fritz the Frog', text: 'Ribbit! The Crystal Lake puppies loved to swim here. But Zählix froze their cages in magical ice! You\'ll need sharp math skills to melt them.' },
-      { portrait: '🐉', speaker: 'Dex the Dragon', text: 'This is it — the Dragon\'s Den. Zählix\'s strongest Number Locks guard the last puppies. I\'m just a small dragon, but... I believe in you!' }
+      { portrait: '🐉', speaker: 'Dex the Dragon', text: 'This is it — the Dragon\'s Den. Zählix\'s strongest Number Locks guard the last puppies. I\'m just a small dragon, but... I believe in you!' },
+      { portrait: '🏙️', speaker: 'Sammy the Squirrel', text: 'The puppies escaped to the big city! Professor Zählix hid them in alleyways and behind locked doors between the towering buildings of New York City!' },
+      { portrait: '🌉', speaker: 'Oliver the Owl', text: 'Zählix\'s last stand! He fled across the ocean to Budapest, hiding the final puppies among the grand buildings along the Danube river. This ends here!' }
     ],
     de: [
       { portrait: '🦋', speaker: 'Bella', text: 'Willkommen auf der Sonnigen Wiese! Hier war es voller fröhliches Bellen... jetzt ist es zu still. Die ersten Welpen sind in der Nähe eingesperrt. Bitte finde sie!' },
@@ -1108,7 +1206,9 @@ const STORY = {
       { portrait: '🐻', speaker: 'Bruno der Bär', text: 'Die Welpen spielten jeden Tag mit meinen Jungen. Jetzt ist der Tiefe Wald so einsam... Ich hörte sie hinter den großen Felsen wimmern. Bitte beeile dich!' },
       { portrait: '🦅', speaker: 'Elara der Adler', text: 'Von hier oben sehe ich Käfige auf den Berggipfeln! Die Schlösser sind in dieser Höhe viel stärker. Mach dich bereit — der Bergpfad wartet.' },
       { portrait: '🐸', speaker: 'Fritz der Frosch', text: 'Quak! Die Kristallsee-Welpen liebten es hier zu schwimmen. Aber Zählix hat ihre Käfige in magisches Eis eingefroren! Du brauchst scharfe Mathe-Skills.' },
-      { portrait: '🐉', speaker: 'Dex der Drache', text: 'Das ist es — die Drachenhöhle. Zählix\' stärkste Zahlenschlösser bewachen die letzten Welpen. Ich bin nur ein kleiner Drache, aber... ich glaube an dich!' }
+      { portrait: '🐉', speaker: 'Dex der Drache', text: 'Das ist es — die Drachenhöhle. Zählix\' stärkste Zahlenschlösser bewachen die letzten Welpen. Ich bin nur ein kleiner Drache, aber... ich glaube an dich!' },
+      { portrait: '🏙️', speaker: 'Sammy das Eichhörnchen', text: 'Die Welpen sind in die Großstadt geflohen! Professor Zählix hat sie in Gassen und hinter verschlossenen Türen zwischen den Wolkenkratzern von New York versteckt!' },
+      { portrait: '🌉', speaker: 'Oliver die Eule', text: 'Zählix\' letztes Gefecht! Er ist über den Ozean nach Budapest geflohen und hat die letzten Welpen in den prächtigen Gebäuden entlang der Donau versteckt!' }
     ],
     hu: [
       { portrait: '🦋', speaker: 'Bella', text: 'Üdv a Napos Réten! Régen tele volt vidám ugatással... most túl csendes. Az első kiskutyák a közelben vannak bezárva. Kérlek, keresd meg őket!' },
@@ -1116,7 +1216,9 @@ const STORY = {
       { portrait: '🐻', speaker: 'Brunó a medve', text: 'A kiskutyák minden nap játszottak a bocsaimmal. Most a Mély Erdő nagyon magányos... Hallottam nyüszítésüket a nagy sziklák mögött. Kérlek, siess!' },
       { portrait: '🦅', speaker: 'Elara a sas', text: 'Innen fentről ketreceket látok a hegycsúcsokon! A zárak sokkal erősebbek ebben a magasságban. Készülj fel — a Hegyi Ösvény vár.' },
       { portrait: '🐸', speaker: 'Fritz a béka', text: 'Brekk! A Kristálytó kiskutyái imádtak itt úszni. De Zählix mágikus jégbe fagyasztotta a ketreceiket! Éles matek-tudás kell a megolvasztásukhoz.' },
-      { portrait: '🐉', speaker: 'Dex a sárkány', text: 'Ez az — a Sárkánybarlang. Zählix legerősebb Számlezárai őrzik az utolsó kiskutyákat. Csak egy kis sárkány vagyok, de... hiszek benned!' }
+      { portrait: '🐉', speaker: 'Dex a sárkány', text: 'Ez az — a Sárkánybarlang. Zählix legerősebb Számlezárai őrzik az utolsó kiskutyákat. Csak egy kis sárkány vagyok, de... hiszek benned!' },
+      { portrait: '🏙️', speaker: 'Sammy a mókus', text: 'A kiskutyák a nagyvárosba menekültek! Zählix professzor sikátorokban és zárt ajtók mögé rejtette őket New York felhőkarcolói között!' },
+      { portrait: '🌉', speaker: 'Oliver a bagoly', text: 'Zählix utolsó csatája! Átmenekült az óceánon Budapestre, és a Duna-parti gyönyörű épületek között rejtette el az utolsó kiskutyákat!' }
     ]
   },
 
@@ -1128,7 +1230,8 @@ const STORY = {
       { portrait: '🐻', speaker: 'Bruno', text: '"My cubs are playing with the puppies again! Thank you! But Bruno looks worried: "I heard Zählix has hidden more puppies up in the mountains..."' },
       { portrait: '🦅', speaker: 'Elara', text: '"The mountain air is filled with joyful barks! But Elara circles down: "I spotted more cages near the Crystal Lake. Zählix won\'t give up easily."' },
       { portrait: '🐸', speaker: 'Fritz', text: '"Ribbit! The lake is full of swimming puppies again! But Fritz looks nervous: "Zählix retreated to his den... the Dragon\'s Den. His last stronghold."' },
-      { portrait: '✨', speaker: 'The End', text: '' }
+      { portrait: '🐉', speaker: 'Dex', text: '"You defeated Zählix here, but look — he vanished through a magic portal! The squirrels say he fled to a huge city far away... New York City!"' },
+      { portrait: '🏙️', speaker: 'Sammy', text: '"We rescued the city puppies! But a pigeon just delivered a message — Zählix fled across the Atlantic to Budapest, Hungary! He\'s hiding the LAST puppies along the Danube river!"' }
     ],
     de: [
       { portrait: '🦋', speaker: 'Bella', text: 'Die Wiese lebt wieder mit fröhlichem Bellen! Aber Bella flüstert: "Es gibt noch mehr Welpen tiefer im Wald... Machst du weiter?"' },
@@ -1136,7 +1239,8 @@ const STORY = {
       { portrait: '🐻', speaker: 'Bruno', text: '"Meine Jungen spielen wieder mit den Welpen! Danke! Aber Bruno schaut besorgt: "Ich hörte, Zählix hat mehr Welpen in den Bergen versteckt..."' },
       { portrait: '🦅', speaker: 'Elara', text: '"Die Bergluft ist voller freudiger Beller! Aber Elara kreist herunter: "Ich sah mehr Käfige am Kristallsee. Zählix gibt nicht leicht auf."' },
       { portrait: '🐸', speaker: 'Fritz', text: '"Quak! Der See ist wieder voller schwimmender Welpen! Aber Fritz schaut nervös: "Zählix hat sich in seine Höhle zurückgezogen... die Drachenhöhle."' },
-      { portrait: '✨', speaker: 'Ende', text: '' }
+      { portrait: '🐉', speaker: 'Dex', text: '"Du hast Zählix hier besiegt, aber schau — er ist durch ein magisches Portal verschwunden! Die Eichhörnchen sagen, er ist in eine riesige Stadt geflohen... New York City!"' },
+      { portrait: '🏙️', speaker: 'Sammy', text: '"Wir haben die Stadtwelpen gerettet! Aber eine Taube hat gerade eine Nachricht gebracht — Zählix ist über den Atlantik nach Budapest geflohen! Er versteckt die LETZTEN Welpen entlang der Donau!"' }
     ],
     hu: [
       { portrait: '🦋', speaker: 'Bella', text: 'A rét újra tele van vidám ugatással! De Bella suttog: "Még több kiskutya van bezárva mélyebben az erdőben... Folytatod?"' },
@@ -1144,11 +1248,12 @@ const STORY = {
       { portrait: '🐻', speaker: 'Brunó', text: '"A bocsaim újra játszanak a kiskutyákkal! Köszönöm! De Brunó aggódva néz: "Hallottam, Zählix több kiskutyát rejtett el a hegyekben..."' },
       { portrait: '🦅', speaker: 'Elara', text: '"A hegyi levegő tele van örömteli ugatással! De Elara leereszkedik: "Több ketrecet láttam a Kristálytónál. Zählix nem adja fel könnyen."' },
       { portrait: '🐸', speaker: 'Fritz', text: '"Brekk! A tó újra tele úszó kiskutyákkal! De Fritz idegesen néz: "Zählix visszavonult a barlangjába... a Sárkánybarlangba. Az utolsó erődje."' },
-      { portrait: '✨', speaker: 'Vége', text: '' }
+      { portrait: '🐉', speaker: 'Dex', text: '"Legyőzted Zählix-et itt, de nézd — eltűnt egy mágikus portálon! A mókusok szerint egy hatalmas városba menekült... New York City-be!"' },
+      { portrait: '🏙️', speaker: 'Sammy', text: '"Megmentettük a városi kiskutyákat! De egy galamb most hozta az üzenetet — Zählix az Atlantikon át Budapestre menekült! Az UTOLSÓ kiskutyákat a Duna mentén rejti!"' }
     ]
   },
 
-  // Final ending sequence (after level 6)
+  // Final ending sequence (after level 8 — Budapest)
   ending: {
     en: [
       { portrait: '🦊', speaker: 'Professor Zählix', text: '"Impossible! You broke ALL my Number Locks?! How can a child solve such complex patterns?!"' },
@@ -1156,7 +1261,7 @@ const STORY = {
       { portrait: '🦊', speaker: 'Professor Zählix', text: 'The old fox pauses. He looks at the puppies playing happily. A tiny smile appears. "Perhaps... perhaps the barking isn\'t noise after all. It\'s... joy."' },
       { portrait: '🎉', speaker: 'Professor Zählix', text: '"I\'m sorry for what I did. Let me make it up to everyone — I\'ll use my math magic to throw the biggest celebration this land has ever seen!"' },
       { portrait: '🐕', speaker: 'All the puppies', text: '"WOOF WOOF WOOF!" All the rescued puppies bark with joy! They gather around {name}, wagging their tails. The land is happy once more!' },
-      { portrait: '👑', speaker: 'The End', text: 'Congratulations, {name}! You saved every single puppy and taught Professor Zählix that joy is the most beautiful sound in the world. You are a true Math Hero! 🌟' }
+      { portrait: '👑', speaker: 'The End', text: 'Congratulations, {name}! From sunny meadows to the streets of New York and the banks of the Danube in Budapest — you saved every single puppy and taught Professor Zählix that joy is the most beautiful sound in the world. You are a true Math Hero! 🌟' }
     ],
     de: [
       { portrait: '🦊', speaker: 'Professor Zählix', text: '"Unmöglich! Du hast ALLE meine Zahlenschlösser geknackt?! Wie kann ein Kind solche Muster lösen?!"' },
@@ -1164,7 +1269,7 @@ const STORY = {
       { portrait: '🦊', speaker: 'Professor Zählix', text: 'Der alte Fuchs hält inne. Er schaut die fröhlich spielenden Welpen an. Ein kleines Lächeln erscheint. "Vielleicht... ist das Bellen doch kein Lärm. Es ist... Freude."' },
       { portrait: '🎉', speaker: 'Professor Zählix', text: '"Es tut mir leid. Lasst mich alles wiedergutmachen — ich werde meine Mathe-Magie nutzen, um die größte Feier zu veranstalten, die es je gab!"' },
       { portrait: '🐕', speaker: 'Alle Welpen', text: '"WUFF WUFF WUFF!" Alle geretteten Welpen bellen vor Freude! Sie versammeln sich um {name} und wedeln mit den Schwänzen. Das Land ist wieder glücklich!' },
-      { portrait: '👑', speaker: 'Ende', text: 'Herzlichen Glückwunsch, {name}! Du hast jeden einzelnen Welpen gerettet und Professor Zählix gelehrt, dass Freude das schönste Geräusch der Welt ist. Du bist eine wahre Mathe-Heldin! 🌟' }
+      { portrait: '👑', speaker: 'Ende', text: 'Herzlichen Glückwunsch, {name}! Von sonnigen Wiesen über die Straßen von New York bis an die Donau in Budapest — du hast jeden einzelnen Welpen gerettet und Professor Zählix gelehrt, dass Freude das schönste Geräusch der Welt ist. Du bist eine wahre Mathe-Heldin! 🌟' }
     ],
     hu: [
       { portrait: '🦊', speaker: 'Zählix professzor', text: '"Lehetetlen! MINDEN Számlezáramat feltörted?! Hogy oldhat meg egy gyerek ilyen bonyolult mintákat?!"' },
@@ -1172,7 +1277,7 @@ const STORY = {
       { portrait: '🦊', speaker: 'Zählix professzor', text: 'Az öreg róka megáll. Nézi a boldogan játszó kölykeket. Halvány mosoly jelenik meg. "Talán... talán az ugatás mégsem zaj. Ez... öröm."' },
       { portrait: '🎉', speaker: 'Zählix professzor', text: '"Sajnálom, amit tettem. Hadd tegyem jóvá — a matek-varázslatommal a legnagyobb ünnepséget rendezem, amit ez a föld valaha látott!"' },
       { portrait: '🐕', speaker: 'Az összes kiskutya', text: '"VAU VAU VAU!" Az összes megmentett kiskutya örömében ugat! Összegyűlnek {name} körül, farkukat csóválva. Az ország újra boldog!' },
-      { portrait: '👑', speaker: 'Vége', text: 'Gratulálok, {name}! Minden egyes kiskutyát megmentettél és megtanítottad Zählix professzornak, hogy az öröm a legszebb hang a világon. Igazi Matek Hős vagy! 🌟' }
+      { portrait: '👑', speaker: 'Vége', text: 'Gratulálok, {name}! A napos rétektől New York utcáin át a budapesti Duna-partig — minden egyes kiskutyát megmentettél és megtanítottad Zählix professzornak, hogy az öröm a legszebb hang a világon. Igazi Matek Hős vagy! 🌟' }
     ]
   },
 
@@ -1221,6 +1326,20 @@ const STORY = {
         { char: 'bruno', lines: ['I followed you all the way here. We all believe in you!', 'The last cages are behind magical barriers. But you have the Gift of Patterns!', 'This is it. The final battle. Give it everything you\'ve got!'] },
         { char: 'bella', lines: ['All the animals of the land are watching and cheering for you!', 'Zählix is hiding deeper in the den. He\'s scared of YOU now!', 'You\'re the bravest adventurer I\'ve ever met!'] },
         { char: 'oliver', lines: ['Every puzzle you\'ve solved has made you stronger. This is your moment.', 'Zählix underestimated you from the very beginning.', 'The last locks will be tough. But you are tougher.'] }
+      ],
+      // Level 7 — New York City
+      [
+        { char: 'sammy', lines: ['Wow, look at these buildings! They\'re taller than any tree I\'ve ever climbed!', 'I heard puppies barking from inside that building across the street!', 'Watch out for traffic when crossing the roads! But don\'t worry, the taxis stop for heroes.'] },
+        { char: 'bella', lines: ['The city butterflies are smaller here, but just as brave! They showed me where a puppy is hiding!', 'The Number Locks in the city use bigger numbers. Stay sharp!', 'Central Park reminds me of our meadow back home... but with more hot dog stands!'] },
+        { char: 'pip', lines: ['Tweet tweet! I can see the whole city from up on the lampposts!', 'There\'s a puppy cage in the alley between those two tall buildings!', 'The pigeons here told me Zählix is planning to escape to Europe!'] },
+        { char: 'oliver', lines: ['Hoo-hoo! Even in this concrete jungle, wisdom finds a way.', 'The city puzzles require street smarts. You have plenty of those!', 'I overheard Zählix booking a flight to Budapest... we must hurry!'] }
+      ],
+      // Level 8 — Budapest
+      [
+        { char: 'oliver', lines: ['The Danube river divides this beautiful city in two — Buda and Pest!', 'Zählix hid puppies on both sides of the river. Cross the bridges carefully!', 'This is his final hiding place. After this, every puppy will be free!'] },
+        { char: 'bella', lines: ['Budapest is so beautiful! The old buildings remind me of fairy tales!', 'I saw a puppy cage near one of the grand old buildings along the river!', 'We\'re almost done! Just a few more Number Locks to crack!'] },
+        { char: 'bruno', lines: ['I swam across the Danube to get here! The water was cold but the puppies need us!', 'Zählix is running out of places to hide. His locks are desperate now!', 'After we free these puppies, we can all go home as heroes!'] },
+        { char: 'sammy', lines: ['Hungarian squirrels are very friendly! They showed me a secret path!', 'Zählix is hiding in the old castle district. But we\'ll find him!', 'The last puppies are so close I can almost hear them barking with joy!'] }
       ]
     ],
     de: [
@@ -1259,6 +1378,20 @@ const STORY = {
         { char: 'bruno', lines: ['Ich bin dir den ganzen Weg gefolgt. Wir alle glauben an dich!', 'Die letzten Käfige sind hinter magischen Barrieren. Aber du hast das Talent!', 'Das ist es. Der letzte Kampf. Gib alles!'] },
         { char: 'bella', lines: ['Alle Tiere des Landes schauen zu und jubeln dir zu!', 'Zählix versteckt sich tiefer in der Höhle. Er hat jetzt Angst vor DIR!', 'Du bist die mutigste Abenteurerin, die ich je getroffen habe!'] },
         { char: 'oliver', lines: ['Jedes gelöste Rätsel hat dich stärker gemacht. Das ist dein Moment.', 'Zählix hat dich von Anfang an unterschätzt.', 'Die letzten Schlösser werden hart. Aber du bist härter.'] }
+      ],
+      // Level 7 — New York City
+      [
+        { char: 'sammy', lines: ['Wow, schau dir diese Gebäude an! Sie sind höher als jeder Baum, den ich je geklettert bin!', 'Ich hörte Welpen aus dem Gebäude auf der anderen Straßenseite bellen!', 'Pass auf beim Überqueren der Straße! Aber keine Sorge, die Taxis halten für Helden.'] },
+        { char: 'bella', lines: ['Die Stadtschmetterlinge sind kleiner, aber genauso mutig! Sie zeigten mir, wo ein Welpe sich versteckt!', 'Die Zahlenschlösser in der Stadt nutzen größere Zahlen. Bleib aufmerksam!', 'Der Central Park erinnert mich an unsere Wiese... aber mit mehr Hotdog-Ständen!'] },
+        { char: 'pip', lines: ['Tschirp tschirp! Ich kann die ganze Stadt von den Laternen aus sehen!', 'Da ist ein Welpenkäfig in der Gasse zwischen den hohen Gebäuden!', 'Die Tauben hier sagten mir, Zählix plant nach Europa zu fliehen!'] },
+        { char: 'oliver', lines: ['Huu-huu! Selbst in diesem Betondschungel findet Weisheit einen Weg.', 'Die Stadträtsel brauchen Straßenschläue. Davon hast du genug!', 'Ich hörte, Zählix bucht einen Flug nach Budapest... wir müssen uns beeilen!'] }
+      ],
+      // Level 8 — Budapest
+      [
+        { char: 'oliver', lines: ['Die Donau teilt diese schöne Stadt in zwei — Buda und Pest!', 'Zählix hat Welpen auf beiden Seiten des Flusses versteckt. Überquere die Brücken vorsichtig!', 'Das ist sein letztes Versteck. Danach wird jeder Welpe frei sein!'] },
+        { char: 'bella', lines: ['Budapest ist so schön! Die alten Gebäude erinnern mich an Märchen!', 'Ich sah einen Welpenkäfig bei einem der Prachtbauten am Fluss!', 'Wir sind fast fertig! Nur noch ein paar Zahlenschlösser zu knacken!'] },
+        { char: 'bruno', lines: ['Ich bin durch die Donau geschwommen um herzukommen! Das Wasser war kalt, aber die Welpen brauchen uns!', 'Zählix gehen die Verstecke aus. Seine Schlösser sind jetzt verzweifelt!', 'Nachdem wir diese Welpen befreit haben, können wir alle als Helden nach Hause!'] },
+        { char: 'sammy', lines: ['Ungarische Eichhörnchen sind sehr freundlich! Sie zeigten mir einen Geheimweg!', 'Zählix versteckt sich im alten Burgviertel. Aber wir finden ihn!', 'Die letzten Welpen sind so nah, ich kann sie fast vor Freude bellen hören!'] }
       ]
     ],
     hu: [
@@ -1297,6 +1430,20 @@ const STORY = {
         { char: 'bruno', lines: ['Egészen idáig követtelek. Mindannyian hiszünk benned!', 'Az utolsó ketrecek mágikus akadályok mögött vannak. De neked van a Tehetséged!', 'Ez az. Az utolsó csata. Adj bele mindent!'] },
         { char: 'bella', lines: ['Az ország összes állata figyel és szurkol neked!', 'Zählix mélyebben bújik a barlangban. Most ő fél TŐLED!', 'Te vagy a legbátrabb kalandor, akivel valaha találkoztam!'] },
         { char: 'oliver', lines: ['Minden megoldott rejtvény erősebbé tett. Ez a te pillanatod.', 'Zählix kezdettől fogva alábecsült téged.', 'Az utolsó zárak nehezek lesznek. De te keményebb vagy.'] }
+      ],
+      // Level 7 — New York City
+      [
+        { char: 'sammy', lines: ['Hűha, nézd ezeket az épületeket! Magasabbak, mint bármelyik fa, amire valaha másztam!', 'Hallottam kiskutyákat ugatni abból az épületből az utca túloldalán!', 'Vigyázz átkeléskor! De ne aggódj, a taxik megállnak a hősöknek.'] },
+        { char: 'bella', lines: ['A városi pillangók kisebbek itt, de ugyanolyan bátrak! Megmutatták, hol bújik egy kiskutya!', 'A Számlezárak a városban nagyobb számokat használnak. Figyelj!', 'A Central Park emlékeztet a mi rétünkre... de több hotdog standdal!'] },
+        { char: 'pip', lines: ['Csirip csirip! A lámpák tetejéről az egész várost látom!', 'Van egy kiskutya ketrec a két magas épület közötti sikátorban!', 'Az itteni galambok mondták, Zählix Európába akar szökni!'] },
+        { char: 'oliver', lines: ['Huhú! Még ebben a betonrengetegben is utat talál a bölcsesség.', 'A városi rejtvényekhez utcai okosság kell. Abból van bőven!', 'Hallottam, Zählix Budapestre repül... sietnünk kell!'] }
+      ],
+      // Level 8 — Budapest
+      [
+        { char: 'oliver', lines: ['A Duna kettéosztja ezt a gyönyörű várost — Budára és Pestre!', 'Zählix a folyó mindkét oldalára rejtett kiskutyákat. Óvatosan kelj át a hidakon!', 'Ez az utolsó rejtekhelye. Ezután minden kiskutya szabad lesz!'] },
+        { char: 'bella', lines: ['Budapest olyan szép! A régi épületek mesékre emlékeztetnek!', 'Láttam egy kiskutya ketrecet az egyik díszes régi épületnél a folyó mentén!', 'Majdnem kész vagyunk! Már csak pár Számlezár van hátra!'] },
+        { char: 'bruno', lines: ['Átúsztam a Dunán, hogy idejussak! Hideg volt a víz, de a kiskutyáknak szükségük van ránk!', 'Zählix-nek fogynak a rejtekhelyei. A zárai most kétségbeesettek!', 'Miután kiszabadítjuk ezeket a kiskutyákat, hősként mehetünk haza!'] },
+        { char: 'sammy', lines: ['A magyar mókusok nagyon barátságosak! Mutattak egy titkos utat!', 'Zählix a régi Várnegyedben bújkál. De megtaláljuk!', 'Az utolsó kiskutyák olyan közel vannak, szinte hallom az örömteli ugatásukat!'] }
       ]
     ]
   },
@@ -1448,8 +1595,8 @@ function showLevelIntro(levelIdx, onComplete) {
 
 // Show level outro
 function showLevelOutro(levelIdx, onComplete) {
-  if (levelIdx === 5) {
-    // Final level - show ending
+  if (levelIdx === 7) {
+    // Final level (Budapest) - show ending
     showStorySequence(STORY.ending[LANG] || STORY.ending.en, onComplete);
     return;
   }
@@ -1475,12 +1622,98 @@ function getDogRescueMessage() {
 function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
   const map=[];
   const rng=seedRng(seed);
-  const wall=biome==='mountain'||biome==='castle'?T.ROCK:T.TREE;
-  const bgTile=biome==='forest'||biome==='castle'?T.DGRASS:T.GRASS;
+  const isCity=biome.startsWith('city');
+  const wall=isCity?T.BUILDING:biome==='mountain'||biome==='castle'?T.ROCK:T.TREE;
+  const bgTile=isCity?T.SIDEWALK:biome==='forest'||biome==='castle'?T.DGRASS:T.GRASS;
   for(let y=0;y<h;y++){map[y]=[];for(let x=0;x<w;x++){
     if(y===0||y===h-1||x===0||x===w-1)map[y][x]=wall;
-    else map[y][x]=bgTile;
+    else map[y][x]=isCity?T.BUILDING:bgTile;
   }}
+  
+  // City biome: lay out street grid with buildings
+  if(isCity){
+    const roadSpacingH=7+Math.floor(rng()*2); // horizontal road every 7-8 rows
+    const roadSpacingV=9+Math.floor(rng()*2); // vertical road every 9-10 cols
+    // Lay horizontal roads
+    for(let ry=roadSpacingH;ry<h-2;ry+=roadSpacingH){
+      for(let rx=1;rx<w-1;rx++){
+        if(ry>0&&ry<h-1)map[ry][rx]=T.ROAD;
+        if(ry+1>0&&ry+1<h-1)map[ry+1][rx]=T.ROAD;
+        // Sidewalks above and below
+        if(ry-1>0)map[ry-1][rx]=T.SIDEWALK;
+        if(ry+2<h-1)map[ry+2][rx]=T.SIDEWALK;
+      }
+    }
+    // Lay vertical roads
+    for(let vx=roadSpacingV;vx<w-2;vx+=roadSpacingV){
+      for(let vy=1;vy<h-1;vy++){
+        map[vy][vx]=T.ROAD;
+        if(vx+1<w-1)map[vy][vx+1]=T.ROAD;
+        // Sidewalks on sides
+        if(vx-1>0&&map[vy][vx-1]===T.BUILDING)map[vy][vx-1]=T.SIDEWALK;
+        if(vx+2<w-1&&map[vy][vx+2]===T.BUILDING)map[vy][vx+2]=T.SIDEWALK;
+      }
+    }
+    // Add windows and doors on building edges facing streets
+    for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<w-2;x2++){
+      if(map[y2][x2]!==T.BUILDING)continue;
+      // Check if adjacent to sidewalk or road
+      const adjStreet=[[0,1],[0,-1],[1,0],[-1,0]].some(([dy2,dx2])=>{
+        const t2=map[y2+dy2][x2+dx2];return t2===T.SIDEWALK||t2===T.ROAD;
+      });
+      if(!adjStreet)continue;
+      // Bottom row buildings get doors occasionally
+      const belowIsWalk=y2+1<h-1&&(map[y2+1][x2]===T.SIDEWALK||map[y2+1][x2]===T.ROAD);
+      if(belowIsWalk&&rng()<0.12){map[y2][x2]=T.BLDG_DOOR;continue;}
+      if(rng()<0.25)map[y2][x2]=T.BLDG_WINDOW;
+    }
+    // Scatter parks (small green spaces, 2-3 per map)
+    for(let p2=0;p2<3;p2++){
+      const px2=3+Math.floor(rng()*(w-6)),py2=3+Math.floor(rng()*(h-6));
+      for(let pdy=-1;pdy<=1;pdy++)for(let pdx=-1;pdx<=1;pdx++){
+        const ptx=px2+pdx,pty=py2+pdy;
+        if(ptx>1&&ptx<w-2&&pty>1&&pty<h-2&&(map[pty][ptx]===T.BUILDING||map[pty][ptx]===T.SIDEWALK)){
+          map[pty][ptx]=T.PARK;
+        }
+      }
+    }
+    // Lampposts along sidewalks
+    for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<w-2;x2++){
+      if(map[y2][x2]===T.SIDEWALK&&rng()<0.04)map[y2][x2]=T.LAMPPOST;
+    }
+    // NYC: taxis on roads
+    if(biome==='city_nyc'){
+      for(let y2=2;y2<h-2;y2++)for(let x2=2;x2<w-2;x2++){
+        if(map[y2][x2]===T.ROAD&&rng()<0.02)map[y2][x2]=T.TAXI;
+      }
+    }
+    // Budapest: Danube river running horizontally through center
+    if(biome==='city_budapest'){
+      const riverY=Math.floor(h/2);
+      for(let rx=1;rx<w-1;rx++){
+        for(let ry2=-1;ry2<=2;ry2++){
+          const ry3=riverY+ry2;
+          if(ry3>0&&ry3<h-1)map[ry3][rx]=T.RIVER;
+        }
+      }
+      // Add 3 bridges across the river
+      const bridgeSpacing=Math.floor(w/4);
+      for(let bi=1;bi<=3;bi++){
+        const bx=Math.min(w-3,Math.max(2,bi*bridgeSpacing));
+        for(let ry2=-1;ry2<=2;ry2++){
+          const ry3=riverY+ry2;
+          if(ry3>0&&ry3<h-1){
+            map[ry3][bx]=T.BRIDGE;map[ry3][bx+1]=T.BRIDGE;
+          }
+        }
+        // Sidewalk approaches to bridge
+        for(const dy2 of [-2,3]){
+          const ay=riverY+dy2;
+          if(ay>0&&ay<h-1){map[ay][bx]=T.SIDEWALK;map[ay][bx+1]=T.SIDEWALK;}
+        }
+      }
+    }
+  }
   
   // Create zone separator walls with gates
   const gatePositions=[];
@@ -1509,7 +1742,8 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
   map[startY][startX]=T.START;
   map[exitY][exitX]=T.EXIT;
   
-  // Add terrain features WITHIN zones for visual interest
+  // Add terrain features WITHIN zones for visual interest (skip for city)
+  if(!isCity)
   for(let z=0;z<zones.length;z++){
     const zone=zones[z];
     const zw=zone.right-zone.left;
@@ -1549,7 +1783,8 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
   }
   carvePath(map,curX,curY,exitX,exitY,bgTile,rng,wall);
   
-  // Carve wandering side paths in each zone for exploration
+  // Carve wandering side paths in each zone for exploration (skip for city — streets provide paths)
+  if(!isCity)
   for(let z=0;z<zones.length;z++){
     const zone=zones[z];const zw=zone.right-zone.left;
     for(let p=0;p<4;p++){
@@ -1598,8 +1833,8 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
     }
   }
   
-  // Add bridges across water features  
-  // (scan for water patches and add bridges if they separate walkable areas)
+  // Add bridges across water features (skip for city — bridges already placed)
+  if(!isCity)
   for(let y=2;y<h-2;y++)for(let x=2;x<w-2;x++){
     if(map[y][x]===T.WATER){
       // Horizontal bridge opportunity
@@ -1629,7 +1864,7 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
       dx=zone.left+1+Math.floor(rng()*zw);
       dy=3+Math.floor(rng()*(h-6));
       attempts++;
-    }while((map[dy][dx]===wall||map[dy][dx]===T.GATE||map[dy][dx]===T.WATER||
+    }while((map[dy][dx]===wall||map[dy][dx]===T.GATE||map[dy][dx]===T.WATER||map[dy][dx]===T.RIVER||map[dy][dx]===T.ROAD||map[dy][dx]===T.LAMPPOST||
             map[dy][dx]===T.EXIT||map[dy][dx]===T.START)&&attempts<80);
     if(attempts<80){
       map[dy][dx]=T.DOG;
@@ -1644,14 +1879,27 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
           }else{map[cy2][cx2]=T.FENCE;}
         }
       }
-      // Ensure path to cage gate
+      // Ensure path to cage gate — start OUTSIDE the cage so carvePath doesn't need to cross FENCE
       if(gateDir){
-        const gpx=gateDir.x+(gateDir.x>dx?1:gateDir.x<dx?-1:0);
-        const gpy=gateDir.y+(gateDir.y>dy?1:gateDir.y<dy?-1:0);
-        if(gpx>0&&gpx<w-1&&gpy>0&&gpy<h-1&&map[gpy][gpx]!==T.GATE&&map[gpy][gpx]!==T.DOG){
-          map[gpy][gpx]=bgTile;
+        const gdx=gateDir.x-dx, gdy=gateDir.y-dy; // direction from dog to gate
+        // Clear approach corridor outside the gate (3 tiles out + 1 on each side)
+        for(let step=1;step<=3;step++){
+          const ax=gateDir.x+gdx*step, ay=gateDir.y+gdy*step;
+          if(ax>0&&ax<w-1&&ay>0&&ay<h-1&&map[ay][ax]!==T.GATE&&map[ay][ax]!==T.DOG&&map[ay][ax]!==T.DOG_GATE&&map[ay][ax]!==T.EXIT&&map[ay][ax]!==T.START){
+            map[ay][ax]=bgTile;
+          }
+          // Side tiles for wider approach
+          if(step===1){
+            const sx1=ax+(gdy!==0?1:0),sy1=ay+(gdx!==0?1:0);
+            const sx2=ax+(gdy!==0?-1:0),sy2=ay+(gdx!==0?-1:0);
+            if(sx1>0&&sx1<w-1&&sy1>0&&sy1<h-1&&map[sy1][sx1]!==T.GATE&&map[sy1][sx1]!==T.DOG&&map[sy1][sx1]!==T.FENCE&&map[sy1][sx1]!==T.DOG_GATE)map[sy1][sx1]=bgTile;
+            if(sx2>0&&sx2<w-1&&sy2>0&&sy2<h-1&&map[sy2][sx2]!==T.GATE&&map[sy2][sx2]!==T.DOG&&map[sy2][sx2]!==T.FENCE&&map[sy2][sx2]!==T.DOG_GATE)map[sy2][sx2]=bgTile;
+          }
         }
-        carvePath(map,gateDir.x,gateDir.y,zone.left+Math.floor(zw/2),Math.floor(h/2),bgTile,rng,wall);
+        // Start path carving from outside the cage
+        const startX2=gateDir.x+gdx*2, startY2=gateDir.y+gdy*2;
+        const spx=Math.max(1,Math.min(w-2,startX2)), spy=Math.max(1,Math.min(h-2,startY2));
+        carvePath(map,spx,spy,zone.left+Math.floor(zw/2),Math.floor(h/2),bgTile,rng,wall);
       }else{
         carvePath(map,dx,dy,zone.left+Math.floor(zw/2),Math.floor(h/2),bgTile,rng,wall);
       }
@@ -1672,7 +1920,7 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
       nx=2+Math.floor(rng()*(w-4));
       ny=2+Math.floor(rng()*(h-4));
       attempts++;
-    }while((map[ny][nx]!==bgTile&&map[ny][nx]!==T.GRASS&&map[ny][nx]!==T.DGRASS)&&attempts<60);
+    }while((map[ny][nx]!==bgTile&&map[ny][nx]!==T.GRASS&&map[ny][nx]!==T.DGRASS&&map[ny][nx]!==T.PARK&&map[ny][nx]!==T.SIDEWALK)&&attempts<60);
     if(attempts<60){
       const npcType=npcTypes[i%npcTypes.length];
       map[ny][nx]=npcType;
@@ -1680,14 +1928,15 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
     }
   }
   
-  // Scatter decorations
+  // Scatter decorations (skip for city — city has its own decoration)
+  if(!isCity)
   for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
     if((map[y][x]===bgTile||map[y][x]===T.GRASS)&&rng()<0.08)map[y][x]=T.FLOWER;
     else if((map[y][x]===bgTile||map[y][x]===T.GRASS)&&rng()<0.04)map[y][x]=T.TGRASS;
     else if((map[y][x]===bgTile||map[y][x]===T.GRASS)&&biome==='forest'&&rng()<0.03)map[y][x]=T.MUSH;
   }
   
-  // Add water features for lake biome
+  // Add water features for lake biome (skip for city)
   if(biome==='lake'){
     const lx=Math.floor(w*0.5),ly=Math.floor(h*0.5);
     for(let dy=-4;dy<=4;dy++)for(let dx=-5;dx<=5;dx++){
@@ -1705,8 +1954,8 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
     for(let dy=-1;dy<=1;dy++){
       const cy=gp.y+dy;
       if(cy>0&&cy<h-1){
-        if(gp.x-1>0&&(map[cy][gp.x-1]===wall||map[cy][gp.x-1]===T.WATER))map[cy][gp.x-1]=bgTile;
-        if(gp.x+2<w-1&&(map[cy][gp.x+2]===wall||map[cy][gp.x+2]===T.WATER))map[cy][gp.x+2]=bgTile;
+        if(gp.x-1>0&&(map[cy][gp.x-1]===wall||map[cy][gp.x-1]===T.WATER||map[cy][gp.x-1]===T.RIVER))map[cy][gp.x-1]=bgTile;
+        if(gp.x+2<w-1&&(map[cy][gp.x+2]===wall||map[cy][gp.x+2]===T.WATER||map[cy][gp.x+2]===T.RIVER))map[cy][gp.x+2]=bgTile;
       }
     }
     // Place path tiles leading to gate
@@ -1718,9 +1967,49 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
   // Ensure exit and start are reachable
   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
     const ey=exitY+dy,ex=exitX+dx;
-    if(ey>0&&ey<h-1&&ex>0&&ex<w-1&&(map[ey][ex]===wall||map[ey][ex]===T.WATER))map[ey][ex]=bgTile;
+    if(ey>0&&ey<h-1&&ex>0&&ex<w-1&&(map[ey][ex]===wall||map[ey][ex]===T.WATER||map[ey][ex]===T.RIVER))map[ey][ex]=bgTile;
     const sy=startY+dy,sx2=startX+dx;
-    if(sy>0&&sy<h-1&&sx2>0&&sx2<w-1&&(map[sy][sx2]===wall||map[sy][sx2]===T.WATER))map[sy][sx2]=bgTile;
+    if(sy>0&&sy<h-1&&sx2>0&&sx2<w-1&&(map[sy][sx2]===wall||map[sy][sx2]===T.WATER||map[sy][sx2]===T.RIVER))map[sy][sx2]=bgTile;
+  }
+  
+  // BFS reachability check — ensure all DOG_GATEs are reachable from START
+  const walkSet=new Set([...WALKABLE,T.GATE,T.DOG_GATE]);
+  const visited=Array.from({length:h},()=>new Uint8Array(w));
+  const bfsQ=[[startX,startY]];visited[startY][startX]=1;
+  while(bfsQ.length){
+    const [bx,by]=bfsQ.shift();
+    for(const [ddx,ddy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx2=bx+ddx,ny2=by+ddy;
+      if(nx2>0&&nx2<w-1&&ny2>0&&ny2<h-1&&!visited[ny2][nx2]&&walkSet.has(map[ny2][nx2])){
+        visited[ny2][nx2]=1;bfsQ.push([nx2,ny2]);
+      }
+    }
+  }
+  // Force-carve path to any unreachable DOG_GATE
+  for(const dog of dogs){
+    if(!dog.cageGate)continue;
+    const gx2=dog.cageGate.x,gy2=dog.cageGate.y;
+    if(visited[gy2][gx2])continue;
+    // Find nearest reachable walkable tile
+    let found=null;
+    for(let rad=1;rad<20&&!found;rad++){
+      for(let ddy=-rad;ddy<=rad&&!found;ddy++)for(let ddx=-rad;ddx<=rad&&!found;ddx++){
+        const tnx=gx2+ddx,tny=gy2+ddy;
+        if(tnx>0&&tnx<w-1&&tny>0&&tny<h-1&&visited[tny][tnx])found={x:tnx,y:tny};
+      }
+    }
+    if(found){
+      // Straight-line carve from gate approach to reachable tile
+      let cx3=gx2,cy3=gy2;
+      const breakable=new Set([wall,T.FENCE,T.ROCK,T.TREE,T.WATER,T.BUSH,bgTile,T.GRASS,T.DGRASS,T.TGRASS]);
+      for(let steps=0;steps<200&&(cx3!==found.x||cy3!==found.y);steps++){
+        if(breakable.has(map[cy3][cx3])&&map[cy3][cx3]!==T.DOG&&map[cy3][cx3]!==T.EXIT&&map[cy3][cx3]!==T.START){
+          map[cy3][cx3]=bgTile;
+        }
+        if(Math.abs(found.x-cx3)>Math.abs(found.y-cy3))cx3+=(found.x>cx3?1:-1);
+        else cy3+=(found.y>cy3?1:-1);
+      }
+    }
   }
   
   return{map,dogs,gates:gatePositions,npcs,start:{x:startX,y:startY},exit:{x:exitX,y:exitY}};
@@ -1730,7 +2019,7 @@ function seedRng(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/
 
 function carvePath(map,x1,y1,x2,y2,bgTile,rng,wall){
   let x=x1,y=y1;let maxSteps=600;
-  const protect=new Set([T.GATE,T.DOG,T.DOG_GATE,T.FENCE,T.EXIT,T.START,T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD]);
+  const protect=new Set([T.GATE,T.DOG,T.DOG_GATE,T.FENCE,T.EXIT,T.START,T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD,T.ROAD,T.RIVER,T.BLDG_WINDOW,T.BLDG_DOOR,T.PARK,T.LAMPPOST,T.TAXI,T.BRIDGE]);
   while((x!==x2||y!==y2)&&maxSteps-->0){
     if(x>0&&x<map[0].length-1&&y>0&&y<map.length-1){
       if(!protect.has(map[y][x])){
@@ -1770,7 +2059,9 @@ const LEVEL_DEFS=[
   {id:3,nameKey:'level3',diff:3,bgColor:'#2e5016',biome:'forest',w:64,h:48,gates:4,dogs:4,npcs:8,seed:256},
   {id:4,nameKey:'level4',diff:4,bgColor:'#607d8b',biome:'mountain',w:72,h:52,gates:5,dogs:5,npcs:8,seed:512},
   {id:5,nameKey:'level5',diff:5,bgColor:'#0277bd',biome:'lake',w:80,h:56,gates:5,dogs:5,npcs:9,seed:789},
-  {id:6,nameKey:'level6',diff:6,bgColor:'#3e2723',biome:'castle',w:90,h:60,gates:6,dogs:6,npcs:10,seed:1024}
+  {id:6,nameKey:'level6',diff:6,bgColor:'#3e2723',biome:'castle',w:90,h:60,gates:6,dogs:6,npcs:10,seed:1024},
+  {id:7,nameKey:'level7',diff:3,bgColor:'#4a5568',biome:'city_nyc',w:60,h:45,gates:4,dogs:4,npcs:8,seed:2048},
+  {id:8,nameKey:'level8',diff:4,bgColor:'#c5a36e',biome:'city_budapest',w:65,h:48,gates:5,dogs:5,npcs:9,seed:3072}
 ];
 
 // Generate all levels
@@ -2403,7 +2694,9 @@ function showFlash(msg,color='#4CAF50'){
   clearTimeout(flashTO);flashTO=setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(-50%) scale(0.9)'},2500);
 }
 
+let _speechInterval=null;
 function showSpeechBubble(name,text,sx,sy){
+  if(_speechInterval)clearInterval(_speechInterval);
   const b=document.getElementById('speech-bubble');
   const nameEl=document.getElementById('speech-name-text');
   const textEl=document.getElementById('speech-text');
@@ -2417,12 +2710,12 @@ function showSpeechBubble(name,text,sx,sy){
   b.style.top=Math.max(10,sy-100)+'px';b.style.maxWidth=bw+'px';
   // Typewriter effect for speech
   let i=0;
-  const interval=setInterval(()=>{
-    if(i<text.length){textEl.textContent+=text[i];i++}else clearInterval(interval);
+  _speechInterval=setInterval(()=>{
+    if(i<text.length){textEl.textContent+=text[i];i++}else{clearInterval(_speechInterval);_speechInterval=null;}
   },22);
   clearTimeout(b._hideTO);
-  b._hideTO=setTimeout(()=>{b.style.display='none';clearInterval(interval)},Math.max(4000,text.length*35+2000));
-  b.onclick=()=>{clearInterval(interval);textEl.textContent=text;
+  b._hideTO=setTimeout(()=>{b.style.display='none';if(_speechInterval){clearInterval(_speechInterval);_speechInterval=null;}},Math.max(4000,text.length*35+2000));
+  b.onclick=()=>{if(_speechInterval){clearInterval(_speechInterval);_speechInterval=null;}textEl.textContent=text;
     clearTimeout(b._hideTO);b._hideTO=setTimeout(()=>{b.style.display='none'},1500)};
 }
 
