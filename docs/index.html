@@ -1067,8 +1067,9 @@ function initTitle(){
 }
 
 async function showLevelSelect(){
-  showScreen('level-screen');const grid=document.getElementById('level-grid');grid.innerHTML='';
+  showScreen('level-screen');const grid=document.getElementById('level-grid');
   const recs=await getRecords();
+  grid.innerHTML='';
   LEVELS.forEach((lv,i)=>{
     const card=document.createElement('div');card.className='level-card';
     const rec=recs[i];const unlocked=i===0||recs[i-1];
