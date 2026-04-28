@@ -844,7 +844,7 @@ class Game{
       sfxGateOpen();hideQuestUI();
       this.addBurst(gx*TS+TS/2,gy*TS+TS/2,30,'#FFD700');
       this.addBurst(gx*TS+TS/2,gy*TS+TS/2,20,'#4CAF50');
-      showFlash('✨ '+t('gate_blocked').replace('!','') + ' ✨','#FF9800');
+      showFlash('✨ Gate opened! ✨','#4CAF50');
       return true;
     }
     showQuestUI(this.questList,this.questIdx,this.questList.length);return true;
@@ -942,6 +942,28 @@ class Game{
         // Exclamation mark
         cx.fillStyle='#FFD700';cx.font=`bold ${Math.max(10,TS*0.5)}px monospace`;cx.textAlign='center';
         cx.fillText('!',sx+TS/2,sy-2+bounce);
+        // Proximity hint: show name if player is nearby
+        const pdx=Math.abs(this.p.x-c),pdy=Math.abs(this.p.y-r);
+        if(pdx+pdy<=2){
+          cx.fillStyle='rgba(0,0,0,0.6)';cx.font=`bold ${Math.max(8,TS*0.35)}px sans-serif`;
+          cx.fillText(dog.name,sx+TS/2,sy+TS+10);
+        }
+      }
+      
+      // Proximity gate hints
+      if(tile===T.GATE){
+        const gate=this.gates.find(g=>g.x===c&&g.y===r&&!g.open);
+        if(gate){
+          const pdx=Math.abs(this.p.x-c),pdy=Math.abs(this.p.y-r);
+          if(pdx+pdy<=2){
+            const hintBounce=Math.sin(this.fc*0.06)*2;
+            cx.fillStyle='rgba(0,0,0,0.7)';
+            const hw=TS*3.5,hh=14;
+            cx.fillRect(sx+TS/2-hw/2,sy-18+hintBounce,hw,hh);
+            cx.fillStyle='#FFD700';cx.font=`bold ${Math.max(8,TS*0.35)}px sans-serif`;cx.textAlign='center';
+            cx.fillText('🔑 '+t('gate_blocked'),sx+TS/2,sy-8+hintBounce);
+          }
+        }
       }
     }
 
@@ -997,6 +1019,26 @@ class Game{
     const el=Math.floor((Date.now()-this.startTime)/1000);
     document.getElementById('hud-timer').textContent=Math.floor(el/60)+':'+(el%60).toString().padStart(2,'0');
     document.getElementById('hud-dogs').textContent=this.rescued.length+'/'+this.totalDogs;
+
+    // Minimap
+    const mmS=2,mmW=this.mw*mmS,mmH=this.mh*mmS;
+    const mmX=cv.width-mmW-10,mmY=cv.height-mmH-10;
+    cx.fillStyle='rgba(0,0,0,0.4)';cx.fillRect(mmX-2,mmY-2,mmW+4,mmH+4);
+    for(let r=0;r<this.mh;r++)for(let c=0;c<this.mw;c++){
+      const tile=this.map[r][c];
+      cx.fillStyle=tile===T.TREE||tile===T.BUSH?'#2e7d32':tile===T.WATER?'#1976d2':
+        tile===T.PATH||tile===T.BRIDGE?'#c49563':tile===T.ROCK?'#78909c':
+        tile===T.GATE?'#fdd835':tile===T.DOG?'#FFD700':tile===T.EXIT?'#FF5722':'#7cb342';
+      cx.fillRect(mmX+c*mmS,mmY+r*mmS,mmS,mmS);
+    }
+    // Player on minimap
+    cx.fillStyle='#ff0000';
+    cx.fillRect(mmX+this.p.x*mmS-1,mmY+this.p.y*mmS-1,mmS+2,mmS+2);
+    // Rescued dogs on minimap
+    this.rescued.forEach(d=>{
+      cx.fillStyle='#ff69b4';
+      cx.fillRect(mmX+Math.round(d.followX/TS)*mmS,mmY+Math.round(d.followY/TS)*mmS,mmS,mmS);
+    });
   }
 
   complete(){
