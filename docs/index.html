@@ -174,6 +174,7 @@ input{font-family:inherit;outline:none}
 .tile-start{background:#e8f5e9}
 .tile-end{background:#fff9c4;border:2px dashed #fbc02d;border-radius:4px;animation:end-glow 2s ease-in-out infinite}
 @keyframes end-glow{0%,100%{box-shadow:inset 0 0 8px rgba(255,193,7,0.3)}50%{box-shadow:inset 0 0 16px rgba(255,193,7,0.6)}}
+@keyframes exit-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 .tile-rock{background:#90a4ae}
 .tile-flower{background:#c8e6c9}
 .tile-dark-tree{background:#388e3c}
@@ -1254,11 +1255,43 @@ function playSound(type){
     const g=audioCtx.createGain();
     o.connect(g);g.connect(audioCtx.destination);
     g.gain.value=0.08;
-    if(type==='correct'){o.frequency.value=523;o.type='sine';g.gain.value=0.1;o.start();o.frequency.linearRampToValueAtTime(659,audioCtx.currentTime+0.1);o.stop(audioCtx.currentTime+0.2)}
-    else if(type==='wrong'){o.frequency.value=200;o.type='square';g.gain.value=0.06;o.start();o.stop(audioCtx.currentTime+0.25)}
-    else if(type==='rescue'){o.frequency.value=440;o.type='sine';g.gain.value=0.1;o.start();o.frequency.linearRampToValueAtTime(880,audioCtx.currentTime+0.3);o.stop(audioCtx.currentTime+0.4)}
-    else if(type==='complete'){o.frequency.value=523;o.type='sine';g.gain.value=0.12;o.start();o.frequency.linearRampToValueAtTime(1047,audioCtx.currentTime+0.5);o.stop(audioCtx.currentTime+0.6)}
-    else if(type==='step'){o.frequency.value=300;o.type='sine';g.gain.value=0.03;o.start();o.stop(audioCtx.currentTime+0.05)}
+    if(type==='correct'){
+      o.frequency.value=523;o.type='sine';g.gain.value=0.1;o.start();
+      o.frequency.linearRampToValueAtTime(659,audioCtx.currentTime+0.1);
+      o.stop(audioCtx.currentTime+0.2);
+    }else if(type==='wrong'){
+      o.frequency.value=200;o.type='square';g.gain.value=0.06;o.start();
+      o.stop(audioCtx.currentTime+0.25);
+    }else if(type==='rescue'){
+      // Happy ascending arpeggio
+      const notes=[523,659,784,1047];
+      notes.forEach((freq,i)=>{
+        const oo=audioCtx.createOscillator();
+        const gg=audioCtx.createGain();
+        oo.connect(gg);gg.connect(audioCtx.destination);
+        oo.frequency.value=freq;oo.type='sine';
+        gg.gain.value=0.1;
+        oo.start(audioCtx.currentTime+i*0.12);
+        oo.stop(audioCtx.currentTime+i*0.12+0.15);
+      });
+      return;
+    }else if(type==='complete'){
+      // Victory fanfare
+      const notes=[523,659,784,1047,1047];
+      notes.forEach((freq,i)=>{
+        const oo=audioCtx.createOscillator();
+        const gg=audioCtx.createGain();
+        oo.connect(gg);gg.connect(audioCtx.destination);
+        oo.frequency.value=freq;oo.type='sine';
+        gg.gain.value=0.12;
+        oo.start(audioCtx.currentTime+i*0.15);
+        oo.stop(audioCtx.currentTime+i*0.15+0.2);
+      });
+      return;
+    }else if(type==='step'){
+      o.frequency.value=300;o.type='sine';g.gain.value=0.03;o.start();
+      o.stop(audioCtx.currentTime+0.05);
+    }
   }catch(e){}
 }
 
@@ -2080,10 +2113,30 @@ function completeGate(){
   // Show rescue banner
   showRescueBanner(dog);
 
-  // Check if all gates solved
+  // Check if all gates solved and show direction to exit
   if(game.rescuedDogs.length===game.gates.length){
-    // All dogs rescued — player needs to reach the end
+    highlightExit();
   }
+}
+
+function highlightExit(){
+  const mapEl=document.getElementById('game-map');
+  const existing=mapEl.querySelector('.exit-arrow');
+  if(existing)return;
+  const lv=game.levels[game.currentLevel];
+  const tile=getTileSize();
+  const arrow=document.createElement('div');
+  arrow.className='exit-arrow';
+  arrow.textContent='⭐';
+  arrow.style.cssText=`
+    position:absolute;z-index:6;
+    font-size:calc(var(--tile)*0.5);
+    left:${lv.end.c*tile}px;top:${lv.end.r*tile-tile*0.3}px;
+    width:${tile}px;text-align:center;
+    animation:exit-bounce 1s ease-in-out infinite;
+    pointer-events:none;
+  `;
+  mapEl.appendChild(arrow);
 }
 
 function showRescueBanner(dog){
