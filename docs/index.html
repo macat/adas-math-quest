@@ -638,6 +638,7 @@ function typewriterEffect(element, text, speed = 30) {
     element.appendChild(cursor);
     function type() {
       if (i < text.length) {
+        if (!cursor.parentNode) { resolve(); return; }
         element.insertBefore(document.createTextNode(text[i]), cursor);
         i++;
         setTimeout(type, speed);
@@ -1691,9 +1692,18 @@ const MAT = {
   rock: new THREE.MeshStandardMaterial({color:0x90a4ae,flatShading:true}),
   building: new THREE.MeshStandardMaterial({color:0x8d4e3a,flatShading:true}),
   buildingDark: new THREE.MeshStandardMaterial({color:0x6d4c41,flatShading:true}),
-  fence: new THREE.MeshStandardMaterial({color:0xa1887f,flatShading:true}),
+  fence: new THREE.MeshStandardMaterial({color:0x8B6914,flatShading:true}),
+  fenceCap: new THREE.MeshStandardMaterial({color:0x7A5C10,flatShading:true}),
   gate: new THREE.MeshStandardMaterial({color:0xdaa520,flatShading:true,emissive:0x443300,emissiveIntensity:0.3}),
+  gateStone: new THREE.MeshStandardMaterial({color:0x8d8d8d,flatShading:true}),
+  gateStoneDark: new THREE.MeshStandardMaterial({color:0x6b6b6b,flatShading:true}),
+  gateIron: new THREE.MeshStandardMaterial({color:0x444444,flatShading:true,metalness:0.6,roughness:0.4}),
+  gateIronGold: new THREE.MeshStandardMaterial({color:0xc8a82a,flatShading:true,metalness:0.5,roughness:0.3,emissive:0x332200,emissiveIntensity:0.2}),
   dogGate: new THREE.MeshStandardMaterial({color:0xff9800,flatShading:true,emissive:0x442200,emissiveIntensity:0.3}),
+  dogGateIron: new THREE.MeshStandardMaterial({color:0x555555,flatShading:true,metalness:0.5,roughness:0.5}),
+  dogNose: new THREE.MeshStandardMaterial({color:0x222222,flatShading:true,metalness:0.2,roughness:0.6}),
+  dogEyeWhite: new THREE.MeshStandardMaterial({color:0xffffff,flatShading:true}),
+  dogTongue: new THREE.MeshStandardMaterial({color:0xff6b8a,flatShading:true}),
   flower: new THREE.MeshStandardMaterial({color:0xff69b4,flatShading:true}),
   mushroom: new THREE.MeshStandardMaterial({color:0xe74c3c,flatShading:true}),
   mushroomWhite: new THREE.MeshStandardMaterial({color:0xfafafa,flatShading:true}),
@@ -1713,27 +1723,30 @@ const MAT = {
 const GEO = {
   ground: new THREE.PlaneGeometry(1, 1),
   box: new THREE.BoxGeometry(1, 1, 1),
-  trunk: new THREE.CylinderGeometry(0.06, 0.08, 0.6, 5),
-  canopy: new THREE.ConeGeometry(0.3, 0.5, 6),
-  canopyIco: new THREE.IcosahedronGeometry(0.28, 0),
-  rock: new THREE.DodecahedronGeometry(0.3, 0),
-  bushSphere: new THREE.SphereGeometry(0.25, 5, 4),
+  trunk: new THREE.CylinderGeometry(0.08, 0.11, 0.7, 6),
+  canopy: new THREE.ConeGeometry(0.38, 0.55, 6),
+  canopyIco: new THREE.IcosahedronGeometry(0.35, 0),
+  rock: new THREE.DodecahedronGeometry(0.35, 0),
+  bushSphere: new THREE.SphereGeometry(0.3, 5, 4),
   sphere: new THREE.SphereGeometry(0.04, 4, 3),
   particle: new THREE.SphereGeometry(0.05, 4, 3),
-  capsule: new THREE.CapsuleGeometry(0.12, 0.2, 3, 6),
-  head: new THREE.SphereGeometry(0.14, 6, 5),
+  capsule: new THREE.CapsuleGeometry(0.15, 0.25, 3, 6),
+  head: new THREE.SphereGeometry(0.17, 6, 5),
   eye: new THREE.SphereGeometry(0.025, 4, 3),
   arm: new THREE.CylinderGeometry(0.03, 0.03, 0.18, 4),
   leg: new THREE.CylinderGeometry(0.04, 0.04, 0.15, 4),
-  dogBody: new THREE.CapsuleGeometry(0.1, 0.2, 3, 6),
-  dogHead: new THREE.SphereGeometry(0.1, 6, 5),
-  dogLeg: new THREE.CylinderGeometry(0.02, 0.02, 0.1, 4),
-  dogTail: new THREE.CylinderGeometry(0.015, 0.008, 0.15, 4),
-  dogEar: new THREE.SphereGeometry(0.04, 4, 3),
-  fence: new THREE.BoxGeometry(0.06, 0.4, 0.06),
-  fenceRail: new THREE.BoxGeometry(1.0, 0.04, 0.03),
-  gatePost: new THREE.BoxGeometry(0.12, 0.8, 0.12),
-  gateBar: new THREE.BoxGeometry(0.8, 0.06, 0.06),
+  dogBody: new THREE.CapsuleGeometry(0.18, 0.32, 4, 8),
+  dogHead: new THREE.SphereGeometry(0.16, 8, 6),
+  dogLeg: new THREE.CylinderGeometry(0.045, 0.04, 0.18, 5),
+  dogTail: new THREE.CylinderGeometry(0.025, 0.012, 0.2, 5),
+  dogEar: new THREE.SphereGeometry(0.06, 5, 4),
+  dogPaw: new THREE.SphereGeometry(0.05, 5, 3),
+  dogSnout: new THREE.SphereGeometry(0.08, 6, 4),
+  fence: new THREE.BoxGeometry(0.09, 0.55, 0.09),
+  fenceRail: new THREE.BoxGeometry(1.0, 0.06, 0.04),
+  fencePicket: new THREE.BoxGeometry(0.05, 0.45, 0.03),
+  gatePost: new THREE.BoxGeometry(0.18, 1.2, 0.18),
+  gateBar: new THREE.BoxGeometry(0.9, 0.08, 0.08),
   lampPost: new THREE.CylinderGeometry(0.03, 0.04, 0.8, 5),
   lampBulb: new THREE.SphereGeometry(0.06, 5, 4),
   exitPlatform: new THREE.CylinderGeometry(0.4, 0.4, 0.08, 8),
@@ -1779,7 +1792,7 @@ function buildLevel3D(levelData) {
   const biome = levelData.biome || 'meadow';
   const bc = BIOME_COLORS[biome] || BIOME_COLORS.meadow;
   scene.background = new THREE.Color(bc.sky);
-  scene.fog = new THREE.Fog(bc.fog, 20, 45);
+  scene.fog = new THREE.Fog(bc.fog, 15, Math.max(40, Math.max(mw, mh) * 0.8));
 
   // Update lighting
   scene.children.forEach(c => {
@@ -1833,11 +1846,11 @@ function buildLevel3D(levelData) {
     for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
       if (map[r][c] === T.TREE) {
         const rng = ((r*7+c*13)%17)/17;
-        m4.makeTranslation(c + 0.5, 0.3, r + 0.5);
+        m4.makeTranslation(c + 0.5, 0.35, r + 0.5);
         trunkIM.setMatrixAt(ti, m4);
-        const s = 0.8 + rng * 0.4;
+        const s = 0.85 + rng * 0.5;
         m4.makeScale(s, s, s);
-        m4.setPosition(c + 0.5, 0.65 + rng*0.15, r + 0.5);
+        m4.setPosition(c + 0.5, 0.75 + rng*0.18, r + 0.5);
         canopyIM.setMatrixAt(ti, m4);
         ti++;
       }
@@ -1957,17 +1970,61 @@ function buildLevel3D(levelData) {
   if (fenceCount > 0) {
     const fenceIM = new THREE.InstancedMesh(GEO.fence, MAT.fence, fenceCount);
     fenceIM.castShadow = true;
+    fenceIM.userData.isFence = true;
+    // Pointed caps on top of fence posts
+    const capGeo = new THREE.ConeGeometry(0.055, 0.1, 4);
+    const capIM = new THREE.InstancedMesh(capGeo, MAT.fenceCap, fenceCount);
     let fi = 0;
     const m4 = new THREE.Matrix4();
+    const fenceRails = [];
     for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
       if (map[r][c] === T.FENCE) {
-        m4.makeTranslation(c + 0.5, 0.2, r + 0.5);
-        fenceIM.setMatrixAt(fi++, m4);
+        m4.makeTranslation(c + 0.5, 0.275, r + 0.5);
+        fenceIM.setMatrixAt(fi, m4);
+        // Cap on top
+        m4.makeTranslation(c + 0.5, 0.6, r + 0.5);
+        capIM.setMatrixAt(fi, m4);
+        fi++;
+        fenceRails.push({x: c + 0.5, z: r + 0.5});
       }
     }
     fenceIM.instanceMatrix.needsUpdate = true;
-    scene.add(fenceIM);
-    sceneObjects.push(fenceIM);
+    capIM.instanceMatrix.needsUpdate = true;
+    scene.add(fenceIM, capIM);
+    sceneObjects.push(fenceIM, capIM);
+
+    // Add horizontal rails between adjacent fence posts
+    if (fenceRails.length > 0) {
+      const railPairs = [];
+      const fSet = new Set(fenceRails.map(f => f.x + ',' + f.z));
+      for (const f of fenceRails) {
+        // Check right neighbor
+        if (fSet.has((f.x + 1) + ',' + f.z)) railPairs.push({x: f.x + 0.5, z: f.z, rot: 0});
+        // Check bottom neighbor
+        if (fSet.has(f.x + ',' + (f.z + 1))) railPairs.push({x: f.x, z: f.z + 0.5, rot: Math.PI/2});
+      }
+      if (railPairs.length > 0) {
+        const railCount = railPairs.length * 2; // 2 rails per pair (top + bottom)
+        const railIM = new THREE.InstancedMesh(GEO.fenceRail, MAT.fence, railCount);
+        railIM.userData.isFence = true;
+        let ri = 0;
+        const rm = new THREE.Matrix4(), rq = new THREE.Quaternion(), rv = new THREE.Vector3();
+        for (const rp of railPairs) {
+          rq.setFromEuler(new THREE.Euler(0, rp.rot, 0));
+          // Top rail
+          rv.set(rp.x, 0.42, rp.z);
+          rm.compose(rv, rq, new THREE.Vector3(1,1,1));
+          railIM.setMatrixAt(ri++, rm);
+          // Bottom rail
+          rv.set(rp.x, 0.18, rp.z);
+          rm.compose(rv, rq, new THREE.Vector3(1,1,1));
+          railIM.setMatrixAt(ri++, rm);
+        }
+        railIM.instanceMatrix.needsUpdate = true;
+        scene.add(railIM);
+        sceneObjects.push(railIM);
+      }
+    }
   }
 
   // Build water/river tiles (animated)
@@ -2001,10 +2058,11 @@ function buildLevel3D(levelData) {
     flowerTiles.forEach(ft => {
       for (let i = 0; i < 3; i++) {
         const fm = new THREE.Mesh(GEO.sphere, new THREE.MeshStandardMaterial({
-          color: flColors[(ft.c * 3 + ft.r * 7 + i) % flColors.length], flatShading: true
+          color: flColors[(ft.c * 3 + ft.r * 7 + i) % flColors.length], flatShading: true,
+          emissive: flColors[(ft.c * 3 + ft.r * 7 + i) % flColors.length], emissiveIntensity: 0.2
         }));
-        fm.position.set(ft.c + 0.2 + i * 0.3, 0.08, ft.r + 0.3 + (i % 2) * 0.4);
-        fm.scale.set(1.5, 1.5, 1.5);
+        fm.position.set(ft.c + 0.2 + i * 0.3, 0.1, ft.r + 0.3 + (i % 2) * 0.4);
+        fm.scale.set(3.0, 3.0, 3.0);
         scene.add(fm);
         sceneObjects.push(fm);
       }
@@ -2014,9 +2072,9 @@ function buildLevel3D(levelData) {
   // Mushrooms
   for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
     if (map[r][c] === T.MUSH) {
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.12, 5), MAT.mushroomWhite);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.16, 5), MAT.mushroomWhite);
       stem.position.set(c + 0.5, 0.06, r + 0.5);
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 4, 0, Math.PI*2, 0, Math.PI/2), MAT.mushroom);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 4, 0, Math.PI*2, 0, Math.PI/2), MAT.mushroom);
       cap.position.set(c + 0.5, 0.13, r + 0.5);
       scene.add(stem, cap);
       sceneObjects.push(stem, cap);
@@ -2226,7 +2284,7 @@ function buildPlayer3D(charKey) {
     group.add(gL, gR, bridge);
   }
 
-  group.scale.set(0.9, 0.9, 0.9);
+  group.scale.set(1.0, 1.0, 1.0);
   return group;
 }
 
@@ -2238,81 +2296,185 @@ function buildDog3D(dogKey) {
   const bellyMat = new THREE.MeshStandardMaterial({color: dog.bellyColor, flatShading: true});
   const earMat = new THREE.MeshStandardMaterial({color: dog.earColor, flatShading: true});
 
-  // Body (horizontal capsule)
+  // Size multiplier based on dog breed
+  const sizeScale = dog.size === 'big' ? 1.15 : dog.size === 'small' ? 0.88 : 1.0;
+
+  // ---- BODY (horizontal capsule, chunky and cute) ----
   const body = new THREE.Mesh(GEO.dogBody, bodyMat);
   body.rotation.z = Math.PI / 2;
-  body.position.y = 0.17;
+  body.position.set(0, 0.28, 0);
   body.castShadow = true;
   group.add(body);
 
-  // Head
+  // Belly patch (lighter underside, slightly flattened sphere)
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.14, 6, 4), bellyMat);
+  belly.scale.set(1.0, 0.5, 1.2);
+  belly.position.set(0, 0.18, 0);
+  group.add(belly);
+
+  // ---- HEAD (bigger, with proper snout) ----
   const head = new THREE.Mesh(GEO.dogHead, bodyMat);
-  head.position.set(0, 0.25, 0.18);
+  head.position.set(0, 0.38, 0.28);
   group.add(head);
   group.userData.head = head;
 
-  // Nose
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.025, 4, 3), MAT.dark);
-  nose.position.set(0, 0.24, 0.28);
+  // Snout (protruding muzzle)
+  const snout = new THREE.Mesh(GEO.dogSnout, bodyMat);
+  snout.scale.set(0.9, 0.7, 1.1);
+  snout.position.set(0, 0.34, 0.40);
+  group.add(snout);
+
+  // Nose (shiny black, on tip of snout)
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), MAT.dogNose);
+  nose.position.set(0, 0.35, 0.47);
   group.add(nose);
 
-  // Eyes
-  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.018, 4, 3), MAT.dark);
-  eyeL.position.set(-0.04, 0.28, 0.25);
-  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.018, 4, 3), MAT.dark);
-  eyeR.position.set(0.04, 0.28, 0.25);
-  group.add(eyeL, eyeR);
+  // ---- EYES (white sclera + dark pupil for expression) ----
+  const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 4), MAT.dogEyeWhite);
+  eyeWhiteL.position.set(-0.065, 0.42, 0.38);
+  const eyeWhiteR = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 4), MAT.dogEyeWhite);
+  eyeWhiteR.position.set(0.065, 0.42, 0.38);
+  group.add(eyeWhiteL, eyeWhiteR);
 
-  // Ears
+  const pupilL = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), MAT.dark);
+  pupilL.position.set(-0.06, 0.42, 0.41);
+  const pupilR = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), MAT.dark);
+  pupilR.position.set(0.06, 0.42, 0.41);
+  group.add(pupilL, pupilR);
+
+  // ---- EARS (bigger, more expressive) ----
   if (dog.earStyle === 'floppy') {
-    const earGeo = new THREE.SphereGeometry(0.04, 4, 3);
+    // Big floppy ears that droop down
+    const earGeo = new THREE.SphereGeometry(0.07, 5, 4);
     const eL = new THREE.Mesh(earGeo, earMat);
-    eL.position.set(-0.08, 0.28, 0.14);
-    eL.scale.set(1, 1.5, 0.7);
+    eL.scale.set(0.7, 1.6, 0.8);
+    eL.position.set(-0.13, 0.38, 0.22);
+    eL.rotation.z = 0.3;
     const eR = new THREE.Mesh(earGeo, earMat);
-    eR.position.set(0.08, 0.28, 0.14);
-    eR.scale.set(1, 1.5, 0.7);
+    eR.scale.set(0.7, 1.6, 0.8);
+    eR.position.set(0.13, 0.38, 0.22);
+    eR.rotation.z = -0.3;
     group.add(eL, eR);
   } else {
-    // Pointy ears
-    const earGeo = new THREE.ConeGeometry(0.03, 0.06, 4);
+    // Pointy/perky ears (triangular, standing up)
+    const earGeo = new THREE.ConeGeometry(0.05, 0.12, 4);
     const eL = new THREE.Mesh(earGeo, earMat);
-    eL.position.set(-0.06, 0.34, 0.15);
+    eL.position.set(-0.09, 0.52, 0.22);
+    eL.rotation.z = 0.15;
     const eR = new THREE.Mesh(earGeo, earMat);
-    eR.position.set(0.06, 0.34, 0.15);
+    eR.position.set(0.09, 0.52, 0.22);
+    eR.rotation.z = -0.15;
     group.add(eL, eR);
   }
 
-  // Legs (4)
-  const legPositions = [[-0.06, 0.05, 0.08], [0.06, 0.05, 0.08], [-0.06, 0.05, -0.08], [0.06, 0.05, -0.08]];
+  // ---- MOUTH / TONGUE (cute happy dog) ----
+  const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.015, 0.05), MAT.dogTongue);
+  tongue.position.set(0.02, 0.30, 0.46);
+  tongue.rotation.x = 0.2;
+  group.add(tongue);
+
+  // ---- LEGS (4 sturdy legs with paws) ----
+  const legPositions = [
+    [-0.1, 0.09, 0.12],  // front-left
+    [0.1, 0.09, 0.12],   // front-right
+    [-0.1, 0.09, -0.12],  // back-left
+    [0.1, 0.09, -0.12]    // back-right
+  ];
   const legs = [];
-  legPositions.forEach(p => {
+  legPositions.forEach((p, i) => {
     const leg = new THREE.Mesh(GEO.dogLeg, bodyMat);
-    leg.position.set(...p);
+    leg.position.set(p[0], p[1], p[2]);
+    leg.castShadow = true;
     group.add(leg);
     legs.push(leg);
+    // Paw at bottom of each leg (flattened sphere)
+    const paw = new THREE.Mesh(GEO.dogPaw, bodyMat);
+    paw.scale.set(1.1, 0.5, 1.2);
+    paw.position.set(p[0], 0.01, p[2]);
+    group.add(paw);
   });
   group.userData.legs = legs;
 
-  // Tail
+  // ---- TAIL (thicker, with cute curve) ----
   const tail = new THREE.Mesh(GEO.dogTail, bodyMat);
-  tail.position.set(0, 0.22, -0.18);
-  tail.rotation.x = -0.5;
+  tail.position.set(0, 0.34, -0.22);
+  tail.rotation.x = -0.8;
   group.add(tail);
   group.userData.tail = tail;
 
-  // Spots for dalmatian
+  // Tail tip (fluffy end for golden/poodle)
+  if (dog.curly || dogKey === 'golden') {
+    const tailTip = new THREE.Mesh(new THREE.SphereGeometry(0.03, 4, 3), bodyMat);
+    tailTip.position.set(0, 0.42, -0.30);
+    group.add(tailTip);
+  }
+
+  // ---- POODLE PUFFS ----
+  if (dog.curly) {
+    const puffMat = new THREE.MeshStandardMaterial({color: dog.bodyColor, flatShading: true});
+    // Head puff
+    const headPuff = new THREE.Mesh(new THREE.SphereGeometry(0.1, 5, 4), puffMat);
+    headPuff.position.set(0, 0.48, 0.25);
+    group.add(headPuff);
+    // Chest puff
+    const chestPuff = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 3), puffMat);
+    chestPuff.position.set(0, 0.24, 0.2);
+    group.add(chestPuff);
+    // Ankle puffs
+    legPositions.forEach(p => {
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 3), puffMat);
+      puff.position.set(p[0], 0.04, p[2]);
+      group.add(puff);
+    });
+  }
+
+  // ---- SPOTS (dalmatian) ----
   if (dog.spotColor) {
     const spotMat = new THREE.MeshStandardMaterial({color: dog.spotColor, flatShading: true});
-    const spots = [[0.08,0.2,0.05],[-0.06,0.18,-0.04],[0.03,0.22,0.1]];
+    const spots = [
+      [0.12, 0.3, 0.06, 0.04], [-0.08, 0.28, -0.06, 0.035],
+      [0.04, 0.34, 0.14, 0.03], [-0.1, 0.22, 0.08, 0.035],
+      [0.06, 0.24, -0.1, 0.03], [-0.04, 0.32, 0.02, 0.025]
+    ];
     spots.forEach(sp => {
-      const spot = new THREE.Mesh(new THREE.SphereGeometry(0.025, 4, 3), spotMat);
-      spot.position.set(sp[0]||0, sp[1]||0.2, sp[2]||0);
+      const spot = new THREE.Mesh(new THREE.SphereGeometry(sp[3], 4, 3), spotMat);
+      spot.position.set(sp[0], sp[1], sp[2]);
       group.add(spot);
     });
   }
 
-  group.scale.set(0.7, 0.7, 0.7);
+  // ---- COLLAR (colored ring around neck) ----
+  const collarColor = dogKey === 'golden' ? 0xe53935 : dogKey === 'husky' ? 0x1565c0 :
+    dogKey === 'corgi' ? 0xff9800 : dogKey === 'poodle' ? 0xce93d8 :
+    dogKey === 'dalmatian' ? 0xe53935 : 0x4caf50;
+  const collarMat = new THREE.MeshStandardMaterial({color: collarColor, flatShading: true});
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 4, 8), collarMat);
+  collar.position.set(0, 0.36, 0.24);
+  collar.rotation.x = Math.PI / 2;
+  group.add(collar);
+
+  // Collar tag (small shiny disc)
+  const tagMat = new THREE.MeshStandardMaterial({color: 0xffd700, flatShading: true, metalness: 0.6, roughness: 0.3});
+  const tag = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.005, 5), tagMat);
+  tag.position.set(0, 0.32, 0.32);
+  group.add(tag);
+
+  // ---- BASE DISC (for visibility) ----
+  const discMat = new THREE.MeshStandardMaterial({color: 0xffcc80, emissive: 0xffcc80, emissiveIntensity: 0.3, flatShading: true});
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.04, 8), discMat);
+  disc.position.y = 0.02;
+  group.add(disc);
+
+  // ---- FLOATING PAW MARKER ----
+  const pawMarker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 5, 4),
+    new THREE.MeshStandardMaterial({color: 0xffeb3b, emissive: 0xffeb3b, emissiveIntensity: 0.5, flatShading: true})
+  );
+  pawMarker.position.y = 0.7;
+  group.add(pawMarker);
+  group.userData.marker = pawMarker;
+
+  group.scale.set(sizeScale, sizeScale, sizeScale);
   return group;
 }
 
@@ -2326,7 +2488,7 @@ function buildNPC3D(tileType) {
   };
   const cfg = npcConfigs[tileType] || npcConfigs[T.NPC_BUT];
   const bodyMat = new THREE.MeshStandardMaterial({color: cfg.bodyColor, flatShading: true});
-  const scale = cfg.big ? 1.2 : cfg.small ? 0.6 : 0.8;
+  const scale = cfg.big ? 1.4 : cfg.small ? 0.9 : 1.1;
 
   // Body
   const body = new THREE.Mesh(GEO.capsule, bodyMat);
@@ -2383,49 +2545,166 @@ function buildNPC3D(tileType) {
     group.add(beak);
   }
 
+  // Highlighted base disc for visibility (raised above ground)
+  const discGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.04, 8);
+  const discColor = tileType === T.NPC_BUT ? 0xffd54f : tileType === T.NPC_SQU ? 0xffab91 : tileType === T.NPC_BEAR ? 0xbcaaa4 : 0x81d4fa;
+  const disc = new THREE.Mesh(discGeo, new THREE.MeshStandardMaterial({color: discColor, emissive: discColor, emissiveIntensity: 0.3, flatShading: true}));
+  disc.position.y = 0.05;
+  group.add(disc);
+
+  // Floating marker above head for visibility
+  const markerColor = tileType === T.NPC_BUT ? 0xff9800 : tileType === T.NPC_SQU ? 0xa1887f : tileType === T.NPC_BEAR ? 0x795548 : 0x64b5f6;
+  const marker = new THREE.Mesh(
+    new THREE.ConeGeometry(0.08, 0.15, 4),
+    new THREE.MeshStandardMaterial({color: markerColor, emissive: markerColor, emissiveIntensity: 0.4, flatShading: true})
+  );
+  marker.rotation.x = Math.PI; // Point down
+  marker.position.y = 0.85;
+  group.add(marker);
+  group.userData.marker = marker;
+
   group.scale.set(scale, scale, scale);
   return group;
 }
 
 function buildGate3D(isOpen = false) {
   const group = new THREE.Group();
-  // Left pillar
-  const pL = new THREE.Mesh(GEO.gatePost, MAT.gate);
-  pL.position.set(-0.35, 0.4, 0);
-  // Right pillar
-  const pR = new THREE.Mesh(GEO.gatePost, MAT.gate);
-  pR.position.set(0.35, 0.4, 0);
-  // Top bar
-  const bar = new THREE.Mesh(GEO.gateBar, MAT.gate);
-  bar.position.set(0, 0.75, 0);
-  group.add(pL, pR, bar);
-  group.userData.bar = bar;
+
+  // ---- STONE PILLARS (stacked sections for texture) ----
+  // Left pillar - main body
+  const pL = new THREE.Mesh(GEO.gatePost, MAT.gateStone);
+  pL.position.set(-0.40, 0.6, 0);
+  pL.castShadow = true;
+  // Right pillar - main body
+  const pR = new THREE.Mesh(GEO.gatePost, MAT.gateStone);
+  pR.position.set(0.40, 0.6, 0);
+  pR.castShadow = true;
+  group.add(pL, pR);
   group.userData.pL = pL;
   group.userData.pR = pR;
 
-  // Warm glow
-  const light = new THREE.PointLight(0xffaa33, 0.8, 3);
-  light.position.set(0, 0.9, 0);
+  // Pillar base stones (wider base)
+  const baseGeo = new THREE.BoxGeometry(0.24, 0.15, 0.24);
+  const baseL = new THREE.Mesh(baseGeo, MAT.gateStoneDark);
+  baseL.position.set(-0.40, 0.075, 0);
+  const baseR = new THREE.Mesh(baseGeo, MAT.gateStoneDark);
+  baseR.position.set(0.40, 0.075, 0);
+  group.add(baseL, baseR);
+
+  // Capstones on top of pillars (small pyramids)
+  const capGeo = new THREE.ConeGeometry(0.12, 0.18, 4);
+  const capL = new THREE.Mesh(capGeo, MAT.gateIronGold);
+  capL.position.set(-0.40, 1.28, 0);
+  const capR = new THREE.Mesh(capGeo, MAT.gateIronGold);
+  capR.position.set(0.40, 1.28, 0);
+  group.add(capL, capR);
+
+  // Decorative stone rings on pillars
+  const ringGeo = new THREE.TorusGeometry(0.11, 0.025, 4, 6);
+  const ringL = new THREE.Mesh(ringGeo, MAT.gateStoneDark);
+  ringL.position.set(-0.40, 0.9, 0);
+  ringL.rotation.x = Math.PI / 2;
+  const ringR = new THREE.Mesh(ringGeo, MAT.gateStoneDark);
+  ringR.position.set(0.40, 0.9, 0);
+  ringR.rotation.x = Math.PI / 2;
+  group.add(ringL, ringR);
+
+  // ---- TOP ARCH (curved bar instead of flat) ----
+  const bar = new THREE.Mesh(GEO.gateBar, MAT.gateIron);
+  bar.position.set(0, 1.05, 0);
+  group.add(bar);
+  group.userData.bar = bar;
+
+  // Arch decoration (half-torus on top)
+  const archGeo = new THREE.TorusGeometry(0.3, 0.04, 5, 8, Math.PI);
+  const arch = new THREE.Mesh(archGeo, MAT.gateIronGold);
+  arch.position.set(0, 1.1, 0);
+  arch.rotation.z = Math.PI;
+  group.add(arch);
+
+  // ---- IRON LATTICE / CROSS BARS ----
+  const ironBarGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.75, 4);
+  // Vertical bars
+  for (let i = -2; i <= 2; i++) {
+    const vbar = new THREE.Mesh(ironBarGeo, MAT.gateIron);
+    vbar.position.set(i * 0.12, 0.55, 0);
+    group.add(vbar);
+  }
+  // Horizontal cross bars
+  const hbarGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.65, 4);
+  const hbar1 = new THREE.Mesh(hbarGeo, MAT.gateIron);
+  hbar1.rotation.z = Math.PI / 2;
+  hbar1.position.set(0, 0.4, 0);
+  const hbar2 = new THREE.Mesh(hbarGeo, MAT.gateIron);
+  hbar2.rotation.z = Math.PI / 2;
+  hbar2.position.set(0, 0.7, 0);
+  group.add(hbar1, hbar2);
+
+  // ---- ORNAMENTAL GOLD SPHERE at arch top ----
+  const ornament = new THREE.Mesh(
+    new THREE.SphereGeometry(0.06, 6, 4),
+    MAT.gateIronGold
+  );
+  ornament.position.set(0, 1.4, 0);
+  group.add(ornament);
+
+  // ---- WARM GLOW (brighter) ----
+  const light = new THREE.PointLight(0xffaa33, 1.2, 4);
+  light.position.set(0, 1.3, 0);
   group.add(light);
   group.userData.light = light;
 
+  // Small glow orbs on pillar caps
+  const glowMat = new THREE.MeshBasicMaterial({color: 0xffdd66, transparent: true, opacity: 0.6});
+  const glowL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 3), glowMat);
+  glowL.position.set(-0.40, 1.4, 0);
+  const glowR = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 3), glowMat);
+  glowR.position.set(0.40, 1.4, 0);
+  group.add(glowL, glowR);
+
   if (isOpen) {
     bar.rotation.x = -Math.PI / 2;
-    bar.position.y = 1.0;
+    bar.position.y = 1.3;
   }
   return group;
 }
 
 function buildDogGate3D() {
   const group = new THREE.Group();
-  const pL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), MAT.dogGate);
-  pL.position.set(-0.3, 0.3, 0);
-  const pR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), MAT.dogGate);
-  pR.position.set(0.3, 0.3, 0);
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.05), MAT.dogGate);
-  bar.position.set(0, 0.55, 0);
-  group.add(pL, pR, bar);
+  // Sturdier posts
+  const postGeo = new THREE.BoxGeometry(0.14, 0.7, 0.14);
+  const pL = new THREE.Mesh(postGeo, MAT.dogGate);
+  pL.position.set(-0.32, 0.35, 0);
+  pL.castShadow = true;
+  const pR = new THREE.Mesh(postGeo, MAT.dogGate);
+  pR.position.set(0.32, 0.35, 0);
+  pR.castShadow = true;
+  group.add(pL, pR);
+
+  // Post caps (small pyramids)
+  const capGeo = new THREE.ConeGeometry(0.08, 0.12, 4);
+  const capL = new THREE.Mesh(capGeo, MAT.dogGate);
+  capL.position.set(-0.32, 0.75, 0);
+  const capR = new THREE.Mesh(capGeo, MAT.dogGate);
+  capR.position.set(0.32, 0.75, 0);
+  group.add(capL, capR);
+
+  // Top bar
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 0.06), MAT.dogGateIron);
+  bar.position.set(0, 0.65, 0);
+  group.add(bar);
   group.userData.bar = bar;
+
+  // Iron vertical bars
+  for (let i = -1; i <= 1; i++) {
+    const vbar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.012, 0.012, 0.55, 4),
+      MAT.dogGateIron
+    );
+    vbar.position.set(i * 0.14, 0.35, 0);
+    group.add(vbar);
+  }
+
   return group;
 }
 
@@ -2572,7 +2851,7 @@ class Game{
     const tx = this.p.px + 0.5;
     const tz = this.p.py + 0.5;
     const targetPos = new THREE.Vector3(tx, 0.5, tz);
-    const desiredCam = new THREE.Vector3(tx, 8, tz + 6);
+    const desiredCam = new THREE.Vector3(tx, 3.5, tz + 3);
 
     if (instant) {
       camera.position.copy(desiredCam);
@@ -2580,6 +2859,14 @@ class Game{
       camera.position.lerp(desiredCam, 0.08);
     }
     camera.lookAt(targetPos);
+
+    // Move shadow camera to follow player
+    const sun = scene.children.find(c => c.isDirectionalLight);
+    if (sun) {
+      sun.position.set(tx + 10, 20, tz + 8);
+      sun.target.position.set(tx, 0, tz);
+      sun.target.updateMatrixWorld();
+    }
   }
 
   tryMove(dir){
@@ -2741,9 +3028,9 @@ class Game{
   }
 
   rebuildFences() {
-    // Remove existing fence instanced meshes and rebuild
+    // Remove existing fence instanced meshes (posts and rails)
     sceneObjects = sceneObjects.filter(o => {
-      if (o.geometry === GEO.fence && o.isInstancedMesh) {
+      if (o.userData && o.userData.isFence && o.isInstancedMesh) {
         scene.remove(o);
         return false;
       }
@@ -2751,23 +3038,45 @@ class Game{
     });
     // Count remaining fences
     let fCount = 0;
+    const fenceRails = [];
     for (let r = 0; r < this.mh; r++) for (let c = 0; c < this.mw; c++) {
-      if (this.map[r][c] === T.FENCE) fCount++;
+      if (this.map[r][c] === T.FENCE) { fCount++; fenceRails.push({x: c + 0.5, z: r + 0.5}); }
     }
     if (fCount > 0) {
       const fIM = new THREE.InstancedMesh(GEO.fence, MAT.fence, fCount);
       fIM.castShadow = true;
+      fIM.userData.isFence = true;
       let fi = 0;
       const m4 = new THREE.Matrix4();
-      for (let r = 0; r < this.mh; r++) for (let c = 0; c < this.mw; c++) {
-        if (this.map[r][c] === T.FENCE) {
-          m4.makeTranslation(c + 0.5, 0.2, r + 0.5);
-          fIM.setMatrixAt(fi++, m4);
-        }
+      for (const f of fenceRails) {
+        m4.makeTranslation(f.x, 0.2, f.z);
+        fIM.setMatrixAt(fi++, m4);
       }
       fIM.instanceMatrix.needsUpdate = true;
       scene.add(fIM);
       sceneObjects.push(fIM);
+
+      // Rebuild rails
+      const fSet = new Set(fenceRails.map(f => f.x + ',' + f.z));
+      const railPairs = [];
+      for (const f of fenceRails) {
+        if (fSet.has((f.x + 1) + ',' + f.z)) railPairs.push({x: f.x + 0.5, z: f.z, rot: 0});
+        if (fSet.has(f.x + ',' + (f.z + 1))) railPairs.push({x: f.x, z: f.z + 0.5, rot: Math.PI/2});
+      }
+      if (railPairs.length > 0) {
+        const railIM = new THREE.InstancedMesh(GEO.fenceRail, MAT.fence, railPairs.length * 2);
+        railIM.userData.isFence = true;
+        let ri = 0;
+        const rm = new THREE.Matrix4(), rq = new THREE.Quaternion(), rv = new THREE.Vector3();
+        for (const rp of railPairs) {
+          rq.setFromEuler(new THREE.Euler(0, rp.rot, 0));
+          rv.set(rp.x, 0.32, rp.z); rm.compose(rv, rq, new THREE.Vector3(1,1,1)); railIM.setMatrixAt(ri++, rm);
+          rv.set(rp.x, 0.15, rp.z); rm.compose(rv, rq, new THREE.Vector3(1,1,1)); railIM.setMatrixAt(ri++, rm);
+        }
+        railIM.instanceMatrix.needsUpdate = true;
+        scene.add(railIM);
+        sceneObjects.push(railIM);
+      }
     }
   }
 
@@ -2842,7 +3151,7 @@ class Game{
         const bar = gm.userData.bar;
         if (bar) {
           bar.rotation.x = -gm.userData._openProgress * Math.PI / 2;
-          bar.position.y = 0.75 + gm.userData._openProgress * 0.25;
+          bar.position.y = 1.05 + gm.userData._openProgress * 0.25;
         }
         if (gm.userData._openProgress >= 1) {
           gm.userData._opening = false;
@@ -2863,6 +3172,10 @@ class Game{
         if (nm.userData.tail) {
           nm.userData.tail.rotation.y = Math.sin(this.fc * 0.1) * 0.3;
         }
+        // Bob floating marker
+        if (nm.userData.marker) {
+          nm.userData.marker.position.y = 0.85 + Math.sin(this.fc * 0.06 + ni) * 0.08;
+        }
       }
     });
 
@@ -2873,6 +3186,10 @@ class Game{
         dm.position.y = Math.sin(this.fc * 0.04) * 0.05;
         if (dm.userData.tail) {
           dm.userData.tail.rotation.y = Math.sin(this.fc * 0.15) * 0.5;
+        }
+        // Bob marker
+        if (dm.userData.marker) {
+          dm.userData.marker.position.y = 0.7 + Math.sin(this.fc * 0.08 + di) * 0.08;
         }
       }
     });
@@ -3262,7 +3579,7 @@ let rafId;
 
 function initThreeJS() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -3281,10 +3598,10 @@ function initThreeJS() {
   sun.shadow.mapSize.set(1024, 1024);
   sun.shadow.camera.near = 0.5;
   sun.shadow.camera.far = 100;
-  sun.shadow.camera.left = -40;
-  sun.shadow.camera.right = 40;
-  sun.shadow.camera.top = 40;
-  sun.shadow.camera.bottom = -40;
+  sun.shadow.camera.left = -15;
+  sun.shadow.camera.right = 15;
+  sun.shadow.camera.top = 15;
+  sun.shadow.camera.bottom = -15;
   scene.add(sun);
 
   // Add hemisphere light for more natural look
