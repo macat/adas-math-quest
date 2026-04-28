@@ -218,25 +218,15 @@ function renderTile(type,v=0){
   const x=c.getContext('2d');
   switch(type){
     case T.GRASS:{x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
-      // Subtle variation — not a full color change
-      const gv=(v*37+17)%100;
-      if(gv<20){x.fillStyle='rgba(255,255,255,0.04)';x.fillRect(0,0,TS,TS)}
-      else if(gv>80){x.fillStyle='rgba(0,0,0,0.03)';x.fillRect(0,0,TS,TS)}
-      // Tiny grass blades
-      x.fillStyle='rgba(100,200,50,0.3)';
-      x.fillRect((v*7%18)+2,TS-4,1,3);x.fillRect((v*13%16)+6,TS-5,1,4);break}
+      // Very subtle single-pixel details, same on every tile variant
+      x.fillStyle='#82c049';x.fillRect(7,TS-3,1,2);x.fillRect(16,TS-4,1,3);break}
     case T.DGRASS:{x.fillStyle='#4a7c28';x.fillRect(0,0,TS,TS);
-      const dv=(v*41+7)%100;
-      if(dv<20){x.fillStyle='rgba(255,255,255,0.03)';x.fillRect(0,0,TS,TS)}
-      x.fillStyle='rgba(80,160,40,0.2)';x.fillRect((v*11%16),TS-3,1,2);break}
+      x.fillStyle='#507d2e';x.fillRect(10,TS-3,1,2);break}
     case T.TGRASS:{x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);x.fillStyle='#9ccc65';
-      for(let i=0;i<3;i++)x.fillRect((v*7+i*5)%20,12,1,8);break}
+      for(let i=0;i<4;i++){x.fillRect(4+i*5,8,1,TS-8)}break}
     case T.PATH:{x.fillStyle='#c49563';x.fillRect(0,0,TS,TS);
-      const pv=(v*31+11)%100;
-      if(pv<25){x.fillStyle='rgba(255,255,255,0.04)';x.fillRect(0,0,TS,TS)}
-      else if(pv>75){x.fillStyle='rgba(0,0,0,0.04)';x.fillRect(0,0,TS,TS)}
-      // Subtle dirt texture
-      x.fillStyle='rgba(0,0,0,0.03)';x.fillRect((v*11%18),(v*7%18),2,1);break}
+      // Single subtle pebble detail
+      x.fillStyle='rgba(0,0,0,0.05)';x.fillRect(10,11,3,2);break}
     case T.TREE:{x.fillStyle='#689f38';x.fillRect(0,0,TS,TS);
       x.fillStyle='#5c3d26';x.fillRect(10,16,4,8);
       x.fillStyle='#2e7d32';x.fillRect(3,2,18,14);
