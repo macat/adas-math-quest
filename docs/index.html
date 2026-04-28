@@ -161,25 +161,27 @@ input{font-family:inherit;outline:none}
   outline:1px solid rgba(0,0,0,0.06);
 }
 
-/* Tile types */
+/* Tile types - Meadow (default) */
 .tile-wall{background:#5d4037}
-.tile-path{background:#c8e6c9}
+.tile-path{background:#e8f5e9;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.04)}
 .tile-grass{background:#a5d6a7}
 .tile-tree{background:#66bb6a}
-.tile-water{background:#4fc3f7}
-.tile-bridge{background:#bcaaa4}
-.tile-gate{background:#ffe082;border:2px solid #f9a825}
+.tile-water{background:#4fc3f7;animation:water-shimmer 3s ease-in-out infinite}
+@keyframes water-shimmer{0%,100%{opacity:1}50%{opacity:0.85}}
+.tile-bridge{background:#d7ccc8;box-shadow:inset 0 0 0 2px #a1887f}
+.tile-gate{background:#fff9c4;border:2px solid #f9a825;border-radius:4px}
 .tile-gate.solved{background:#c8e6c9;border-color:#66bb6a}
-.tile-start{background:#c8e6c9}
-.tile-end{background:#fff9c4;border:2px dashed #fbc02d}
+.tile-start{background:#e8f5e9}
+.tile-end{background:#fff9c4;border:2px dashed #fbc02d;border-radius:4px;animation:end-glow 2s ease-in-out infinite}
+@keyframes end-glow{0%,100%{box-shadow:inset 0 0 8px rgba(255,193,7,0.3)}50%{box-shadow:inset 0 0 16px rgba(255,193,7,0.6)}}
 .tile-rock{background:#90a4ae}
 .tile-flower{background:#c8e6c9}
-.tile-dark-tree{background:#2e7d32}
+.tile-dark-tree{background:#388e3c}
 .tile-mountain{background:#78909c}
 .tile-snow{background:#eceff1}
 .tile-lava{background:#e65100}
-.tile-castle-wall{background:#5d4037}
-.tile-castle-floor{background:#d7ccc8}
+.tile-castle-wall{background:#4e342e}
+.tile-castle-floor{background:#d7ccc8;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06)}
 
 /* Player */
 .player-sprite{
@@ -187,15 +189,19 @@ input{font-family:inherit;outline:none}
   font-size:calc(var(--tile) * 0.75);
   transition:left 0.15s ease-out,top 0.15s ease-out;
   filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  animation:player-bob 2s ease-in-out infinite;
 }
+@keyframes player-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 
 /* Dog followers */
 .dog-follower{
   position:absolute;z-index:4;
   font-size:calc(var(--tile) * 0.55);
-  transition:left 0.25s ease-out,top 0.25s ease-out;
+  transition:left 0.3s ease-out,top 0.3s ease-out;
   filter:drop-shadow(0 1px 3px rgba(0,0,0,0.2));
+  animation:follower-wag 1.5s ease-in-out infinite;
 }
+@keyframes follower-wag{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
 
 /* Gate markers */
 .gate-marker{
@@ -432,8 +438,11 @@ input{font-family:inherit;outline:none}
   :root{--tile:40px}
   .quest-box{padding:16px}
   .quest-question{font-size:1rem}
+  .dpad{bottom:10px;left:10px}
+  .dpad-btn{width:46px;height:46px;font-size:1.1rem}
 }
 @media(min-width:768px){
+  :root{--tile:52px}
   .dpad{opacity:0.4}
 }
 @media(min-width:1024px){
@@ -1079,13 +1088,20 @@ const QUEST_TYPES = {
     const tmpl=pick(templates);
     const playerName=game.playerName||'Ada';
     let a,b,total,answer;
-    if(tmpl.includes('{total}')){
-      total=rand(10,Math.min(d.max,50));b=rand(1,total-1);a=total-b;answer=a;
+    // Determine if this is an addition or subtraction template
+    const isSubtraction=tmpl.includes('{total}');
+    if(isSubtraction){
+      // Template: "{total} things, {b} left/removed. How many remain?"
+      total=rand(10,Math.min(d.max,50));
+      b=rand(1,Math.floor(total*0.6));
+      a=total-b;
+      answer=a; // total - b = remaining
     }else{
-      a=rand(2,Math.floor(d.max*0.4));b=rand(1,Math.floor(d.max*0.4));total=a+b;answer=total;
-    }
-    if(tmpl.includes('left')||tmpl.includes('maradt')||tmpl.includes('noch')){
-      answer=total-b;
+      // Template: "{a} + {b} = how many?"
+      a=rand(2,Math.floor(d.max*0.4));
+      b=rand(1,Math.floor(d.max*0.4));
+      total=a+b;
+      answer=total;
     }
     const q=tmpl.replace(/{name}/g,playerName).replace(/{a}/g,a).replace(/{b}/g,b).replace(/{total}/g,total);
     return{type:'numberInput',question:q,answer};
@@ -1561,8 +1577,13 @@ function movePlayer(dr,dc){
 
   // Check for end tile
   const lv=game.levels[game.currentLevel];
-  if(nr===lv.end.r&&nc===lv.end.c&&game.rescuedDogs.length===game.gates.length){
-    levelComplete();
+  if(nr===lv.end.r&&nc===lv.end.c){
+    if(game.rescuedDogs.length===game.gates.length){
+      levelComplete();
+    }else{
+      // Show hint that they need to rescue all dogs
+      showHint({en:'Rescue all dogs first! 🐕',de:'Rette erst alle Hunde! 🐕',hu:'Először mentsd meg az összes kutyát! 🐕'}[lang]||'Rescue all dogs first!');
+    }
   }
 }
 
@@ -1979,6 +2000,26 @@ function showRescueBanner(dog){
   banner.innerHTML=`<span style="font-size:1.8rem">${dog.emoji}</span> ${dog.name} ${{en:'rescued!',de:'gerettet!',hu:'megmentve!'}[lang]||'rescued!'} 🎉`;
   document.body.appendChild(banner);
   setTimeout(()=>{banner.style.transition='opacity 0.5s';banner.style.opacity='0';setTimeout(()=>banner.remove(),600)},2500);
+
+  // If all dogs rescued, show hint to go to exit
+  if(game.rescuedDogs.length===game.gates.length){
+    setTimeout(()=>{
+      showHint({en:'All dogs rescued! Go to the ⭐ star!',de:'Alle Hunde gerettet! Geh zum ⭐ Stern!',hu:'Minden kutya megmentve! Menj a ⭐ csillaghoz!'}[lang]||'All dogs rescued! Go to the ⭐!');
+    },3000);
+  }
+}
+
+function showHint(text){
+  const hint=document.createElement('div');
+  hint.style.cssText=`
+    position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:50;
+    background:#fff3e0;border:2px solid #ff9800;border-radius:16px;padding:10px 20px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.15);font-weight:600;font-size:0.95rem;color:#e65100;
+    animation:quest-pop 0.3s ease-out;text-align:center;
+  `;
+  hint.textContent=text;
+  document.body.appendChild(hint);
+  setTimeout(()=>{hint.style.transition='opacity 0.5s';hint.style.opacity='0';setTimeout(()=>hint.remove(),600)},3000);
 }
 
 // ========== LEVEL COMPLETE ==========
