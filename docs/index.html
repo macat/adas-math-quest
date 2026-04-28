@@ -14,7 +14,8 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 
 #title-screen{background:linear-gradient(180deg,#5eb3d9 0%,#8ecf65 55%,#6ab04c 100%);gap:14px;padding:20px;text-align:center;overflow-y:auto}
 .title-art{width:240px;height:100px;margin:10px auto 0;image-rendering:pixelated}
-.title-logo{font-size:clamp(2rem,7vw,3.2rem);font-weight:900;color:#2d5016;text-shadow:2px 2px 0 rgba(255,255,255,0.6);font-family:'Courier New',monospace;letter-spacing:2px}
+.title-logo{font-size:clamp(2rem,7vw,3.2rem);font-weight:900;color:#2d5016;text-shadow:2px 2px 0 rgba(255,255,255,0.6);font-family:'Courier New',monospace;letter-spacing:2px;animation:titleGlow 3s ease-in-out infinite}
+@keyframes titleGlow{0%,100%{text-shadow:2px 2px 0 rgba(255,255,255,0.6)}50%{text-shadow:2px 2px 8px rgba(76,175,80,0.8),2px 2px 0 rgba(255,255,255,0.6)}}
 .title-sub{font-size:clamp(0.85rem,2.5vw,1.1rem);color:#3d6b21;font-weight:600}
 .char-select{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:6px 0}
 .char-option{width:80px;height:100px;border-radius:12px;background:#fff;border:3px solid #ccc;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
@@ -63,7 +64,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 .speech-bubble .npc-name{font-weight:800;color:#4CAF50;margin-bottom:4px;font-size:0.8rem}
 @keyframes bubblePop{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
 
-.quest-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);animation:fadeIn 0.3s}
+.quest-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);animation:fadeIn 0.3s}
 .quest-overlay.active{display:flex}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .quest-panel{background:#fff;border-radius:20px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.3);border:4px solid #333;animation:slideUp 0.35s ease-out}
@@ -374,7 +375,7 @@ level1:'Sunny Meadow',level2:'Whispering Woods',level3:'Deep Forest',
 level4:'Mountain Trail',level5:'Crystal Lake',level6:"Dragon's Den",
 npc_hint:['I saw a puppy near the gate ahead!','A lost dog is somewhere beyond the bridge!','I heard barking past the next gate!','Keep going, you\'re getting closer to a puppy!'],
 npc_hello:['Hello, adventurer!','What a beautiful day!','Keep going!','Did you hear barking?'],
-gate_blocked:'Solve the puzzle to pass!',
+gate_blocked:'Solve the puzzle to pass!',cage_solve:'Solve to rescue!',
 thank_you:'Thank you, {0}!',quest_pattern:'Solve the pattern:',quest_solve:'Solve:',quest_truefalse:'True or False?',
 find_dogs:'Find {0} more dogs to open the exit!'},
 de:{title_sub:'Rette die verlorenen Welpen!',play:'\u25b6 SPIELEN',choose_level:'Wähle ein Level',back:'\u2190 Zurück',
@@ -387,7 +388,7 @@ level1:'Sonnige Wiese',level2:'Flüsterwald',level3:'Tiefer Wald',
 level4:'Bergpfad',level5:'Kristallsee',level6:'Drachenhöhle',
 npc_hint:['Ich sah einen Welpen beim Tor!','Ein Hund versteckt sich hinter der Brücke!','Ich hörte Bellen am nächsten Tor!','Weiter so, du bist nah dran!'],
 npc_hello:['Hallo!','Was für ein Tag!','Weiter so!','Hörst du Bellen?'],
-gate_blocked:'Löse das Rätsel um durchzukommen!',
+gate_blocked:'Löse das Rätsel um durchzukommen!',cage_solve:'Löse zum Retten!',
 thank_you:'Danke, {0}!',quest_pattern:'Löse die Reihe:',quest_solve:'Löse:',quest_truefalse:'Richtig oder Falsch?',
 find_dogs:'Finde noch {0} Hunde zum Ausgang!'},
 hu:{title_sub:'Mentsd meg a kiskutyákat!',play:'\u25b6 JÁTÉK',choose_level:'Válassz pályát',back:'\u2190 Vissza',
@@ -400,7 +401,7 @@ level1:'Napos rét',level2:'Suttogó erdő',level3:'Mély erdő',
 level4:'Hegyi ösvény',level5:'Kristálytó',level6:'Sárkánybarlang',
 npc_hint:['Láttam egy kiskutyát a kapunál!','Egy kutya bújkál a híd mögött!','Ugatást hallottam a következő kapunál!','Csak így tovább, közel vagy!'],
 npc_hello:['Szia!','Milyen szép nap!','Csak így tovább!','Hallottad az ugatást?'],
-gate_blocked:'Oldd meg a feladatot!',
+gate_blocked:'Oldd meg a feladatot!',cage_solve:'Oldd meg a mentéshez!',
 thank_you:'Köszönöm, {0}!',quest_pattern:'Oldd meg a sort:',quest_solve:'Oldd meg:',quest_truefalse:'Igaz vagy Hamis?',
 find_dogs:'Találj még {0} kutyát a kijárathoz!'}
 };
@@ -574,7 +575,7 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
     const lx=Math.floor(w*0.5),ly=Math.floor(h*0.5);
     for(let dy=-4;dy<=4;dy++)for(let dx=-5;dx<=5;dx++){
       if(dx*dx+dy*dy<20&&ly+dy>1&&ly+dy<h-2&&lx+dx>1&&lx+dx<w-2){
-        if(map[ly+dy][lx+dx]!==T.GATE&&map[ly+dy][lx+dx]!==T.DOG&&
+        if(map[ly+dy][lx+dx]!==T.GATE&&map[ly+dy][lx+dx]!==T.DOG&&map[ly+dy][lx+dx]!==T.DOG_GATE&&map[ly+dy][lx+dx]!==T.FENCE&&
            map[ly+dy][lx+dx]!==T.EXIT&&map[ly+dy][lx+dx]!==T.START&&
            map[ly+dy][lx+dx]!==T.PATH)
           map[ly+dy][lx+dx]=T.WATER;
@@ -796,7 +797,7 @@ class Game{
     const vw=cv.width/RENDER_SCALE,vh=cv.height/RENDER_SCALE;
     const tx=this.p.px-vw/2+TS/2,ty=this.p.py-vh/2+TS/2;
     if(instant){this.cam.x=tx;this.cam.y=ty}
-    else{this.cam.x+=(tx-this.cam.x)*0.08;this.cam.y+=(ty-this.cam.y)*0.08}
+    else{this.cam.x+=(tx-this.cam.x)*0.1;this.cam.y+=(ty-this.cam.y)*0.1}
     if(mapW<=vw){this.cam.x=(mapW-vw)/2}
     else{this.cam.x=Math.max(0,Math.min(mapW-vw,this.cam.x))}
     if(mapH<=vh){this.cam.y=(mapH-vh)/2}
@@ -955,7 +956,7 @@ class Game{
 
     // Player movement
     if(this.p.moving){
-      const tx=this.p.tx*TS,ty=this.p.ty*TS,spd=TS*0.25;
+      const tx=this.p.tx*TS,ty=this.p.ty*TS,spd=TS*0.35;
       const dx=tx-this.p.px,dy=ty-this.p.py,dist=Math.sqrt(dx*dx+dy*dy);
       if(dist<spd){this.p.px=tx;this.p.py=ty;this.p.x=this.p.tx;this.p.y=this.p.ty;this.p.moving=false}
       else{this.p.px+=(dx/dist)*spd;this.p.py+=(dy/dist)*spd}
@@ -1105,7 +1106,7 @@ class Game{
       cx.strokeText(playerName,sx+TS/2,sy-3+idleBob);cx.fillText(playerName,sx+TS/2,sy-3+idleBob);
     }
 
-    // Gate open effects
+    // Gate open effects with expanding sparkle ring
     this.gates.forEach(g=>{
       if(g.openAnim>0){
         const gx=g.x*TS+TS/2-this.cam.x,gy=g.y*TS+TS/2-this.cam.y;
@@ -1322,7 +1323,7 @@ async function showLevelSelect(){
     const cx=c.getContext('2d');cx.imageSmoothingEnabled=false;
     lv.map.forEach((row,r)=>row.forEach((tile,col)=>{
       cx.fillStyle=tile===T.TREE||tile===T.BUSH?'#2e7d32':tile===T.WATER?'#1976d2':
-        tile===T.PATH||tile===T.BRIDGE?'#d4a574':tile===T.ROCK?'#78909c':tile===T.GATE?'#8d6e63':
+        tile===T.PATH||tile===T.BRIDGE?'#d4a574':tile===T.ROCK?'#78909c':tile===T.GATE?'#8d6e63':tile===T.DOG_GATE?'#8d6e63':tile===T.FENCE?'#a1887f':
         tile===T.DOG?'#FFD700':tile===T.EXIT?'#4CAF50':'#7cb342';
       cx.fillRect(col*2,r*2,2,2)}));card.appendChild(c);
     const h3=document.createElement('h3');h3.textContent=t(lv.nameKey);card.appendChild(h3);
