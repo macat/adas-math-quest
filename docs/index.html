@@ -229,11 +229,18 @@ function renderTile(type,v=0){
       // Single subtle pebble detail
       x.fillStyle='rgba(0,0,0,0.05)';x.fillRect(10,11,3,2);break}
     case T.TREE:{x.fillStyle='#689f38';x.fillRect(0,0,TS,TS);
+      const tsway=Math.sin(globalFC*0.02+v*3)*0.5;
+      // Trunk
       x.fillStyle='#5c3d26';x.fillRect(10,16,4,8);
-      x.fillStyle='#2e7d32';x.fillRect(3,2,18,14);
-      x.fillStyle='#388e3c';x.fillRect(5,1,14,10);
-      x.fillStyle='#43a047';x.fillRect(7,0,10,6);
-      x.fillStyle='rgba(255,255,255,0.12)';x.fillRect(7,2,4,3);break}
+      // Canopy layers with subtle sway
+      x.fillStyle='#2e7d32';x.fillRect(3+tsway,2,18,14);
+      x.fillStyle='#388e3c';x.fillRect(5+tsway*0.7,1,14,10);
+      x.fillStyle='#43a047';x.fillRect(7+tsway*0.5,0,10,6);
+      // Light highlight
+      x.fillStyle='rgba(255,255,255,0.12)';x.fillRect(7+tsway,2,4,3);
+      // Shadow at base
+      x.fillStyle='rgba(0,0,0,0.08)';x.fillRect(6,20,12,3);
+      break}
     case T.BUSH:{x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
       x.fillStyle='#2e7d32';x.fillRect(3,6,18,14);
       x.fillStyle='#388e3c';x.fillRect(5,4,14,10);
@@ -242,14 +249,32 @@ function renderTile(type,v=0){
       x.fillStyle='#78909c';x.fillRect(3,6,18,14);
       x.fillStyle='#90a4ae';x.fillRect(5,4,14,12);
       x.fillStyle='#b0bec5';x.fillRect(7,6,8,6);break}
-    case T.WATER:{x.fillStyle='#1565c0';x.fillRect(0,0,TS,TS);
-      const wf=animF%4;x.fillStyle='rgba(100,181,246,0.5)';
-      x.fillRect((wf*3)%TS,6,8,1);x.fillRect(((wf*3+12)%TS),14,6,1);
-      x.fillStyle='rgba(255,255,255,0.15)';x.fillRect(((wf*5+4)%TS),10,5,1);break}
+    case T.WATER:{
+      const wt=globalFC*0.03;
+      const wc1=Math.sin(wt)*0.15;
+      x.fillStyle=`rgb(${21+Math.floor(wc1*20)},${101+Math.floor(Math.sin(wt+1)*10)},${192+Math.floor(wc1*30)})`;
+      x.fillRect(0,0,TS,TS);
+      // Multiple animated wave lines
+      const wf=animF%8;
+      x.fillStyle='rgba(100,181,246,0.4)';
+      x.fillRect((wf*2)%TS,4,10,1);x.fillRect(((wf*2+14)%TS),12,8,1);x.fillRect(((wf*3+6)%TS),19,7,1);
+      x.fillStyle='rgba(255,255,255,0.2)';
+      x.fillRect(((wf*3+3)%TS),8,6,1);x.fillRect(((wf*4+9)%TS),16,5,1);
+      // Sparkle
+      if(globalFC%30<3){x.fillStyle='rgba(255,255,255,0.6)';x.fillRect(((v*7+globalFC)%18)+2,((v*13)%15)+3,2,2);}
+      break}
     case T.FLOWER:{x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
       const fc=['#e74c3c','#f1c40f','#e91e63','#ff9800','#9c27b0'][v%5];
-      x.fillStyle=fc;const fx=8+(v*5%8),fy=8+(v*7%8);
-      x.fillRect(fx,fy,3,3);x.fillStyle='#ffeb3b';x.fillRect(fx+1,fy+1,1,1);break}
+      const fbob=Math.sin(globalFC*0.04+v*2)*1;
+      // Stem
+      x.fillStyle='#558b2f';const fsx=10,fsy=13+fbob;
+      x.fillRect(fsx+1,fsy,1,TS-fsy);
+      // Flower head
+      x.fillStyle=fc;const flx=8+(v*5%4),fly=8+(v*7%4)+fbob;
+      x.fillRect(flx,fly,4,4);x.fillStyle='#ffeb3b';x.fillRect(flx+1,fly+1,2,2);
+      // Leaf
+      x.fillStyle='#7cb342';x.fillRect(flx+4,fly+3,2,1);
+      break}
     case T.MUSH:{x.fillStyle='#7cb342';x.fillRect(0,0,TS,TS);
       x.fillStyle='#f5f5f5';x.fillRect(10,14,4,8);
       x.fillStyle='#e74c3c';x.fillRect(7,8,10,7);
@@ -751,12 +776,16 @@ class Game{
     this.gateOpenEffect=null;
     // Initialize floating ambient particles
     for(let i=0;i<30;i++){
+      const ptypes=['leaf','pollen','sparkle','petal'];
+      const ptype=ptypes[Math.floor(Math.random()*ptypes.length)];
+      const pcolors={leaf:'#81c784',pollen:'#ffeb3b',sparkle:'#fff',petal:'#f8bbd0'};
       this.floatingParts.push({
         x:Math.random()*this.mw*TS,y:Math.random()*this.mh*TS,
-        vx:(Math.random()-0.5)*0.3,vy:-Math.random()*0.2-0.1,
-        life:200+Math.random()*300,maxLife:500,
-        size:1+Math.random()*2,
-        color:['#fff','#ffeb3b','#c8e6c9','#f8bbd0'][Math.floor(Math.random()*4)]
+        vx:(Math.random()-0.5)*0.4,vy:-Math.random()*0.15-0.05,
+        life:300+Math.random()*400,maxLife:700,
+        size:ptype==='sparkle'?1:1.5+Math.random()*2,
+        color:pcolors[ptype],
+        ptype,spin:Math.random()*Math.PI*2
       });
     }
   }
@@ -922,7 +951,7 @@ class Game{
   update(){
     this.fc++;globalFC=this.fc;animF=Math.floor(this.fc/15);
     // Clear tile cache for animated tiles
-    if(this.fc%8===0)for(const k in tileCache)if(k.startsWith('4_')||k.startsWith('6_')||k.startsWith('17_')||k.startsWith('22_'))delete tileCache[k];
+    if(this.fc%8===0)for(const k in tileCache)if(k.startsWith('2_')||k.startsWith('4_')||k.startsWith('5_')||k.startsWith('6_')||k.startsWith('17_')||k.startsWith('22_'))delete tileCache[k];
 
     // Player movement
     if(this.p.moving){
@@ -1058,13 +1087,18 @@ class Game{
       drawDogSprite(cx,dog.key,fx,fy,this.fc+i*20);
     });
 
-    // Player character
+    // Player character with directional walk animation
     const ch=CHARS[playerChar];if(ch){
       const sx=Math.round(this.p.px-this.cam.x),sy=Math.round(this.p.py-this.cam.y);
-      // Idle bob
       const idleBob=this.p.moving?0:Math.sin(this.p.idleT*0.06)*1.5;
+      const walkBounce=this.p.moving?Math.sin(this.fc*0.3)*1.5:0;
       const sprScale=Math.max(1,Math.round(TS/16));
-      SPR.draw(cx,this.p.frame%2===0?ch.down:ch.walk,16,16,sx+(TS-16*sprScale)/2,sy+(TS-16*sprScale)/2+idleBob,sprScale);
+      const dirSprites={down:ch.down,up:ch.up||ch.down,left:ch.left||ch.down,right:ch.right||ch.down};
+      const spr=(this.p.moving&&this.p.frame%2===1)?ch.walk:(dirSprites[this.p.dir]||ch.down);
+      SPR.draw(cx,spr,16,16,sx+(TS-16*sprScale)/2,sy+(TS-16*sprScale)/2+idleBob+walkBounce,sprScale);
+      // Shadow under player
+      cx.fillStyle='rgba(0,0,0,0.15)';
+      cx.beginPath();cx.ellipse(sx+TS/2,sy+TS-1,TS*0.35,TS*0.1,0,0,Math.PI*2);cx.fill();
       // Name tag
       cx.fillStyle='#fff';cx.strokeStyle='#333';cx.lineWidth=2;
       cx.font=`bold ${Math.max(8,TS*0.38)}px sans-serif`;cx.textAlign='center';
