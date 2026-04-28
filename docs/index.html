@@ -87,7 +87,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 
 @keyframes bubblePop{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
 
-.quest-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);animation:fadeIn 0.3s}
+.quest-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);animation:fadeIn 0.3s}
 .quest-overlay.active{display:flex}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .quest-panel{background:#fff;border-radius:20px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.3);border:4px solid #333;animation:slideUp 0.35s ease-out}
@@ -246,7 +246,7 @@ const T={GRASS:0,PATH:1,TREE:2,ROCK:3,WATER:4,FLOWER:5,GATE:6,BRIDGE:7,DOG:8,
 NPC_BUT:9,NPC_SQU:10,NPC_BEAR:11,NPC_BIRD:12,BUSH:13,DGRASS:14,TGRASS:15,
 MUSH:16,EXIT:17,START:18,FENCE:19,HOUSE:20,SIGN:21,DOG_GATE:22};
 const TS=24; // internal tile size for sprite art
-const RENDER_SCALE=0.5; // display tiles at half size for bigger world feel
+let RENDER_SCALE=2; // dynamic — recalculated on resize
 const WALKABLE=new Set([T.GRASS,T.PATH,T.FLOWER,T.DGRASS,T.TGRASS,T.MUSH,T.EXIT,T.START,T.BRIDGE,T.BUSH]);
 const INTERACT=new Set([T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD,T.SIGN]);
 const tileCache={};
@@ -412,7 +412,13 @@ function drawBird(cx,x,y,f){
 function drawDogSprite(cx,key,x,y,f){const dog=DOGS[key];if(!dog)return;
   const s=Math.max(1,Math.round(TS/12));
   const ox=x+(TS-12*s)/2;const oy=y+(TS-12*s)/2+Math.sin(f*0.08)*1.5;
-  SPR.draw(cx,dog.sprite,12,12,ox,oy,s);}
+  SPR.draw(cx,dog.sprite,12,12,ox,oy,s);
+  // Tail wag animation
+  const tailX=ox+10*s,tailY=oy+3*s;
+  const wag=Math.sin(f*0.2)*2*s;
+  cx.fillStyle=dog.sprite[3]&&dog.sprite[3][0]?dog.sprite[3][0]:'#8d6e63';
+  cx.fillRect(tailX+wag,tailY,2*s,2*s);cx.fillRect(tailX+s+wag,tailY-s,s,2*s);
+}
 const NPCD={[T.NPC_BUT]:drawButterfly,[T.NPC_SQU]:drawSquirrel,[T.NPC_BEAR]:drawBear,[T.NPC_BIRD]:drawBird};
 
 
@@ -1539,6 +1545,32 @@ class Game{
     }
     if(!this.p.moving&&this.moveHeld&&this.moveDir){this.moveCD--;if(this.moveCD<=0){this.tryMove(this.moveDir);this.moveCD=2}}
 
+    // Auto-trigger quest when adjacent to a gate/cage (fix: user sees tooltip but quest doesn't open)
+    if(!this.p.moving&&!this.activeQuest){
+      const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
+      for(const[ddx,ddy] of dirs){
+        const ax=this.p.x+ddx,ay=this.p.y+ddy;
+        if(ax<0||ay<0||ax>=this.mw||ay>=this.mh)continue;
+        const t2=this.map[ay][ax];
+        if(t2===T.GATE){
+          const g=this.gates.find(g2=>g2.x===ax&&g2.y===ay&&!g2.open);
+          if(g&&!g.autoTriggered){g.autoTriggered=true;this.openGateQuest(g);break}
+        }
+        if(t2===T.DOG_GATE){
+          const nd=this.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===ax&&d.cageGate.y===ay&&!d.cageOpen);
+          if(nd&&!nd.autoTriggered){
+            nd.autoTriggered=true;
+            if(!nd.quests)nd.quests=genQuests(3,this.ld.diff);
+            showFlash('🐕 '+getCageMessage(),'#FF9800');
+            this.activeQuest={type:'dogCage',dog:nd,x:ax,y:ay};
+            this.questList=nd.quests;this.questIdx=0;
+            this.addBurst(ax*TS+TS/2,ay*TS+TS/2,8,'#FF9800');
+            showQuestUI(this.questList,0,nd.quests.length);break;
+          }
+        }
+      }
+    }
+
     // Dog following - smooth trail
     let prevX=this.p.px,prevY=this.p.py;
     for(const dog of this.rescued){
@@ -1692,14 +1724,17 @@ class Game{
     const ch=CHARS[playerChar];if(ch){
       const sx=Math.round(this.p.px-this.cam.x),sy=Math.round(this.p.py-this.cam.y);
       const idleBob=this.p.moving?0:Math.sin(this.p.idleT*0.06)*1.5;
-      const walkBounce=this.p.moving?Math.sin(this.fc*0.3)*1.5:0;
+      const walkBounce=this.p.moving?Math.sin((this.p.walkFrame||0)*Math.PI)*2:0;
+      const walkLean=this.p.moving?Math.sin((this.p.walkFrame||0)*Math.PI*0.5)*1:0;
       const sprScale=Math.max(1,Math.round(TS/16));
       const dirSprites={down:ch.down,up:ch.up||ch.down,left:ch.left||ch.down,right:ch.right||ch.down};
-      const spr=(this.p.moving&&this.p.frame%2===1)?ch.walk:(dirSprites[this.p.dir]||ch.down);
-      SPR.draw(cx,spr,16,16,sx+(TS-16*sprScale)/2,sy+(TS-16*sprScale)/2+idleBob+walkBounce,sprScale);
-      // Shadow under player
+      const walkFrame=Math.floor((this.p.walkFrame||0))%2;
+      const spr=this.p.moving&&walkFrame===1?(ch.walk||dirSprites[this.p.dir]):dirSprites[this.p.dir]||ch.down;
+      SPR.draw(cx,spr,16,16,sx+(TS-16*sprScale)/2+walkLean,sy+(TS-16*sprScale)/2+idleBob+walkBounce,sprScale);
+      // Shadow under player (stretches during walk)
+      const shadowW=this.p.moving?TS*0.38:TS*0.35;
       cx.fillStyle='rgba(0,0,0,0.15)';
-      cx.beginPath();cx.ellipse(sx+TS/2,sy+TS-1,TS*0.35,TS*0.1,0,0,Math.PI*2);cx.fill();
+      cx.beginPath();cx.ellipse(sx+TS/2,sy+TS-1,shadowW,TS*0.1,0,0,Math.PI*2);cx.fill();
       // Name tag
       cx.fillStyle='#fff';cx.strokeStyle='#333';cx.lineWidth=2;
       cx.font=`bold ${Math.max(8,TS*0.38)}px sans-serif`;cx.textAlign='center';
@@ -1820,10 +1855,13 @@ function showSpeechBubble(name,text,sx,sy){
 }
 
 function showQuestUI(quests,idx,total){
+  try{
   const ov=document.getElementById('quest-overlay'),body=document.getElementById('quest-body');
+  if(!ov||!body||!quests||!quests[idx]){console.error('showQuestUI: missing data',{ov:!!ov,body:!!body,quests:quests?.length,idx});return}
   document.getElementById('quest-title').textContent=t('math_challenge');
   document.getElementById('quest-progress').textContent=t('task_of',idx+1,total);
   document.getElementById('quest-bar').style.width=Math.round((idx/total)*100)+'%';
+  ov.style.display='flex'; // force display in case CSS class fails
   ov.classList.add('active');body.innerHTML='';
   // Celebration between questions
   if(idx>0){
@@ -1837,6 +1875,7 @@ function showQuestUI(quests,idx,total){
   else if(q.type==='choice')renderChoice(body,q);
   else if(q.type==='input')renderInput(body,q);
   else if(q.type==='truefalse')renderTF2(body,q);
+  }catch(err){console.error('showQuestUI error:',err)}
 }
 
 function renderPattern(body,q){
@@ -1923,7 +1962,7 @@ function renderTF2(body,q){
     row.appendChild(btn)});body.appendChild(row);
 }
 
-function hideQuestUI(){document.getElementById('quest-overlay').classList.remove('active')}
+function hideQuestUI(){const ov=document.getElementById('quest-overlay');ov.classList.remove('active');ov.style.display=''}
 
 // ===== RECORDS =====
 let db;
@@ -2005,7 +2044,12 @@ function showVictory(dogs,time,mistakes,stars,li){
 let canvas,ctx,rafId;
 function actualStartLevel(idx){
   showScreen('game-screen');canvas=document.getElementById('game-canvas');ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
-  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;if(game)game.updateCam(true)}
+  function resize(){
+      canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+      // Show ~25 tiles across on any screen size
+      RENDER_SCALE=Math.max(1.5,Math.min(4,window.innerWidth/(25*TS)));
+      if(game)game.updateCam(true);
+    }
   window.removeEventListener('resize',resize);window.addEventListener('resize',resize);resize();
   game=new Game(idx);for(const k in tileCache)delete tileCache[k];
   if(rafId)cancelAnimationFrame(rafId);
