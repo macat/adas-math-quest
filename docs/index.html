@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Ada's Math Quest 🐕</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+:root {
+  --forest-dark: #1a472a;
+  --forest: #2d6a4f;
+  --meadow: #52b788;
+  --leaf: #95d5b2;
+  --sky: #a8dadc;
+  --sky-light: #e0f4f5;
+  --sun: #ffd166;
+  --flower-pink: #ff6b9d;
+  --flower-purple: #c77dff;
+  --bark: #8b5e3c;
+  --earth: #6b4226;
+  --cream: #fefae0;
+  --white: #ffffff;
+  --danger: #ef476f;
+  --success: #06d6a0;
+  --gold: #ffd166;
+  --text: #2d3436;
+  --text-light: #636e72;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(180deg, #87CEEB 0%, #a8dadc 30%, #52b788 60%, #2d6a4f 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: var(--text);
+}
+
+h1, h2, h3 { font-family: 'Fredoka', sans-serif; }
+
+/* ==================== SCREENS ==================== */
+.screen { display: none; min-height: 100vh; position: relative; }
+.screen.active { display: flex; flex-direction: column; align-items: center; }
+
+/* ==================== FLOATING NATURE ELEMENTS ==================== */
+.nature-bg {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none; z-index: 0; overflow: hidden;
+}
+.cloud {
+  position: absolute; font-size: 3rem; opacity: 0.6;
+  animation: float-cloud linear infinite;
+}
+@keyframes float-cloud {
+  from { transform: translateX(-100px); }
+  to { transform: translateX(calc(100vw + 100px)); }
+}
+.butterfly {
+  position: absolute; font-size: 1.5rem;
+  animation: flutter 3s ease-in-out infinite;
+}
+@keyframes flutter {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(10px, -15px) rotate(5deg); }
+  50% { transform: translate(-5px, -25px) rotate(-3deg); }
+  75% { transform: translate(15px, -10px) rotate(4deg); }
+}
+
+/* ==================== START SCREEN ==================== */
+#start-screen {
+  justify-content: center; gap: 1.5rem; padding: 2rem;
+  background: linear-gradient(180deg, #87CEEB 0%, #b8e0d2 50%, #52b788 100%);
+}
+.title-card {
+  background: rgba(255,255,255,0.95); border-radius: 2rem; padding: 2.5rem 3rem;
+  text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  max-width: 500px; width: 90%; position: relative; z-index: 1;
+}
+.title-card h1 {
+  font-size: 2.5rem; color: var(--forest-dark);
+  text-shadow: 2px 2px 0 var(--leaf);
+  margin-bottom: 0.5rem;
+}
+.title-dogs { font-size: 3rem; margin: 0.5rem 0; }
+.title-subtitle {
+  font-size: 1.1rem; color: var(--text-light); margin-bottom: 1rem;
+}
+.start-input {
+  display: flex; flex-direction: column; gap: 0.8rem; margin: 1rem 0;
+}
+.start-input label { font-weight: 700; font-size: 0.95rem; text-align: left; }
+.start-input input, .start-input select {
+  padding: 0.7rem 1rem; border-radius: 1rem; border: 2px solid var(--leaf);
+  font-size: 1rem; font-family: 'Nunito', sans-serif;
+  background: var(--cream); outline: none; transition: border-color 0.2s;
+}
+.start-input input:focus, .start-input select:focus {
+  border-color: var(--meadow);
+}
+.btn {
+  padding: 0.9rem 2.5rem; border-radius: 2rem; border: none;
+  font-family: 'Fredoka', sans-serif; font-size: 1.2rem; font-weight: 600;
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.btn:active { transform: scale(0.95); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--meadow), var(--forest));
+  color: white; box-shadow: 0 4px 15px rgba(45,106,79,0.4);
+}
+.btn-primary:hover { box-shadow: 0 6px 20px rgba(45,106,79,0.5); transform: translateY(-2px); }
+.btn-gold {
+  background: linear-gradient(135deg, var(--sun), #f4a261);
+  color: var(--earth); box-shadow: 0 4px 15px rgba(255,209,102,0.5);
+}
+.btn-small { padding: 0.5rem 1.2rem; font-size: 0.95rem; }
+
+/* ==================== MAP SCREEN ==================== */
+#map-screen {
+  background: linear-gradient(180deg, #87CEEB 0%, #a8dadc 20%, #d8f3dc 50%, #52b788 100%);
+  padding: 1rem; gap: 1rem;
+}
+.map-header {
+  background: rgba(255,255,255,0.92); border-radius: 1.5rem; padding: 1rem 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  width: 95%; max-width: 700px; z-index: 1;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.map-header h2 { font-size: 1.3rem; color: var(--forest-dark); }
+.map-info { display: flex; gap: 1rem; align-items: center; font-size: 0.9rem; }
+.map-info span { display: flex; align-items: center; gap: 0.3rem; }
+
+.map-container {
+  background: rgba(255,255,255,0.85); border-radius: 2rem; padding: 1.5rem;
+  width: 95%; max-width: 700px; min-height: 400px;
+  position: relative; z-index: 1;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+  align-content: start;
+}
+.dog-spot {
+  background: var(--cream); border-radius: 1.5rem; padding: 1.2rem;
+  text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+  border: 3px dashed var(--leaf); position: relative;
+}
+.dog-spot:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+.dog-spot.rescued {
+  border: 3px solid var(--success); background: linear-gradient(135deg, #d8f3dc, #b7e4c7);
+  cursor: default;
+}
+.dog-spot.rescued .dog-emoji { animation: happy-bounce 0.6s ease; }
+.dog-spot.locked { opacity: 0.6; cursor: not-allowed; border-color: #ccc; }
+.dog-spot .dog-emoji { font-size: 2.5rem; display: block; margin-bottom: 0.3rem; }
+.dog-spot .dog-name { font-weight: 700; font-size: 0.95rem; color: var(--forest-dark); }
+.dog-spot .dog-status { font-size: 0.8rem; color: var(--text-light); margin-top: 0.2rem; }
+.dog-spot .quest-count {
+  position: absolute; top: -8px; right: -8px;
+  background: var(--danger); color: white; border-radius: 50%;
+  width: 24px; height: 24px; font-size: 0.75rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.dog-spot.rescued .quest-count { background: var(--success); }
+
+@keyframes happy-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-15px) rotate(-5deg); }
+  60% { transform: translateY(-8px) rotate(5deg); }
+}
+
+.map-footer {
+  display: flex; gap: 1rem; z-index: 1; flex-wrap: wrap; justify-content: center;
+}
+
+/* ==================== QUEST SCREEN ==================== */
+#quest-screen {
+  background: linear-gradient(180deg, #fefae0 0%, #d8f3dc 50%, #95d5b2 100%);
+  padding: 1.5rem; gap: 1rem;
+}
+.quest-header {
+  background: rgba(255,255,255,0.95); border-radius: 1.5rem; padding: 1rem 1.5rem;
+  width: 95%; max-width: 600px; display: flex; justify-content: space-between;
+  align-items: center; z-index: 1; box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.quest-header h3 { font-size: 1.1rem; color: var(--forest-dark); }
+.quest-progress {
+  display: flex; gap: 0.4rem; align-items: center;
+}
+.quest-dot {
+  width: 14px; height: 14px; border-radius: 50%; background: #ddd;
+  transition: background 0.3s, transform 0.3s;
+}
+.quest-dot.done { background: var(--success); transform: scale(1.15); }
+.quest-dot.current { background: var(--sun); transform: scale(1.25); box-shadow: 0 0 8px var(--sun); }
+.quest-dot.wrong { background: var(--danger); }
+
+.quest-card {
+  background: rgba(255,255,255,0.97); border-radius: 2rem; padding: 2rem;
+  width: 95%; max-width: 600px; text-align: center; z-index: 1;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  min-height: 300px; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; gap: 1.5rem;
+  position: relative; overflow: hidden;
+}
+.quest-story {
+  font-size: 1rem; color: var(--text-light); font-style: italic;
+  padding: 0.5rem 1rem; background: var(--cream); border-radius: 1rem;
+  border-left: 4px solid var(--sun);
+}
+.quest-question {
+  font-size: 1.8rem; font-family: 'Fredoka', sans-serif;
+  color: var(--forest-dark); line-height: 1.4;
+}
+.quest-question .blank {
+  display: inline-block; min-width: 60px; border-bottom: 3px dashed var(--meadow);
+  color: var(--meadow); font-weight: 700;
+}
+
+/* Answer input area */
+.answer-area { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 400px; }
+.answer-input-row { display: flex; gap: 0.8rem; justify-content: center; align-items: center; }
+.answer-input {
+  width: 120px; padding: 0.8rem; font-size: 1.8rem; text-align: center;
+  border-radius: 1rem; border: 3px solid var(--leaf);
+  font-family: 'Fredoka', sans-serif; background: var(--cream);
+  outline: none; transition: border-color 0.2s;
+}
+.answer-input:focus { border-color: var(--meadow); }
+.answer-input.correct { border-color: var(--success); background: #d8f3dc; }
+.answer-input.wrong { border-color: var(--danger); background: #ffe0e6; animation: shake 0.4s; }
+
+/* Multiple choice */
+.choices-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;
+  width: 100%; max-width: 350px;
+}
+.choice-btn {
+  padding: 1rem; border-radius: 1.2rem; border: 3px solid var(--leaf);
+  background: var(--cream); font-size: 1.3rem; font-family: 'Fredoka', sans-serif;
+  cursor: pointer; transition: all 0.2s; color: var(--forest-dark);
+}
+.choice-btn:hover { border-color: var(--meadow); background: #e8f5e9; transform: scale(1.03); }
+.choice-btn.correct { border-color: var(--success); background: #d8f3dc; }
+.choice-btn.wrong { border-color: var(--danger); background: #ffe0e6; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+/* Sparkles overlay */
+.sparkles {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none; z-index: 10;
+}
+.sparkle {
+  position: absolute; font-size: 1.5rem; animation: sparkle-pop 0.8s ease forwards;
+}
+@keyframes sparkle-pop {
+  0% { transform: scale(0) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+  100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}
+
+/* ==================== LEVEL COMPLETE ==================== */
+.level-complete-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 100;
+  display: none; justify-content: center; align-items: center;
+  padding: 2rem;
+}
+.level-complete-overlay.show { display: flex; }
+.level-complete-card {
+  background: white; border-radius: 2rem; padding: 2.5rem;
+  text-align: center; max-width: 450px; width: 90%;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes pop-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.level-complete-card h2 { font-size: 2rem; color: var(--forest-dark); margin-bottom: 0.5rem; }
+.level-complete-card .stars { font-size: 2.5rem; margin: 0.5rem 0; }
+.level-complete-card .stats { margin: 1rem 0; font-size: 1rem; color: var(--text-light); }
+.level-complete-card .stats div { margin: 0.3rem 0; }
+.stat-val { font-weight: 700; color: var(--forest-dark); }
+
+/* ==================== FINAL SCREEN ==================== */
+#final-screen {
+  background: linear-gradient(180deg, #ffd166 0%, #f4a261 20%, #52b788 60%, #2d6a4f 100%);
+  padding: 2rem; gap: 1.5rem; justify-content: center;
+}
+.final-card {
+  background: rgba(255,255,255,0.97); border-radius: 2rem; padding: 2rem;
+  text-align: center; max-width: 600px; width: 95%; z-index: 1;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.final-card h1 { font-size: 2.2rem; color: var(--forest-dark); margin-bottom: 0.5rem; }
+.final-dogs {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem;
+  margin: 1.5rem 0; padding: 1rem;
+  background: linear-gradient(135deg, #d8f3dc, #b7e4c7);
+  border-radius: 1.5rem;
+}
+.final-dog {
+  text-align: center; padding: 0.5rem;
+  animation: final-bounce 1s ease infinite;
+}
+.final-dog:nth-child(2n) { animation-delay: 0.15s; }
+.final-dog:nth-child(3n) { animation-delay: 0.3s; }
+.final-dog .dog-emoji { font-size: 2.5rem; display: block; }
+.final-dog .dog-name { font-size: 0.8rem; font-weight: 700; color: var(--forest-dark); }
+.final-dog .dog-thanks { font-size: 0.7rem; color: var(--text-light); }
+@keyframes final-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.final-stats {
+  background: var(--cream); border-radius: 1rem; padding: 1rem;
+  margin: 1rem 0;
+}
+.final-stats h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--forest-dark); }
+.records-list { list-style: none; text-align: left; }
+.records-list li {
+  padding: 0.4rem 0; border-bottom: 1px solid #eee;
+  display: flex; justify-content: space-between;
+}
+
+/* ==================== LANGUAGE SELECTOR ==================== */
+.lang-selector {
+  position: fixed; top: 1rem; right: 1rem; z-index: 50;
+  display: flex; gap: 0.3rem; background: rgba(255,255,255,0.9);
+  padding: 0.3rem; border-radius: 1rem;
+}
+.lang-btn {
+  padding: 0.3rem 0.6rem; border: none; border-radius: 0.7rem;
+  cursor: pointer; font-size: 0.85rem; background: transparent;
+  font-family: 'Nunito', sans-serif; font-weight: 600;
+  transition: background 0.2s;
+}
+.lang-btn.active { background: var(--meadow); color: white; }
+.lang-btn:hover:not(.active) { background: var(--leaf); }
+
+/* Timer display */
+.timer {
+  font-family: 'Fredoka', sans-serif; font-size: 1.1rem;
+  color: var(--forest-dark); display: flex; align-items: center; gap: 0.3rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 600px) {
+  .title-card h1 { font-size: 1.8rem; }
+  .map-container { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; padding: 1rem; }
+  .quest-question { font-size: 1.4rem; }
+  .quest-card { padding: 1.5rem; }
+  .choices-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .choice-btn { padding: 0.7rem; font-size: 1.1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Language selector -->
+<div class="lang-selector">
+  <button class="lang-btn active" data-lang="en">EN</button>
+  <button class="lang-btn" data-lang="de">DE</button>
+  <button class="lang-btn" data-lang="hu">HU</button>
+</div>
+
+<!-- Floating nature background -->
+<div class="nature-bg" id="nature-bg"></div>
+
+<!-- ==================== START SCREEN ==================== -->
+<div class="screen active" id="start-screen">
+  <div class="title-card">
+    <div class="title-dogs">🐕 🐶 🐾 🦮 🐕‍🦺</div>
+    <h1 data-i18n="title">Ada's Math Quest</h1>
+    <p class="title-subtitle" data-i18n="subtitle">Help rescue the lost dogs in the magical forest!</p>
+    <div class="start-input">
+      <label data-i18n="nameLabel">Your name:</label>
+      <input type="text" id="player-name" value="Ada" maxlength="20">
+      <label data-i18n="levelLabel">Choose level:</label>
+      <select id="level-select"></select>
+    </div>
+    <button class="btn btn-primary" id="start-btn">
+      <span data-i18n="startBtn">Start Adventure!</span> 🌟
+    </button>
+    <div style="margin-top:1rem;">
+      <button class="btn btn-gold btn-small" id="records-btn">
+        <span data-i18n="recordsBtn">🏆 Records</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MAP SCREEN ==================== -->
+<div class="screen" id="map-screen">
+  <div class="map-header">
+    <h2 id="map-title"></h2>
+    <div class="map-info">
+      <span>🐕 <span id="dogs-saved">0</span>/<span id="dogs-total">0</span></span>
+      <span class="timer">⏱️ <span id="level-timer">0:00</span></span>
+    </div>
+  </div>
+  <div class="map-container" id="map-container"></div>
+  <div class="map-footer">
+    <button class="btn btn-small btn-gold" id="back-to-menu" data-i18n="backToMenu">← Menu</button>
+  </div>
+</div>
+
+<!-- ==================== QUEST SCREEN ==================== -->
+<div class="screen" id="quest-screen">
+  <div class="quest-header">
+    <h3 id="quest-dog-name"></h3>
+    <div class="quest-progress" id="quest-progress"></div>
+  </div>
+  <div class="quest-card" id="quest-card">
+    <div class="quest-story" id="quest-story"></div>
+    <div class="quest-question" id="quest-question"></div>
+    <div class="answer-area" id="answer-area"></div>
+    <div class="sparkles" id="sparkles"></div>
+  </div>
+  <div style="z-index:1;">
+    <button class="btn btn-small" id="skip-quest" style="background:#ddd;color:#666;" data-i18n="skip">Skip →</button>
+  </div>
+</div>
+
+<!-- ==================== FINAL SCREEN ==================== -->
+<div class="screen" id="final-screen">
+  <div class="final-card">
+    <h1 data-i18n="finalTitle">🎉 All Dogs Rescued! 🎉</h1>
+    <p id="final-message"></p>
+    <div class="final-dogs" id="final-dogs"></div>
+    <div class="final-stats">
+      <h3 data-i18n="yourRecords">🏆 Your Records</h3>
+      <ul class="records-list" id="final-records"></ul>
+    </div>
+    <button class="btn btn-primary" id="play-again-btn">
+      <span data-i18n="playAgain">Play Again!</span> 🐾
+    </button>
+  </div>
+</div>
+
+<!-- ==================== LEVEL COMPLETE OVERLAY ==================== -->
+<div class="level-complete-overlay" id="level-complete">
+  <div class="level-complete-card">
+    <h2 id="lc-title"></h2>
+    <div class="stars" id="lc-stars"></div>
+    <div class="stats" id="lc-stats"></div>
+    <button class="btn btn-primary" id="lc-continue" data-i18n="continue">Continue →</button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// INTERNATIONALIZATION
+// ================================================================
+const I18N = {
+  en: {
+    title: "Ada's Math Quest",
+    subtitle: "Help rescue the lost dogs in the magical forest!",
+    nameLabel: "Your name:",
+    levelLabel: "Choose level:",
+    startBtn: "Start Adventure!",
+    recordsBtn: "🏆 Records",
+    backToMenu: "← Menu",
+    skip: "Skip →",
+    continue: "Continue →",
+    finalTitle: "🎉 All Dogs Rescued! 🎉",
+    playAgain: "Play Again!",
+    yourRecords: "🏆 Your Records",
+    levelNames: [
+      "🌱 Sunny Meadow",
+      "🌿 Whispering Woods",
+      "🌲 Deep Forest",
+      "🏔️ Mountain Trail",
+      "🌊 Crystal Lake",
+      "🏰 Dragon's Den"
+    ],
+    levelDescs: [
+      "Easy addition & subtraction up to 20",
+      "Addition & subtraction up to 50 + patterns",
+      "Up to 100 + multiplication (×2, ×5, ×10)",
+      "Mixed operations + harder patterns",
+      "All operations + sequences",
+      "Boss level — everything mixed!"
+    ],
+    rescueMe: "Rescue me!",
+    rescued: "Rescued! 🎉",
+    locked: "Locked 🔒",
+    questsLeft: "quests left",
+    saving: "Saving",
+    whatNext: "What comes next?",
+    fillBlank: "Fill in the blank:",
+    whichBigger: "Which is bigger?",
+    solve: "Solve:",
+    correct: "Correct! 🌟",
+    tryAgain: "Try again! 💪",
+    levelComplete: "Level Complete!",
+    allDogsLevel: "All dogs in this level are saved!",
+    time: "Time",
+    mistakes: "Mistakes",
+    bestTime: "Best time",
+    newRecord: "🏆 New Record!",
+    thankYou: "Thank you, {name}!",
+    allSavedMsg: "{name}, you saved all the dogs! They're so happy! 🐾❤️",
+    noRecords: "No records yet!",
+    level: "Level",
+    dogNames: ["Buddy","Luna","Max","Bella","Rocky","Daisy","Charlie","Coco","Rex","Milo","Lola","Zeus","Rosie","Duke","Ruby","Bruno","Nala","Jack","Pepper","Teddy","Winnie","Oscar","Fifi","Scout","Ginger"],
+    stories: [
+      "{dog} is hiding behind a big oak tree! Solve this to help find them!",
+      "{dog} got lost chasing butterflies! Quick, solve this!",
+      "{dog} is stuck near the river! Math will build a bridge!",
+      "{dog} is scared of a friendly bear! Show them it's safe!",
+      "{dog} needs to cross a flower field! Help them find the way!",
+      "{dog} found a mysterious cave! Solve the riddle to open it!",
+      "A squirrel stole {dog}'s bone! Win it back with math!",
+      "{dog} is playing with frogs by the pond! Solve to bring them home!",
+    ],
+    wordProblems: [
+      "{name} found {a} puppies in the park. Then {b} more ran over. How many puppies are there now?",
+      "{dog} had {a} treats. They ate {b} of them. How many treats are left?",
+      "There are {a} dogs in the meadow and {b} dogs by the river. How many dogs are there in total?",
+      "{dog} buried {a} bones. They dug up {b}. How many are still buried?",
+      "{name} gave {a} treats to each of {b} dogs. How many treats in total?",
+    ],
+  },
+  de: {
+    title: "Adas Mathe-Abenteuer",
+    subtitle: "Hilf die verlorenen Hunde im Zauberwald zu retten!",
+    nameLabel: "Dein Name:",
+    levelLabel: "Wähle ein Level:",
+    startBtn: "Abenteuer starten!",
+    recordsBtn: "🏆 Rekorde",
+    backToMenu: "← Menü",
+    skip: "Überspringen →",
+    continue: "Weiter →",
+    finalTitle: "🎉 Alle Hunde gerettet! 🎉",
+    playAgain: "Nochmal spielen!",
+    yourRecords: "🏆 Deine Rekorde",
+    levelNames: [
+      "🌱 Sonnige Wiese",
+      "🌿 Flüsterwald",
+      "🌲 Tiefer Wald",
+      "🏔️ Bergpfad",
+      "🌊 Kristallsee",
+      "🏰 Drachenhöhle"
+    ],
+    levelDescs: [
+      "Einfache Addition & Subtraktion bis 20",
+      "Addition & Subtraktion bis 50 + Muster",
+      "Bis 100 + Multiplikation (×2, ×5, ×10)",
+      "Gemischte Aufgaben + schwierigere Muster",
+      "Alle Rechenarten + Zahlenreihen",
+      "Boss-Level — alles gemischt!"
+    ],
+    rescueMe: "Rette mich!",
+    rescued: "Gerettet! 🎉",
+    locked: "Gesperrt 🔒",
+    questsLeft: "Aufgaben übrig",
+    saving: "Rette",
+    whatNext: "Was kommt als nächstes?",
+    fillBlank: "Fülle die Lücke:",
+    whichBigger: "Was ist größer?",
+    solve: "Löse:",
+    correct: "Richtig! 🌟",
+    tryAgain: "Versuch's nochmal! 💪",
+    levelComplete: "Level geschafft!",
+    allDogsLevel: "Alle Hunde in diesem Level sind gerettet!",
+    time: "Zeit",
+    mistakes: "Fehler",
+    bestTime: "Bestzeit",
+    newRecord: "🏆 Neuer Rekord!",
+    thankYou: "Danke, {name}!",
+    allSavedMsg: "{name}, du hast alle Hunde gerettet! Sie sind so glücklich! 🐾❤️",
+    noRecords: "Noch keine Rekorde!",
+    level: "Level",
+    dogNames: ["Buddy","Luna","Max","Bella","Rocky","Daisy","Charlie","Coco","Rex","Milo","Lola","Zeus","Rosie","Duke","Ruby","Bruno","Nala","Jack","Pfeffer","Teddy","Winnie","Oskar","Fifi","Scout","Ingwer"],
+    stories: [
+      "{dog} versteckt sich hinter einer großen Eiche! Löse die Aufgabe!",
+      "{dog} hat sich beim Schmetterlingsjagen verlaufen! Schnell, rechne!",
+      "{dog} steckt am Fluss fest! Mathe baut eine Brücke!",
+      "{dog} hat Angst vor einem freundlichen Bären! Zeig, dass er nett ist!",
+      "{dog} muss über ein Blumenfeld! Hilf den Weg zu finden!",
+      "{dog} fand eine geheimnisvolle Höhle! Löse das Rätsel!",
+      "Ein Eichhörnchen hat {dog}s Knochen gestohlen! Gewinn ihn mit Mathe zurück!",
+      "{dog} spielt mit Fröschen am Teich! Löse die Aufgabe!",
+    ],
+    wordProblems: [
+      "{name} fand {a} Welpen im Park. Dann kamen noch {b} dazu. Wie viele Welpen sind es jetzt?",
+      "{dog} hatte {a} Leckerlis und aß {b} davon. Wie viele sind noch übrig?",
+      "Auf der Wiese sind {a} Hunde und am Fluss {b}. Wie viele Hunde gibt es insgesamt?",
+      "{dog} hat {a} Knochen vergraben und {b} wieder ausgegraben. Wie viele sind noch vergraben?",
+      "{name} gab jedem von {b} Hunden {a} Leckerlis. Wie viele Leckerlis insgesamt?",
+    ],
+  },
+  hu: {
+    title: "Ada Matekkalandja",
+    subtitle: "Segíts megmenteni az elveszett kutyákat a varázslatos erdőben!",
+    nameLabel: "A neved:",
+    levelLabel: "Válassz pályát:",
+    startBtn: "Kaland indítása!",
+    recordsBtn: "🏆 Rekordok",
+    backToMenu: "← Menü",
+    skip: "Kihagyás →",
+    continue: "Tovább →",
+    finalTitle: "🎉 Minden kutya megmentve! 🎉",
+    playAgain: "Újra játszom!",
+    yourRecords: "🏆 Rekordok",
+    levelNames: [
+      "🌱 Napfényes rét",
+      "🌿 Susogó erdő",
+      "🌲 Sűrű rengeteg",
+      "🏔️ Hegyi ösvény",
+      "🌊 Kristálytó",
+      "🏰 Sárkánybarlang"
+    ],
+    levelDescs: [
+      "Könnyű összeadás és kivonás 20-ig",
+      "Összeadás és kivonás 50-ig + minták",
+      "100-ig + szorzás (×2, ×5, ×10)",
+      "Vegyes műveletek + nehezebb minták",
+      "Minden művelet + számsorok",
+      "Főnök szint — minden keverve!"
+    ],
+    rescueMe: "Ments meg!",
+    rescued: "Megmentve! 🎉",
+    locked: "Zárolva 🔒",
+    questsLeft: "feladat hátra",
+    saving: "Mentsd meg",
+    whatNext: "Mi jön ezután?",
+    fillBlank: "Töltsd ki az üres helyet:",
+    whichBigger: "Melyik a nagyobb?",
+    solve: "Oldd meg:",
+    correct: "Helyes! 🌟",
+    tryAgain: "Próbáld újra! 💪",
+    levelComplete: "Pálya teljesítve!",
+    allDogsLevel: "Minden kutya megmentve ezen a pályán!",
+    time: "Idő",
+    mistakes: "Hibák",
+    bestTime: "Legjobb idő",
+    newRecord: "🏆 Új rekord!",
+    thankYou: "Köszönöm, {name}!",
+    allSavedMsg: "{name}, megmentetted az összes kutyát! Nagyon boldogok! 🐾❤️",
+    noRecords: "Még nincsenek rekordok!",
+    level: "Szint",
+    dogNames: ["Bodri","Lujzi","Morzsi","Bella","Buksi","Virág","Csoki","Keksz","Rex","Mili","Lola","Zsiga","Rózsi","Herceg","Rubin","Brúnó","Nála","Jacky","Bors","Maci","Vini","Oszkár","Fifi","Szöcsi","Gyömbér"],
+    stories: [
+      "{dog} egy nagy tölgyfa mögött bújik! Oldd meg a feladatot!",
+      "{dog} lepkéket kergetett és eltévedt! Gyorsan, számolj!",
+      "{dog} a folyónál ragadt! A matek hidat épít!",
+      "{dog} fél egy barátságos medvétől! Mutasd meg, hogy kedves!",
+      "{dog}-nak át kell kelnie a virágmezőn! Segíts megtalálni az utat!",
+      "{dog} egy titokzatos barlangot talált! Oldd meg a rejtvényt!",
+      "Egy mókus ellopta {dog} csontját! Nyerd vissza matekkal!",
+      "{dog} békákkal játszik a tónál! Oldd meg a feladatot!",
+    ],
+    wordProblems: [
+      "{name} talált {a} kiskutyát a parkban. Aztán még {b} odaszaladt. Hány kiskutya van most?",
+      "{dog}-nak volt {a} jutalomfalatja és megevett {b}-t. Hány maradt?",
+      "A réten {a} kutya van, a folyónál {b}. Összesen hány kutya van?",
+      "{dog} elásott {a} csontot és kiásott {b}-t. Hány van még elásva?",
+      "{name} adott {b} kutyának {a}-{a} jutalomfalatot. Összesen hány jutalomfalat?",
+    ],
+  }
+};
+
+let lang = 'en';
+function t(key) { return I18N[lang][key] || I18N['en'][key] || key; }
+function setLang(newLang) {
+  lang = newLang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (I18N[lang][key]) el.textContent = I18N[lang][key];
+  });
+  populateLevelSelect();
+}
+
+// ================================================================
+// DOG EMOJIS AND LEVEL CONFIG
+// ================================================================
+const DOG_EMOJIS = ['🐕','🐶','🦮','🐕‍🦺','🐩','🌭','🐾'];
+
+const LEVELS = [
+  { id: 1, dogCount: 3, questsPerDog: 3, maxNum: 20,  ops: ['+','-'], patterns: false, mult: false, div: false, wordProb: false },
+  { id: 2, dogCount: 4, questsPerDog: 3, maxNum: 50,  ops: ['+','-'], patterns: true,  mult: false, div: false, wordProb: true  },
+  { id: 3, dogCount: 4, questsPerDog: 4, maxNum: 100, ops: ['+','-'], patterns: true,  mult: true,  div: false, wordProb: true  },
+  { id: 4, dogCount: 5, questsPerDog: 4, maxNum: 100, ops: ['+','-','×'], patterns: true, mult: true, div: true,  wordProb: true  },
+  { id: 5, dogCount: 5, questsPerDog: 5, maxNum: 100, ops: ['+','-','×','÷'], patterns: true, mult: true, div: true, wordProb: true },
+  { id: 6, dogCount: 6, questsPerDog: 5, maxNum: 100, ops: ['+','-','×','÷'], patterns: true, mult: true, div: true, wordProb: true },
+];
+
+// ================================================================
+// GAME STATE
+// ================================================================
+let gameState = {
+  playerName: 'Ada',
+  currentLevel: 0,
+  dogs: [],
+  currentDogIdx: -1,
+  currentQuestIdx: 0,
+  quests: [],
+  mistakes: 0,
+  levelStartTime: 0,
+  timerInterval: null,
+};
+
+// ================================================================
+// RECORDS (IndexedDB with localStorage fallback)
+// ================================================================
+let db = null;
+const DB_NAME = 'AdaMathQuest';
+const STORE_NAME = 'records';
+
+function openDB() {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'level' });
+        }
+      };
+      req.onsuccess = (e) => { db = e.target.result; resolve(true); };
+      req.onerror = () => resolve(false);
+    } catch(e) { resolve(false); }
+  });
+}
+
+async function getRecord(level) {
+  if (db) {
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.get(level);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  }
+  const data = localStorage.getItem(`amq_record_${level}`);
+  return data ? JSON.parse(data) : null;
+}
+
+async function saveRecord(level, time, mistakes) {
+  const record = { level, time, mistakes, date: new Date().toISOString(), name: gameState.playerName };
+  if (db) {
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.put(record);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  }
+  localStorage.setItem(`amq_record_${level}`, JSON.stringify(record));
+}
+
+async function getAllRecords() {
+  if (db) {
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  }
+  const records = [];
+  for (let i = 1; i <= 6; i++) {
+    const data = localStorage.getItem(`amq_record_${i}`);
+    if (data) records.push(JSON.parse(data));
+  }
+  return records;
+}
+
+// ================================================================
+// QUESTION GENERATORS
+// ================================================================
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = rand(0, i); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function genArithmetic(cfg) {
+  const op = pick(cfg.ops.filter(o => {
+    if (o === '×' && !cfg.mult) return false;
+    if (o === '÷' && !cfg.div) return false;
+    return true;
+  }));
+
+  let a, b, answer;
+  if (op === '+') {
+    answer = rand(2, cfg.maxNum);
+    a = rand(1, answer - 1);
+    b = answer - a;
+  } else if (op === '-') {
+    a = rand(2, cfg.maxNum);
+    b = rand(1, a - 1);
+    answer = a - b;
+  } else if (op === '×') {
+    const factors = [2, 3, 4, 5, 10];
+    b = pick(factors);
+    a = rand(1, Math.floor(cfg.maxNum / b));
+    answer = a * b;
+  } else { // ÷
+    const divisors = [2, 3, 4, 5, 10];
+    b = pick(divisors);
+    answer = rand(1, Math.floor(cfg.maxNum / b));
+    a = answer * b;
+  }
+
+  // Randomly decide: show as normal or missing-number
+  const isMissing = Math.random() < 0.35;
+  if (isMissing) {
+    const missingPos = Math.random() < 0.5 ? 'left' : 'right';
+    if (missingPos === 'left' && (op === '+' || op === '×')) {
+      return { type: 'input', question: `__ ${op} ${b} = ${answer}`, answer: a, hint: t('fillBlank') };
+    } else {
+      return { type: 'input', question: `${a} ${op} __ = ${answer}`, answer: b, hint: t('fillBlank') };
+    }
+  }
+  return { type: 'input', question: `${a} ${op} ${b} = ?`, answer, hint: t('solve') };
+}
+
+function genPattern(cfg) {
+  const patternTypes = [];
+  patternTypes.push('addSeq');
+  if (cfg.maxNum >= 50) patternTypes.push('multSeq');
+  if (cfg.mult) patternTypes.push('timesTable');
+
+  const pType = pick(patternTypes);
+  let seq, answer, blankIdx;
+
+  if (pType === 'addSeq') {
+    const step = rand(2, Math.min(10, Math.floor(cfg.maxNum / 6)));
+    const start = rand(1, Math.min(20, cfg.maxNum - step * 5));
+    seq = [];
+    for (let i = 0; i < 6; i++) seq.push(start + step * i);
+    blankIdx = rand(3, 5);
+    answer = seq[blankIdx];
+  } else if (pType === 'multSeq') {
+    const base = rand(2, 5);
+    seq = [];
+    for (let i = 1; i <= 6; i++) seq.push(base * i);
+    blankIdx = rand(3, 5);
+    answer = seq[blankIdx];
+  } else {
+    const mult = pick([2, 3, 5, 10]);
+    seq = [];
+    for (let i = 1; i <= 6; i++) seq.push(mult * i);
+    blankIdx = rand(2, 5);
+    answer = seq[blankIdx];
+  }
+
+  const display = seq.map((n, i) => i === blankIdx ? '__' : n).join(', ');
+  return { type: 'input', question: display, answer, hint: t('whatNext') };
+}
+
+function genComparison(cfg) {
+  let leftExpr, rightExpr, leftVal, rightVal;
+
+  // Generate two expressions
+  const ops = ['+', '-'];
+  const op1 = pick(ops), op2 = pick(ops);
+
+  if (op1 === '+') {
+    const a = rand(1, Math.floor(cfg.maxNum / 2));
+    const b = rand(1, Math.floor(cfg.maxNum / 2));
+    leftVal = a + b;
+    leftExpr = `${a} + ${b}`;
+  } else {
+    const a = rand(Math.floor(cfg.maxNum / 3), cfg.maxNum);
+    const b = rand(1, a);
+    leftVal = a - b;
+    leftExpr = `${a} - ${b}`;
+  }
+
+  if (op2 === '+') {
+    const a = rand(1, Math.floor(cfg.maxNum / 2));
+    const b = rand(1, Math.floor(cfg.maxNum / 2));
+    rightVal = a + b;
+    rightExpr = `${a} + ${b}`;
+  } else {
+    const a = rand(Math.floor(cfg.maxNum / 3), cfg.maxNum);
+    const b = rand(1, a);
+    rightVal = a - b;
+    rightExpr = `${a} - ${b}`;
+  }
+
+  // Ensure they're not equal (regenerate if needed)
+  if (leftVal === rightVal) rightVal++;
+
+  const answer = leftVal > rightVal ? leftExpr : rightExpr;
+  return {
+    type: 'choice',
+    question: t('whichBigger'),
+    choices: [leftExpr, rightExpr],
+    answer,
+    hint: t('whichBigger')
+  };
+}
+
+function genWordProblem(cfg) {
+  const templates = t('wordProblems');
+  const tmpl = pick(templates);
+  const dogName = pick(t('dogNames'));
+
+  let a, b, answer;
+  // Detect what operation the template needs
+  if (tmpl.includes('total') || tmpl.includes('insgesamt') || tmpl.includes('összesen') || tmpl.includes('now') || tmpl.includes('jetzt') || tmpl.includes('most')) {
+    if (tmpl.includes('each') || tmpl.includes('jedem') || tmpl.includes('kutyának')) {
+      // multiplication
+      a = rand(2, 5);
+      b = rand(2, 5);
+      answer = a * b;
+    } else {
+      a = rand(1, Math.floor(cfg.maxNum / 2));
+      b = rand(1, Math.floor(cfg.maxNum / 2));
+      answer = a + b;
+    }
+  } else {
+    // subtraction
+    a = rand(5, cfg.maxNum);
+    b = rand(1, a - 1);
+    answer = a - b;
+  }
+
+  const text = tmpl.replace(/\{name\}/g, gameState.playerName).replace(/\{dog\}/g, dogName)
+    .replace(/\{a\}/g, a).replace(/\{b\}/g, b);
+
+  return { type: 'input', question: text, answer, hint: '🐶', isWord: true };
+}
+
+function generateQuest(levelCfg) {
+  const types = ['arithmetic'];
+  if (levelCfg.patterns) types.push('pattern');
+  if (levelCfg.maxNum >= 50) types.push('comparison');
+  if (levelCfg.wordProb) types.push('word');
+
+  // Weight arithmetic higher
+  const weighted = ['arithmetic', 'arithmetic', ...types];
+  const chosen = pick(weighted);
+
+  switch (chosen) {
+    case 'pattern': return genPattern(levelCfg);
+    case 'comparison': return genComparison(levelCfg);
+    case 'word': return genWordProblem(levelCfg);
+    default: return genArithmetic(levelCfg);
+  }
+}
+
+// ================================================================
+// NATURE BACKGROUND
+// ================================================================
+function initNature() {
+  const bg = document.getElementById('nature-bg');
+  bg.innerHTML = '';
+  // Clouds
+  for (let i = 0; i < 4; i++) {
+    const cloud = document.createElement('div');
+    cloud.className = 'cloud';
+    cloud.textContent = '☁️';
+    cloud.style.top = rand(2, 20) + '%';
+    cloud.style.animationDuration = rand(20, 40) + 's';
+    cloud.style.animationDelay = -rand(0, 30) + 's';
+    cloud.style.fontSize = (2 + Math.random() * 2) + 'rem';
+    bg.appendChild(cloud);
+  }
+  // Butterflies
+  const butterflies = ['🦋', '🦋', '🌸'];
+  for (let i = 0; i < 5; i++) {
+    const bf = document.createElement('div');
+    bf.className = 'butterfly';
+    bf.textContent = pick(butterflies);
+    bf.style.top = rand(10, 80) + '%';
+    bf.style.left = rand(5, 90) + '%';
+    bf.style.animationDelay = -rand(0, 3) + 's';
+    bf.style.animationDuration = (2 + Math.random() * 2) + 's';
+    bg.appendChild(bf);
+  }
+}
+
+// ================================================================
+// UI HELPERS
+// ================================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function showSparkles(container) {
+  const sparkleEl = container || document.getElementById('sparkles');
+  sparkleEl.innerHTML = '';
+  const emojis = ['⭐', '✨', '🌟', '💫', '🎉', '🐾'];
+  for (let i = 0; i < 8; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = pick(emojis);
+    s.style.left = rand(10, 90) + '%';
+    s.style.top = rand(10, 90) + '%';
+    s.style.animationDelay = (Math.random() * 0.3) + 's';
+    sparkleEl.appendChild(s);
+  }
+  setTimeout(() => sparkleEl.innerHTML = '', 1200);
+}
+
+function populateLevelSelect() {
+  const sel = document.getElementById('level-select');
+  sel.innerHTML = '';
+  LEVELS.forEach((lv, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${t('levelNames')[i]} — ${t('levelDescs')[i]}`;
+    sel.appendChild(opt);
+  });
+}
+
+// ================================================================
+// START GAME
+// ================================================================
+function startLevel(levelIdx) {
+  const lvlCfg = LEVELS[levelIdx];
+  gameState.currentLevel = levelIdx;
+  gameState.playerName = document.getElementById('player-name').value || 'Ada';
+  gameState.mistakes = 0;
+  gameState.levelStartTime = Date.now();
+
+  // Generate dogs for this level
+  const usedNames = new Set();
+  const dogNames = t('dogNames');
+  gameState.dogs = [];
+  for (let i = 0; i < lvlCfg.dogCount; i++) {
+    let name;
+    do { name = pick(dogNames); } while (usedNames.has(name));
+    usedNames.add(name);
+    gameState.dogs.push({
+      name,
+      emoji: DOG_EMOJIS[i % DOG_EMOJIS.length],
+      rescued: false,
+      questsTotal: lvlCfg.questsPerDog,
+      questsDone: 0,
+    });
+  }
+
+  // Start timer
+  if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+  gameState.timerInterval = setInterval(updateTimer, 1000);
+
+  renderMap();
+  showScreen('map-screen');
+}
+
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - gameState.levelStartTime) / 1000);
+  document.getElementById('level-timer').textContent = formatTime(elapsed);
+}
+
+// ================================================================
+// MAP RENDERING
+// ================================================================
+function renderMap() {
+  const lvlCfg = LEVELS[gameState.currentLevel];
+  const container = document.getElementById('map-container');
+  container.innerHTML = '';
+
+  document.getElementById('map-title').textContent = t('levelNames')[gameState.currentLevel];
+  const savedCount = gameState.dogs.filter(d => d.rescued).length;
+  document.getElementById('dogs-saved').textContent = savedCount;
+  document.getElementById('dogs-total').textContent = gameState.dogs.length;
+
+  // Nature decorations in the map
+  const decos = ['🌳', '🌲', '🌻', '🌺', '🍄', '🦋', '🐻', '🌸', '🐿️', '🦔'];
+  for (let i = 0; i < 3; i++) {
+    const deco = document.createElement('div');
+    deco.style.cssText = `text-align:center;font-size:2rem;padding:0.5rem;opacity:0.5;align-self:center;`;
+    deco.textContent = pick(decos) + ' ' + pick(decos);
+
+    // Intersperse decorations
+    if (i < gameState.dogs.length) {
+      const dogEl = createDogSpot(gameState.dogs[i], i);
+      container.appendChild(dogEl);
+      if (i === 0 || i === 2) container.appendChild(deco);
+    }
+  }
+
+  // Add remaining dogs
+  for (let i = 3; i < gameState.dogs.length; i++) {
+    container.appendChild(createDogSpot(gameState.dogs[i], i));
+  }
+}
+
+function createDogSpot(dog, idx) {
+  const div = document.createElement('div');
+  div.className = 'dog-spot' + (dog.rescued ? ' rescued' : '');
+
+  const remaining = dog.questsTotal - dog.questsDone;
+
+  div.innerHTML = `
+    <span class="dog-emoji">${dog.emoji}</span>
+    <div class="dog-name">${dog.name}</div>
+    <div class="dog-status">${dog.rescued ? t('rescued') : t('rescueMe')}</div>
+    ${!dog.rescued ? `<div class="quest-count">${remaining}</div>` : '<div class="quest-count">✓</div>'}
+  `;
+
+  if (!dog.rescued) {
+    div.addEventListener('click', () => startDogQuest(idx));
+  }
+
+  return div;
+}
+
+// ================================================================
+// QUEST FLOW
+// ================================================================
+function startDogQuest(dogIdx) {
+  const dog = gameState.dogs[dogIdx];
+  const lvlCfg = LEVELS[gameState.currentLevel];
+  gameState.currentDogIdx = dogIdx;
+  gameState.currentQuestIdx = 0;
+
+  // Generate remaining quests for this dog
+  const remaining = dog.questsTotal - dog.questsDone;
+  gameState.quests = [];
+  for (let i = 0; i < remaining; i++) {
+    gameState.quests.push(generateQuest(lvlCfg));
+  }
+
+  showScreen('quest-screen');
+  renderQuest();
+}
+
+function renderQuest() {
+  const dog = gameState.dogs[gameState.currentDogIdx];
+  const quest = gameState.quests[gameState.currentQuestIdx];
+  if (!quest) return;
+
+  // Header
+  document.getElementById('quest-dog-name').textContent = `${t('saving')} ${dog.emoji} ${dog.name}`;
+
+  // Progress dots
+  const progressEl = document.getElementById('quest-progress');
+  progressEl.innerHTML = '';
+  for (let i = 0; i < gameState.quests.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'quest-dot';
+    if (i < gameState.currentQuestIdx) dot.classList.add('done');
+    if (i === gameState.currentQuestIdx) dot.classList.add('current');
+    progressEl.appendChild(dot);
+  }
+
+  // Story
+  const storyEl = document.getElementById('quest-story');
+  const stories = t('stories');
+  storyEl.textContent = pick(stories).replace('{dog}', dog.name);
+
+  // Question
+  const questionEl = document.getElementById('quest-question');
+  if (quest.isWord) {
+    questionEl.innerHTML = quest.question;
+  } else {
+    // Replace __ with styled blanks
+    questionEl.innerHTML = quest.question.replace(/__/g, '<span class="blank">?</span>');
+    if (quest.hint && !quest.isWord) {
+      questionEl.innerHTML = `<div style="font-size:0.9rem;color:var(--text-light);margin-bottom:0.3rem;">${quest.hint}</div>` + questionEl.innerHTML;
+    }
+  }
+
+  // Answer area
+  const answerArea = document.getElementById('answer-area');
+  answerArea.innerHTML = '';
+
+  if (quest.type === 'input') {
+    const row = document.createElement('div');
+    row.className = 'answer-input-row';
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'answer-input';
+    input.inputMode = 'numeric';
+    input.pattern = '[0-9]*';
+    input.id = 'quest-answer';
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+    row.appendChild(input);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary btn-small';
+    btn.textContent = '✓';
+    btn.addEventListener('click', checkAnswer);
+    row.appendChild(btn);
+
+    answerArea.appendChild(row);
+    setTimeout(() => input.focus(), 100);
+
+  } else if (quest.type === 'choice') {
+    const grid = document.createElement('div');
+    grid.className = 'choices-grid';
+    const shuffled = shuffle(quest.choices);
+    shuffled.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = choice;
+      btn.addEventListener('click', () => checkChoiceAnswer(btn, choice, quest));
+      grid.appendChild(btn);
+    });
+    answerArea.appendChild(grid);
+  }
+}
+
+function checkAnswer() {
+  const input = document.getElementById('quest-answer');
+  if (!input) return;
+  const val = parseInt(input.value, 10);
+  const quest = gameState.quests[gameState.currentQuestIdx];
+
+  if (isNaN(val)) return;
+
+  if (val === quest.answer) {
+    input.classList.add('correct');
+    showSparkles();
+    onCorrectAnswer();
+  } else {
+    input.classList.add('wrong');
+    gameState.mistakes++;
+    // Mark current dot as wrong
+    const dots = document.querySelectorAll('.quest-dot');
+    if (dots[gameState.currentQuestIdx]) dots[gameState.currentQuestIdx].classList.add('wrong');
+    setTimeout(() => {
+      input.classList.remove('wrong');
+      input.value = '';
+      input.focus();
+      // Reset dot
+      if (dots[gameState.currentQuestIdx]) dots[gameState.currentQuestIdx].classList.remove('wrong');
+    }, 600);
+  }
+}
+
+function checkChoiceAnswer(btn, choice, quest) {
+  const btns = document.querySelectorAll('.choice-btn');
+  if (choice === quest.answer) {
+    btn.classList.add('correct');
+    showSparkles();
+    btns.forEach(b => b.style.pointerEvents = 'none');
+    onCorrectAnswer();
+  } else {
+    btn.classList.add('wrong');
+    gameState.mistakes++;
+    setTimeout(() => btn.classList.remove('wrong'), 600);
+  }
+}
+
+function onCorrectAnswer() {
+  const dog = gameState.dogs[gameState.currentDogIdx];
+  dog.questsDone++;
+
+  // Mark dot as done
+  const dots = document.querySelectorAll('.quest-dot');
+  if (dots[gameState.currentQuestIdx]) {
+    dots[gameState.currentQuestIdx].classList.remove('current');
+    dots[gameState.currentQuestIdx].classList.add('done');
+  }
+
+  gameState.currentQuestIdx++;
+
+  if (gameState.currentQuestIdx >= gameState.quests.length) {
+    // Dog rescued!
+    dog.rescued = true;
+    setTimeout(() => {
+      // Check if all dogs in level are rescued
+      if (gameState.dogs.every(d => d.rescued)) {
+        onLevelComplete();
+      } else {
+        renderMap();
+        showScreen('map-screen');
+      }
+    }, 800);
+  } else {
+    setTimeout(renderQuest, 800);
+  }
+}
+
+// Skip button
+document.getElementById('skip-quest').addEventListener('click', () => {
+  gameState.mistakes++;
+  gameState.currentQuestIdx++;
+  const dog = gameState.dogs[gameState.currentDogIdx];
+  dog.questsDone++;
+
+  if (gameState.currentQuestIdx >= gameState.quests.length) {
+    dog.rescued = true;
+    if (gameState.dogs.every(d => d.rescued)) {
+      onLevelComplete();
+    } else {
+      renderMap();
+      showScreen('map-screen');
+    }
+  } else {
+    renderQuest();
+  }
+});
+
+// ================================================================
+// LEVEL COMPLETE
+// ================================================================
+async function onLevelComplete() {
+  clearInterval(gameState.timerInterval);
+  const elapsed = Math.floor((Date.now() - gameState.levelStartTime) / 1000);
+
+  const overlay = document.getElementById('level-complete');
+  document.getElementById('lc-title').textContent = `🎉 ${t('levelComplete')} 🎉`;
+
+  // Stars based on mistakes
+  const starCount = gameState.mistakes === 0 ? 3 : gameState.mistakes <= 3 ? 2 : 1;
+  document.getElementById('lc-stars').textContent = '⭐'.repeat(starCount) + '☆'.repeat(3 - starCount);
+
+  // Check for record
+  const prev = await getRecord(gameState.currentLevel + 1);
+  const isNewRecord = !prev || elapsed < prev.time;
+
+  let statsHTML = `
+    <div>${t('time')}: <span class="stat-val">${formatTime(elapsed)}</span></div>
+    <div>${t('mistakes')}: <span class="stat-val">${gameState.mistakes}</span></div>
+  `;
+  if (isNewRecord) {
+    statsHTML += `<div style="margin-top:0.5rem;font-size:1.2rem;color:var(--gold);">${t('newRecord')}</div>`;
+    await saveRecord(gameState.currentLevel + 1, elapsed, gameState.mistakes);
+  } else {
+    statsHTML += `<div>${t('bestTime')}: <span class="stat-val">${formatTime(prev.time)}</span></div>`;
+  }
+  document.getElementById('lc-stats').innerHTML = statsHTML;
+
+  overlay.classList.add('show');
+
+  // If this was the last level, go to final screen
+  document.getElementById('lc-continue').onclick = () => {
+    overlay.classList.remove('show');
+    if (gameState.currentLevel >= LEVELS.length - 1) {
+      showFinalScreen();
+    } else {
+      // Auto-advance to next level
+      gameState.currentLevel++;
+      startLevel(gameState.currentLevel);
+    }
+  };
+}
+
+// ================================================================
+// FINAL SCREEN
+// ================================================================
+async function showFinalScreen() {
+  showScreen('final-screen');
+
+  document.getElementById('final-message').textContent =
+    t('allSavedMsg').replace('{name}', gameState.playerName);
+
+  // Show all dogs from all levels
+  const dogsContainer = document.getElementById('final-dogs');
+  dogsContainer.innerHTML = '';
+
+  // Collect all dog names from all levels
+  const allDogNames = t('dogNames');
+  const totalDogs = LEVELS.reduce((sum, l) => sum + l.dogCount, 0);
+
+  for (let i = 0; i < totalDogs; i++) {
+    const dogDiv = document.createElement('div');
+    dogDiv.className = 'final-dog';
+    dogDiv.style.animationDelay = (i * 0.1) + 's';
+    dogDiv.innerHTML = `
+      <span class="dog-emoji">${DOG_EMOJIS[i % DOG_EMOJIS.length]}</span>
+      <div class="dog-name">${allDogNames[i % allDogNames.length]}</div>
+      <div class="dog-thanks">${t('thankYou').replace('{name}', gameState.playerName)}</div>
+    `;
+    dogsContainer.appendChild(dogDiv);
+  }
+
+  // Records
+  const records = await getAllRecords();
+  const recordsList = document.getElementById('final-records');
+  recordsList.innerHTML = '';
+  if (records.length === 0) {
+    recordsList.innerHTML = `<li>${t('noRecords')}</li>`;
+  } else {
+    records.sort((a, b) => a.level - b.level);
+    records.forEach(r => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span>${t('level')} ${r.level}: ${t('levelNames')[r.level - 1] || ''}</span>
+        <span class="stat-val">${formatTime(r.time)}</span>
+      `;
+      recordsList.appendChild(li);
+    });
+  }
+}
+
+// ================================================================
+// EVENT LISTENERS
+// ================================================================
+document.getElementById('start-btn').addEventListener('click', () => {
+  const levelIdx = parseInt(document.getElementById('level-select').value, 10);
+  startLevel(levelIdx);
+});
+
+document.getElementById('back-to-menu').addEventListener('click', () => {
+  clearInterval(gameState.timerInterval);
+  showScreen('start-screen');
+});
+
+document.getElementById('play-again-btn').addEventListener('click', () => {
+  showScreen('start-screen');
+});
+
+document.getElementById('records-btn').addEventListener('click', async () => {
+  const records = await getAllRecords();
+  if (records.length === 0) {
+    alert(t('noRecords'));
+    return;
+  }
+  let msg = '🏆 Records:\n\n';
+  records.sort((a, b) => a.level - b.level);
+  records.forEach(r => {
+    msg += `${t('level')} ${r.level}: ${formatTime(r.time)} (${r.mistakes} ${t('mistakes').toLowerCase()})\n`;
+  });
+  alert(msg);
+});
+
+// Language buttons
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => setLang(btn.dataset.lang));
+});
+
+// ================================================================
+// INIT
+// ================================================================
+async function init() {
+  await openDB();
+  initNature();
+  populateLevelSelect();
+}
+
+init();
+</script>
+</body>
+</html>
