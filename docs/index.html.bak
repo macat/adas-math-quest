@@ -88,13 +88,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif}
 @keyframes bubblePop{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
 .quest-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);animation:fadeIn 0.3s}
 .quest-overlay.active{display:flex}
-.quest-bubble{position:fixed;z-index:9998;max-width:380px;width:90%;background:rgba(255,255,255,0.97);border-radius:20px;border:3px solid #4CAF50;box-shadow:0 8px 40px rgba(0,0,0,0.3);display:none;animation:bubblePop 0.35s ease-out;backdrop-filter:blur(6px);overflow:hidden}
-.quest-bubble.active{display:block}
-.quest-bubble-story{padding:12px 16px 8px;font-size:0.88rem;color:#5d4037;line-height:1.5;border-bottom:2px dashed #e0e0e0;background:linear-gradient(135deg,#fff8e1,#fff3e0)}
-.quest-bubble-body{padding:14px 16px 16px}
-.quest-bubble-tail{position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:14px solid #4CAF50}
-.quest-bubble-tail::after{content:'';position:absolute;top:-15px;left:-11px;width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:11px solid rgba(255,255,255,0.97)}
-@keyframes questShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .quest-panel{background:#fff;border-radius:20px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.3);border:4px solid #333;animation:slideUp 0.35s ease-out}
 @keyframes slideUp{from{transform:translateY(40px) scale(0.95);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
@@ -192,11 +185,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif}
     <div class="quest-bar-wrap"><div class="quest-bar" id="quest-bar" style="width:0%"></div></div>
     <div class="quest-body" id="quest-body"></div>
   </div>
-</div>
-<div class="quest-bubble" id="quest-bubble">
-  <div class="quest-bubble-story" id="quest-story"></div>
-  <div class="quest-bubble-body" id="quest-bubble-body"></div>
-  <div class="quest-bubble-tail"></div>
 </div>
 <div id="story-screen" class="screen">
   <button class="story-skip" id="story-skip">SKIP ⏭️</button>
@@ -2151,7 +2139,7 @@ const LEVEL_DEFS=[
 // Generate all levels
 const LEVELS=LEVEL_DEFS.map(def=>{
   const gen=generateMap(def.w,def.h,def.biome,def.gates,def.dogs,def.npcs,def.seed);
-  return{...def,...gen,gates:gen.gates.map((g,i)=>({...g,qc:1,d:def.diff}))};
+  return{...def,...gen,gates:gen.gates.map((g,i)=>({...g,qc:3+Math.floor(def.diff/2),d:def.diff}))};
 });
 
 
@@ -2159,74 +2147,20 @@ const LEVELS=LEVEL_DEFS.map(def=>{
 function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a}
 function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
 
-// ===== QUEST STORIES =====
-const QUEST_STORIES = {
-  meadow: [
-    "🧙‍♂️ Zählix cackles: \"I sealed this path with meadow magic! Solve my riddle!\"",
-    "🧙‍♂️ \"Ha! The flowers won't help you here! Only numbers break my spell!\"",
-    "🧙‍♂️ \"Think you're clever? This lock was made by the greatest math villain!\"",
-    "🧙‍♂️ \"Even the butterflies couldn't crack this one!\"",
-    "🧙‍♂️ \"Bzzt! Wrong way — unless you know your numbers!\"",
-  ],
-  forest: [
-    "🧙‍♂️ \"The trees whisper the answer... but can YOU hear them?\"",
-    "🧙‍♂️ \"Lost in the woods? You'll be REALLY lost if you fail this!\"",
-    "🧙‍♂️ \"Even the forest animals couldn't solve this one!\"",
-    "🧙‍♂️ \"The owls are watching... don't mess up!\"",
-    "🧙‍♂️ \"Dark forest, dark magic — light it up with math!\"",
-  ],
-  mountain: [
-    "🧙‍♂️ \"The mountain trolls helped me make this lock EXTRA hard!\"",
-    "🧙‍♂️ \"Altitude makes math harder! Or is that just you?\"",
-    "🧙‍♂️ \"Even the eagles can't fly over THIS lock!\"",
-    "🧙‍♂️ \"Frozen gates need warm brains to open!\"",
-  ],
-  lake: [
-    "🧙‍♂️ \"This one's deep... like the lake! Get it? Deep? Ha!\"",
-    "🧙‍♂️ \"The fish solved this in seconds. Can you beat a fish?\"",
-    "🧙‍♂️ \"Splish splash, your math skills are... trash? Prove me wrong!\"",
-    "🧙‍♂️ \"Even the frogs are laughing at you!\"",
-  ],
-  castle: [
-    "🧙‍♂️ \"The royal mathematician couldn't break this lock!\"",
-    "🧙‍♂️ \"Even kings bow before my number puzzles!\"",
-    "🧙‍♂️ \"This castle has stood for centuries — can your math stand up?\"",
-    "🧙‍♂️ \"Knights in shining armor? I prefer numbers in shining locks!\"",
-  ],
-  city_nyc: [
-    "🧙‍♂️ \"NYC street smarts won't help you here!\"",
-    "🧙‍♂️ \"This lock is tougher than a Times Square pretzel!\"",
-    "🧙‍♂️ \"Taxi! Oh wait, you need MATH, not a ride!\"",
-    "🧙‍♂️ \"Even Broadway stars can't perform their way past this!\"",
-  ],
-  city_budapest: [
-    "🧙‍♂️ \"I learned this from the mathematicians of Budapest!\"",
-    "🧙‍♂️ \"The Danube couldn't wash away this lock!\"",
-    "🧙‍♂️ \"Paprika won't spice your way through — only numbers!\"",
-    "🧙‍♂️ \"Even the thermal baths can't melt this puzzle!\"",
-  ]
-};
-const CAGE_STORIES = [
-  "🐕 You hear whimpering... solve quickly to free them!",
-  "🐕 The puppy looks at you with big hopeful eyes!",
-  "🐕 A tiny bark! They know you're here to help!",
-  "🐕 The cage glows with a magic number lock!",
-  "🐕 A little tail wags behind the bars!",
-  "🐕 \"Woof!\" They're counting on you!",
-];
-
 function genQuests(count,diff){
   const q=[];const types=[];
-  for(let i=0;i<count;i++)types.push(pickType(diff));
+  // Always include at least one pattern series
+  types.push('pattern');
+  for(let i=types.length;i<count;i++)types.push(pickType(diff));
   for(const tp of shuffle(types))q.push(genQuest(tp,diff));
   return q;
 }
 function pickType(d){
-  const p=['arithmetic','missing','truefalse','compare','doubles'];
-  if(d>=2)p.push('pattern','arithmetic','counting','estimation');
-  if(d>=3)p.push('multiply','missing','bonds','compare');
-  if(d>=4)p.push('multiply','pattern','estimation');
-  if(d>=5)p.push('divide','bonds');
+  const p=['arithmetic','missing','truefalse'];
+  if(d>=2)p.push('pattern','arithmetic');
+  if(d>=3)p.push('multiply','missing');
+  if(d>=4)p.push('multiply','pattern');
+  if(d>=5)p.push('divide');
   return p[randInt(0,p.length-1)];
 }
 function genQuest(tp,d){
@@ -2237,11 +2171,6 @@ function genQuest(tp,d){
     case'multiply':return genMul(d);
     case'divide':return genDiv(d);
     case'truefalse':return genTF(d);
-    case'compare':return genCompare(d);
-    case'counting':return genCounting(d);
-    case'estimation':return genEstimation(d);
-    case'doubles':return genDoubles(d);
-    case'bonds':return genBonds(d);
     default:return genArith(d);
   }
 }
@@ -2284,50 +2213,6 @@ function genTF(d){
   const shown=isTrue?correct:correct+(randInt(0,1)?1:-1)*randInt(1,3);
   return{type:'truefalse',eq:`${a} ${op} ${b} = ${shown}`,ans:!!isTrue};
 }
-// === NEW QUEST TYPES ===
-function genCompare(d){
-  // "Which is bigger?" — two expressions
-  let a1,b1,op1,a2,b2,op2,val1,val2;
-  if(d<=2){
-    a1=randInt(5,20);b1=randInt(2,10);op1='+';val1=a1+b1;
-    a2=randInt(5,20);b2=randInt(2,10);op2='+';val2=a2+b2;
-  } else {
-    a1=randInt(10,50);b1=randInt(5,25);op1=randInt(0,1)?'+':'−';
-    val1=op1==='+'?a1+b1:a1-b1; if(val1<0){op1='+';val1=a1+b1}
-    a2=randInt(10,50);b2=randInt(5,25);op2=randInt(0,1)?'+':'−';
-    val2=op2==='+'?a2+b2:a2-b2; if(val2<0){op2='+';val2=a2+b2}
-  }
-  if(val1===val2)val2+=randInt(1,3); // ensure they're different
-  return{type:'compare',exprA:`${a1} ${op1} ${b1}`,exprB:`${a2} ${op2} ${b2}`,valA:val1,valB:val2,ans:val1>val2?'A':'B'};
-}
-function genCounting(d){
-  // Visual counting: "How many ⭐ do you see?"
-  const emojis=['⭐','🍎','🌸','🐕','🦋','🌻','🍄','🐟'];
-  const emoji=emojis[randInt(0,emojis.length-1)];
-  const count=d<=2?randInt(4,10):d<=4?randInt(7,15):randInt(10,20);
-  return{type:'counting',emoji,count,ans:count};
-}
-function genEstimation(d){
-  // "Is X + Y more or less than Z?"
-  let a,b,target,actual;
-  if(d<=2){a=randInt(10,30);b=randInt(5,20);actual=a+b;target=actual+((randInt(0,1)?1:-1)*randInt(3,8))}
-  else{a=randInt(20,60);b=randInt(10,40);actual=a+b;target=actual+((randInt(0,1)?1:-1)*randInt(5,15))}
-  return{type:'estimation',expr:`${a} + ${b}`,target,ans:actual>target?'more':'less'};
-}
-function genDoubles(d){
-  // "What is double X?" or "What is half of X?"
-  const isDouble=randInt(0,1);
-  let n,ans;
-  if(isDouble){n=d<=2?randInt(3,15):randInt(8,50);ans=n*2;return{type:'choice',eq:`Double ${n}`,ans,choices:genChoices(ans,d)}}
-  else{ans=d<=2?randInt(3,15):randInt(5,30);n=ans*2;return{type:'choice',eq:`Half of ${n}`,ans,choices:genChoices(ans,d)}}
-}
-function genBonds(d){
-  // "What adds up to X?" — fill in one number
-  const target=d<=2?randInt(10,20):d<=4?randInt(15,50):randInt(20,100);
-  const a=randInt(1,target-1);
-  return{type:'bonds',target,givenA:a,ans:target-a};
-}
-
 function genChoices(ans,d){
   const s=new Set([ans]);const r=d<=2?3:5;
   while(s.size<4){let w=ans+(randInt(0,1)?1:-1)*randInt(1,r);if(w<0)w=ans+randInt(1,r);s.add(w)}
@@ -2364,13 +2249,6 @@ function sfxZahlix(){playNote(150,0.2,'sawtooth',0.06);setTimeout(()=>playNote(1
 // ===== 3D SCENE SETUP =====
 let scene, camera, renderer, clock;
 let sceneObjects = []; // track objects for cleanup
-
-// Camera orbit state
-let cameraAngle = 0; // radians around Y axis
-let cameraHeight = 10; // camera height above player
-let cameraDistance = 12; // horizontal distance from player (adjustable via scroll)
-let cameraOrbitDrag = false;
-let cameraOrbitLastX = 0;
 let waterMeshes = []; // for animation
 let particleMeshes = []; // 3D particle system
 let playerMesh = null, playerGroup = null;
@@ -4420,9 +4298,7 @@ class Game{
     const tx = this.p.px + 0.5;
     const tz = this.p.py + 0.5;
     const targetPos = new THREE.Vector3(tx, 0.5, tz);
-    const dx = Math.sin(cameraAngle) * cameraDistance * 0.7;
-    const dz = Math.cos(cameraAngle) * cameraDistance * 0.7;
-    const desiredCam = new THREE.Vector3(tx + dx, cameraHeight, tz + dz);
+    const desiredCam = new THREE.Vector3(tx, 7, tz + 5.5);
 
     if (instant) {
       camera.position.copy(desiredCam);
@@ -4430,13 +4306,6 @@ class Game{
       camera.position.lerp(desiredCam, 0.08);
     }
     camera.lookAt(targetPos);
-
-    // Reposition quest bubble if active
-    if (this.activeQuest && document.getElementById('quest-bubble').style.display === 'block') {
-      const gx = this.activeQuest.type === 'dogCage' ? this.activeQuest.x : this.activeQuest.x;
-      const gy = this.activeQuest.type === 'dogCage' ? this.activeQuest.y : this.activeQuest.y;
-      repositionQuestBubble(gx + 0.5, gy + 0.5);
-    }
 
     // Move shadow camera to follow player
     const sun = scene.children.find(c => c.isDirectionalLight);
@@ -4465,12 +4334,12 @@ class Game{
     if(tile===T.DOG_GATE){
       const nearDog=this.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===nx&&d.cageGate.y===ny);
       if(nearDog&&!nearDog.cageOpen){
-        if(!nearDog.quests)nearDog.quests=genQuests(1,this.ld.diff);
-        const story=CAGE_STORIES[Math.floor(Math.random()*CAGE_STORIES.length)];
+        if(!nearDog.quests)nearDog.quests=genQuests(3,this.ld.diff);
+        showFlash('🐕 '+getCageMessage(),'#FF9800');
         this.activeQuest={type:'dogCage',dog:nearDog,x:nx,y:ny};
         this.questList=nearDog.quests;this.questIdx=0;
         this.addBurst(nx+0.5,0.5,ny+0.5,8,'#FF9800');
-        showQuestBubble(this.questList[0],story,nx+0.5,ny+0.5);
+        showQuestUI(this.questList,0,nearDog.quests.length);
         return;
       }
       if(nearDog&&nearDog.cageOpen){this.doMove(nx,ny);return}
@@ -4584,13 +4453,10 @@ class Game{
   }
 
   openGateQuest(gate){
-    if(!gate.quests)gate.quests=genQuests(1,gate.d);
+    if(!gate.quests)gate.quests=genQuests(gate.qc,gate.d);
     this.activeQuest=gate;this.questList=gate.quests;this.questIdx=0;
     this.addBurst(gate.x+0.5,0.5,gate.y+0.5,8,'#FFD700');
-    const biome=this.ld.biome||'meadow';
-    const stories=QUEST_STORIES[biome]||QUEST_STORIES.meadow;
-    const story=stories[Math.floor(Math.random()*stories.length)];
-    showQuestBubble(this.questList[0],story,gate.x+0.5,gate.y+0.5);
+    showQuestUI(this.questList,0,gate.qc);
   }
 
   questAnswered(correct){
@@ -4612,6 +4478,7 @@ class Game{
         sfxSuperStreak();
         this.showStreakFlash('⚡ '+t('super_streak')+' ⚡');
         this.addBurst(this.p.px+0.5,0.8,this.p.py+0.5,30,'#FF5722');
+        // Bonus coins
         this.coinsCollected+=this.streak*2;
         document.getElementById('hud-coins').textContent=this.coinsCollected;
         showFlash('🪙 +'+this.streak*2+' bonus coins!','#FF5722');
@@ -4625,54 +4492,66 @@ class Game{
         this.showStreakFlash('🔥 '+this.streak+'x Streak!');
       }
     }
-    // Single quest per gate/cage — immediately complete
-    if(this.activeQuest.type==='dogCage'){
-      const dog=this.activeQuest.dog;
-      const gx=this.activeQuest.x,gy=this.activeQuest.y;
-      dog.cageOpen=true;
-      this.map[gy][gx]=T.GRASS;
-      for(let fdy=-1;fdy<=1;fdy++)for(let fdx=-1;fdx<=1;fdx++){
-        const fy2=dog.y+fdy,fx2=dog.x+fdx;
-        if(fy2>=0&&fy2<this.mh&&fx2>=0&&fx2<this.mw&&this.map[fy2][fx2]===T.FENCE){
-          this.map[fy2][fx2]=T.GRASS;
+    this.questIdx++;
+    if(this.questList){
+      const pct=Math.round((this.questIdx/this.questList.length)*100);
+      document.getElementById('quest-bar').style.width=pct+'%';
+    }
+    if(this.questIdx>=this.questList.length){
+      if(this.activeQuest.type==='dogCage'){
+        const dog=this.activeQuest.dog;
+        const gx=this.activeQuest.x,gy=this.activeQuest.y;
+        dog.cageOpen=true;
+        this.map[gy][gx]=T.GRASS;
+        // Remove fences around dog
+        for(let fdy=-1;fdy<=1;fdy++)for(let fdx=-1;fdx<=1;fdx++){
+          const fy2=dog.y+fdy,fx2=dog.x+fdx;
+          if(fy2>=0&&fy2<this.mh&&fx2>=0&&fx2<this.mw&&this.map[fy2][fx2]===T.FENCE){
+            this.map[fy2][fx2]=T.GRASS;
+          }
         }
+        // Remove dog gate mesh
+        const di = this.dogs.indexOf(dog);
+        const dgMesh = gateMeshes['dog_' + di];
+        if (dgMesh) { scene.remove(dgMesh); dgMesh.visible = false; }
+        // Rebuild fences (remove all fence instances and rebuild)
+        this.rebuildFences();
+        this.activeQuest=null;this.questList=null;
+        sfxGateOpen();hideQuestUI();
+        this.addBurst(gx+0.5,0.5,gy+0.5,25,'#FF9800');
+        this.addBurst(dog.x+0.5,0.5,dog.y+0.5,20,'#FFD700');
+        showFlash('🔓 '+dog.name+': "'+getDogRescueMessage()+'"','#FF9800');
+        return true;
       }
-      const di = this.dogs.indexOf(dog);
-      const dgMesh = gateMeshes['dog_' + di];
-      if (dgMesh) { scene.remove(dgMesh); dgMesh.visible = false; }
-      this.rebuildFences();
+      // Gate solved
+      const gx=this.activeQuest.x,gy=this.activeQuest.y;
+      this.activeQuest.open=true;
+      this.activeQuest.openAnim=30;
+      this.map[gy][gx]=T.PATH;
+      // Animate gate opening
+      const gi = this.gates.indexOf(this.activeQuest);
+      const gMesh = gateMeshes[gi];
+      if (gMesh) {
+        gMesh.userData._opening = true;
+        gMesh.userData._openProgress = 0;
+      }
       this.activeQuest=null;this.questList=null;
-      sfxGateOpen();hideQuestBubble();
-      this.addBurst(gx+0.5,0.5,gy+0.5,25,'#FF9800');
-      this.addBurst(dog.x+0.5,0.5,dog.y+0.5,20,'#FFD700');
-      showFlash('🔓 '+dog.name+': "'+getDogRescueMessage()+'"','#FF9800');
+      sfxGateOpen();hideQuestUI();
+      this.addBurst(gx+0.5,0.8,gy+0.5,30,'#FFD700');
+      showFlash('✨ Gate opened! ✨','#4CAF50');
+      // Check if this was the last gate — Zählix defeat
+      const allGatesOpen=this.gates.every(g2=>g2.open);
+      if(allGatesOpen){
+        setTimeout(()=>{
+          const defeats=I18N[LANG]?.zahlix_defeat||I18N.en.zahlix_defeat;
+          const msg=defeats[Math.floor(Math.random()*defeats.length)];
+          sfxZahlix();
+          showFlash('🧙‍♂️ Prof. Zählix: "'+msg+'"','#7B1FA2');
+        },800);
+      }
       return true;
     }
-    // Gate solved
-    const gx=this.activeQuest.x,gy=this.activeQuest.y;
-    this.activeQuest.open=true;
-    this.activeQuest.openAnim=30;
-    this.map[gy][gx]=T.PATH;
-    const gi = this.gates.indexOf(this.activeQuest);
-    const gMesh = gateMeshes[gi];
-    if (gMesh) {
-      gMesh.userData._opening = true;
-      gMesh.userData._openProgress = 0;
-    }
-    this.activeQuest=null;this.questList=null;
-    sfxGateOpen();hideQuestBubble();
-    this.addBurst(gx+0.5,0.8,gy+0.5,30,'#FFD700');
-    showFlash('✨ Gate opened! ✨','#4CAF50');
-    const allGatesOpen=this.gates.every(g2=>g2.open);
-    if(allGatesOpen){
-      setTimeout(()=>{
-        const defeats=I18N[LANG]?.zahlix_defeat||I18N.en.zahlix_defeat;
-        const msg=defeats[Math.floor(Math.random()*defeats.length)];
-        sfxZahlix();
-        showFlash('🧙‍♂️ Prof. Zählix: "'+msg+'"','#7B1FA2');
-      },800);
-    }
-    return true;
+    showQuestUI(this.questList,this.questIdx,this.questList.length);return true;
   }
 
   rebuildFences() {
@@ -4769,12 +4648,12 @@ class Game{
           const nd=this.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===ax&&d.cageGate.y===ay&&!d.cageOpen);
           if(nd&&!nd.autoTriggered){
             nd.autoTriggered=true;
-            if(!nd.quests)nd.quests=genQuests(1,this.ld.diff);
-            const story=CAGE_STORIES[Math.floor(Math.random()*CAGE_STORIES.length)];
+            if(!nd.quests)nd.quests=genQuests(3,this.ld.diff);
+            showFlash('🐕 '+getCageMessage(),'#FF9800');
             this.activeQuest={type:'dogCage',dog:nd,x:ax,y:ay};
             this.questList=nd.quests;this.questIdx=0;
             this.addBurst(ax+0.5,0.5,ay+0.5,8,'#FF9800');
-            showQuestBubble(this.questList[0],story,ax+0.5,ay+0.5);break;
+            showQuestUI(this.questList,0,nd.quests.length);break;
           }
         }
       }
@@ -4872,7 +4751,7 @@ class Game{
       let diff = targetAngle - playerGroup.rotation.y;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      playerGroup.rotation.y += diff * 0.3;
+      playerGroup.rotation.y += diff * 0.2;
 
       // Walk animation
       if (this.p.moving) {
@@ -5284,182 +5163,6 @@ function renderTF2(body,q){
 
 function hideQuestUI(){const ov=document.getElementById('quest-overlay');ov.classList.remove('active');ov.style.display=''}
 
-// ===== QUEST BUBBLE SYSTEM =====
-let _questBubbleGatePos = null;
-
-function showQuestBubble(quest, storyText, gateWX, gateWZ) {
-  _questBubbleGatePos = {wx: gateWX, wz: gateWZ};
-  const bubble = document.getElementById('quest-bubble');
-  const storyEl = document.getElementById('quest-story');
-  const bodyEl = document.getElementById('quest-bubble-body');
-  storyEl.textContent = storyText;
-  bodyEl.innerHTML = '';
-  
-  // Render quest content into bubble
-  renderQuestInBubble(bodyEl, quest);
-  
-  bubble.style.display = 'block';
-  bubble.classList.add('active');
-  repositionQuestBubble(gateWX, gateWZ);
-}
-
-function hideQuestBubble() {
-  const bubble = document.getElementById('quest-bubble');
-  bubble.classList.remove('active');
-  bubble.style.display = 'none';
-  _questBubbleGatePos = null;
-}
-
-function repositionQuestBubble(wx, wz) {
-  const bubble = document.getElementById('quest-bubble');
-  if (!bubble || bubble.style.display !== 'block') return;
-  const screen = worldToScreen(wx, wz);
-  const bw = Math.min(380, window.innerWidth - 20);
-  const bh = bubble.offsetHeight || 200;
-  let left = Math.max(10, Math.min(window.innerWidth - bw - 10, screen.x - bw / 2));
-  let top = Math.max(10, screen.y - bh - 30);
-  // If too high, put below
-  if (top < 10) top = screen.y + 20;
-  bubble.style.left = left + 'px';
-  bubble.style.top = top + 'px';
-  bubble.style.width = bw + 'px';
-  // Position tail
-  const tail = bubble.querySelector('.quest-bubble-tail');
-  if (tail) {
-    const tailX = Math.max(20, Math.min(bw - 20, screen.x - left));
-    tail.style.left = tailX + 'px';
-    tail.style.transform = 'translateX(-50%)';
-  }
-}
-
-function renderQuestInBubble(body, q) {
-  if (q.type === 'pattern') renderPattern(body, q);
-  else if (q.type === 'choice') renderChoice(body, q);
-  else if (q.type === 'input') renderInput(body, q);
-  else if (q.type === 'truefalse') renderTF2(body, q);
-  else if (q.type === 'compare') renderCompare(body, q);
-  else if (q.type === 'counting') renderCounting(body, q);
-  else if (q.type === 'estimation') renderEstimation(body, q);
-  else if (q.type === 'bonds') renderBonds(body, q);
-  else renderChoice(body, q); // fallback
-}
-
-function renderCompare(body, q) {
-  const title = document.createElement('p');
-  title.style.cssText = 'font-weight:700;text-align:center;margin-bottom:12px;color:#333;font-size:1rem';
-  title.textContent = '🤔 Which is bigger?';
-  body.appendChild(title);
-  const row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:10px;justify-content:center';
-  let att = 0;
-  ['A', 'B'].forEach(side => {
-    const btn = document.createElement('button');
-    btn.className = 'mc-btn';
-    btn.style.cssText = 'flex:1;padding:14px 8px;font-size:1.1rem;min-height:60px';
-    btn.textContent = side === 'A' ? q.exprA : q.exprB;
-    btn.onclick = () => {
-      row.querySelectorAll('.mc-btn').forEach(b => b.disabled = true);
-      if (side === q.ans) {
-        btn.classList.add('correct');
-        sfxCorrect();
-        setTimeout(() => { if (game) game.questAnswered(true) }, 600);
-      } else {
-        btn.classList.add('wrong'); sfxWrong(); if (game) game.mistakes++; att++;
-        if (att >= 2) {
-          row.querySelectorAll('.mc-btn').forEach(b => { if ((b.textContent === q.exprA && q.ans === 'A') || (b.textContent === q.exprB && q.ans === 'B')) b.classList.add('correct') });
-          setTimeout(() => { if (game) game.questAnswered(true) }, 1500);
-        } else {
-          setTimeout(() => { row.querySelectorAll('.mc-btn').forEach(b => { b.disabled = false; b.classList.remove('wrong', 'correct') }) }, 800);
-        }
-      }
-    };
-    row.appendChild(btn);
-  });
-  body.appendChild(row);
-}
-
-function renderCounting(body, q) {
-  const title = document.createElement('p');
-  title.style.cssText = 'font-weight:700;text-align:center;margin-bottom:8px;color:#333;font-size:1rem';
-  title.textContent = '🔢 How many ' + q.emoji + ' do you see?';
-  body.appendChild(title);
-  // Grid of emojis
-  const grid = document.createElement('div');
-  grid.style.cssText = 'text-align:center;font-size:1.3rem;line-height:2;letter-spacing:4px;margin:8px 0 12px;padding:8px;background:#f5f5f5;border-radius:10px';
-  let emojis = '';
-  for (let i = 0; i < q.count; i++) emojis += q.emoji + ' ';
-  grid.textContent = emojis.trim();
-  body.appendChild(grid);
-  // Input
-  const r2 = document.createElement('div'); r2.className = 'num-input-row'; r2.style.marginTop = '8px';
-  const inp = document.createElement('input'); inp.type = 'number'; inp.className = 'num-input'; inp.inputMode = 'numeric'; r2.appendChild(inp);
-  const btn = document.createElement('button'); btn.className = 'num-submit'; btn.textContent = t('submit');
-  let att = 0;
-  function check() {
-    if (parseInt(inp.value) === q.ans) { sfxCorrect(); inp.disabled = true; btn.disabled = true; setTimeout(() => { if (game) game.questAnswered(true) }, 600) }
-    else { sfxWrong(); if (game) game.mistakes++; att++;
-      if (att >= 3) { const h = document.createElement('p'); h.style.cssText = 'text-align:center;color:#e65100;font-weight:700;margin-top:8px'; h.textContent = t('hint') + q.ans; body.appendChild(h); setTimeout(() => { if (game) game.questAnswered(true) }, 1500); return }
-      inp.style.borderColor = '#f44336'; inp.style.animation = 'shake 0.3s';
-      setTimeout(() => { inp.style.borderColor = '#4CAF50'; inp.style.animation = ''; inp.value = ''; inp.focus() }, 500);
-    }
-  }
-  btn.onclick = check; inp.addEventListener('keydown', e => { if (e.key === 'Enter') check() });
-  r2.appendChild(btn); body.appendChild(r2);
-  setTimeout(() => inp.focus(), 150);
-}
-
-function renderEstimation(body, q) {
-  const title = document.createElement('p');
-  title.style.cssText = 'font-weight:700;text-align:center;margin-bottom:8px;color:#333;font-size:1rem';
-  title.textContent = '🎯 Is ' + q.expr + ' more or less than ' + q.target + '?';
-  body.appendChild(title);
-  const row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:10px;justify-content:center;margin-top:10px';
-  let att = 0;
-  ['more', 'less'].forEach(val => {
-    const btn = document.createElement('button');
-    btn.className = 'tf-btn ' + (val === 'more' ? 'yes' : 'no');
-    btn.style.cssText = 'flex:1;padding:14px;font-size:1.1rem;font-weight:700';
-    btn.textContent = val === 'more' ? '📈 More' : '📉 Less';
-    btn.onclick = () => {
-      row.querySelectorAll('button').forEach(b => b.disabled = true);
-      if (val === q.ans) { btn.style.boxShadow = '0 0 0 3px #4CAF50'; sfxCorrect(); setTimeout(() => { if (game) game.questAnswered(true) }, 600) }
-      else { btn.style.boxShadow = '0 0 0 3px #f44336'; sfxWrong(); if (game) game.mistakes++; att++;
-        if (att >= 2) { row.querySelectorAll('button').forEach(b => { if (b.textContent.toLowerCase().includes(q.ans)) b.style.boxShadow = '0 0 0 3px #4CAF50' }); setTimeout(() => { if (game) game.questAnswered(true) }, 1500) }
-        else { setTimeout(() => { row.querySelectorAll('button').forEach(b => { b.disabled = false; b.style.boxShadow = '' }) }, 800) }
-      }
-    };
-    row.appendChild(btn);
-  });
-  body.appendChild(row);
-}
-
-function renderBonds(body, q) {
-  const title = document.createElement('p');
-  title.style.cssText = 'font-weight:700;text-align:center;margin-bottom:8px;color:#333;font-size:1rem';
-  title.textContent = '🔗 Number Bond!';
-  body.appendChild(title);
-  const eq = document.createElement('p');
-  eq.style.cssText = "font-size:1.2rem;font-weight:700;text-align:center;margin:8px 0;font-family:'Courier New',monospace";
-  eq.textContent = q.givenA + ' + ___ = ' + q.target;
-  body.appendChild(eq);
-  const r2 = document.createElement('div'); r2.className = 'num-input-row'; r2.style.marginTop = '8px';
-  const inp = document.createElement('input'); inp.type = 'number'; inp.className = 'num-input'; inp.inputMode = 'numeric'; r2.appendChild(inp);
-  const btn = document.createElement('button'); btn.className = 'num-submit'; btn.textContent = t('submit');
-  let att = 0;
-  function check() {
-    if (parseInt(inp.value) === q.ans) { sfxCorrect(); inp.disabled = true; btn.disabled = true; setTimeout(() => { if (game) game.questAnswered(true) }, 600) }
-    else { sfxWrong(); if (game) game.mistakes++; att++;
-      if (att >= 3) { const h = document.createElement('p'); h.style.cssText = 'text-align:center;color:#e65100;font-weight:700;margin-top:8px'; h.textContent = t('hint') + q.ans; body.appendChild(h); setTimeout(() => { if (game) game.questAnswered(true) }, 1500); return }
-      inp.style.borderColor = '#f44336'; inp.style.animation = 'shake 0.3s';
-      setTimeout(() => { inp.style.borderColor = '#4CAF50'; inp.style.animation = ''; inp.value = ''; inp.focus() }, 500);
-    }
-  }
-  btn.onclick = check; inp.addEventListener('keydown', e => { if (e.key === 'Enter') check() });
-  r2.appendChild(btn); body.appendChild(r2);
-  setTimeout(() => inp.focus(), 150);
-}
-
 
 // ===== RECORDS =====
 let db;
@@ -5515,7 +5218,7 @@ async function showLevelSelect(){
 }
 
 function showVictory(dogs,time,mistakes,stars,li,coins,totalCoins,bestStreak){
-  showScreen('victory-screen');hideQuestUI();hideQuestBubble();
+  showScreen('victory-screen');hideQuestUI();
   const de=document.getElementById('victory-dogs');de.innerHTML='';
   dogs.forEach(dog=>{const div=document.createElement('div');div.className='victory-dog';
     div.style.animation='float 2s ease-in-out infinite';div.style.animationDelay=Math.random()*2+'s';
@@ -5660,12 +5363,12 @@ document.addEventListener('keydown',e=>{
       if(fx>=0&&fy>=0&&fx<game.mw&&fy<game.mh){
         const tile=game.map[fy][fx];
         if(tile===T.GATE){const g=game.gates.find(g=>g.x===fx&&g.y===fy);if(g&&!g.open)game.openGateQuest(g)}
-        else if(tile===T.DOG_GATE){const nd=game.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===fx&&d.cageGate.y===fy);if(nd&&!nd.cageOpen){if(!nd.quests)nd.quests=genQuests(1,game.ld.diff);const story=CAGE_STORIES[Math.floor(Math.random()*CAGE_STORIES.length)];game.activeQuest={type:'dogCage',dog:nd,x:fx,y:fy};game.questList=nd.quests;game.questIdx=0;game.addBurst(fx+0.5,0.5,fy+0.5,8,'#FF9800');showQuestBubble(game.questList[0],story,fx+0.5,fy+0.5)}}
+        else if(tile===T.DOG_GATE){const nd=game.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===fx&&d.cageGate.y===fy);if(nd&&!nd.cageOpen){if(!nd.quests)nd.quests=genQuests(3,game.ld.diff);game.activeQuest={type:'dogCage',dog:nd,x:fx,y:fy};game.questList=nd.quests;game.questIdx=0;game.addBurst(fx+0.5,0.5,fy+0.5,8,'#FF9800');showQuestUI(game.questList,0,nd.quests.length)}}
         else if(INTERACT.has(tile))game.interactWith(fx,fy,tile)
       }
     }
   }
-  if(e.key==='Escape'){if(game&&game.activeQuest){hideQuestBubble();hideQuestUI();game.activeQuest=null;game.questList=null;game.questIdx=0}
+  if(e.key==='Escape'){if(game&&game.activeQuest){hideQuestUI();game.activeQuest=null;game.questList=null;game.questIdx=0}
     else if(game){game=null;if(rafId)cancelAnimationFrame(rafId);showLevelSelect()}}
 });
 document.addEventListener('keyup',e=>{
@@ -5685,66 +5388,9 @@ document.querySelector('.dpad-center').addEventListener('touchstart',e=>{e.preve
   const fx=game.p.x+d[0],fy=game.p.y+d[1];
   if(fx>=0&&fy>=0&&fx<game.mw&&fy<game.mh){const tile=game.map[fy][fx];
     if(tile===T.GATE){const g=game.gates.find(g=>g.x===fx&&g.y===fy);if(g&&!g.open)game.openGateQuest(g)}
-    else if(tile===T.DOG_GATE){const nd=game.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===fx&&d.cageGate.y===fy);if(nd&&!nd.cageOpen){if(!nd.quests)nd.quests=genQuests(1,game.ld.diff);const story=CAGE_STORIES[Math.floor(Math.random()*CAGE_STORIES.length)];game.activeQuest={type:'dogCage',dog:nd,x:fx,y:fy};game.questList=nd.quests;game.questIdx=0;game.addBurst(fx+0.5,0.5,fy+0.5,8,'#FF9800');showQuestBubble(game.questList[0],story,fx+0.5,fy+0.5)}}
+    else if(tile===T.DOG_GATE){const nd=game.dogs.find(d=>!d.rescued&&d.cageGate&&d.cageGate.x===fx&&d.cageGate.y===fy);if(nd&&!nd.cageOpen){if(!nd.quests)nd.quests=genQuests(3,game.ld.diff);game.activeQuest={type:'dogCage',dog:nd,x:fx,y:fy};game.questList=nd.quests;game.questIdx=0;game.addBurst(fx+0.5,0.5,fy+0.5,8,'#FF9800');showQuestUI(game.questList,0,nd.quests.length)}}
     else if(INTERACT.has(tile))game.interactWith(fx,fy,tile)}
 },{passive:false});
-
-// Camera orbit controls (desktop: right-click/middle-click drag + scroll, mobile: two-finger)
-document.addEventListener('mousedown', e => {
-  if ((e.button === 1 || e.button === 2) && game && !game.activeQuest) {
-    cameraOrbitDrag = true;
-    cameraOrbitLastX = e.clientX;
-    e.preventDefault();
-  }
-});
-document.addEventListener('mousemove', e => {
-  if (cameraOrbitDrag) {
-    const dx = e.clientX - cameraOrbitLastX;
-    cameraAngle -= dx * 0.008;
-    cameraOrbitLastX = e.clientX;
-  }
-});
-document.addEventListener('mouseup', e => {
-  if (e.button === 1 || e.button === 2) cameraOrbitDrag = false;
-});
-document.addEventListener('contextmenu', e => {
-  if (game) e.preventDefault();
-});
-document.addEventListener('wheel', e => {
-  if (!game) return;
-  cameraDistance = Math.max(6, Math.min(20, cameraDistance + e.deltaY * 0.01));
-  cameraHeight = cameraDistance * 0.85;
-  e.preventDefault();
-}, {passive: false});
-
-// Mobile: two-finger rotate + pinch zoom
-let touchOrbitState = null;
-document.addEventListener('touchstart', e => {
-  if (e.touches.length === 2 && game) {
-    const t1 = e.touches[0], t2 = e.touches[1];
-    const dx = t2.clientX - t1.clientX, dy = t2.clientY - t1.clientY;
-    touchOrbitState = {
-      angle: Math.atan2(dy, dx),
-      dist: Math.sqrt(dx*dx + dy*dy),
-      camAngle: cameraAngle,
-      camDist: cameraDistance
-    };
-  }
-}, {passive: true});
-document.addEventListener('touchmove', e => {
-  if (e.touches.length === 2 && touchOrbitState && game) {
-    const t1 = e.touches[0], t2 = e.touches[1];
-    const dx = t2.clientX - t1.clientX, dy = t2.clientY - t1.clientY;
-    const newAngle = Math.atan2(dy, dx);
-    const newDist = Math.sqrt(dx*dx + dy*dy);
-    cameraAngle = touchOrbitState.camAngle - (newAngle - touchOrbitState.angle);
-    cameraDistance = Math.max(6, Math.min(20, touchOrbitState.camDist * (touchOrbitState.dist / Math.max(1, newDist))));
-    cameraHeight = cameraDistance * 0.85;
-  }
-}, {passive: true});
-document.addEventListener('touchend', e => {
-  if (e.touches.length < 2) touchOrbitState = null;
-}, {passive: true});
 
 // Touch swipe on game container
 document.addEventListener('DOMContentLoaded', () => {
