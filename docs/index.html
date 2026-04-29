@@ -2748,94 +2748,131 @@ function buildLevel3D(levelData) {
     }
   }
 
-  // Build water/river tiles (animated)
-  const waterTiles = [];
+  // ===== BATCHED InstancedMesh for water, flowers, mushrooms, lampposts, taxis, bridges, road dashes, park bushes, houses, signs =====
+  // Pre-count all tile types in one pass
+  const waterPos = [], riverPos = [], flowerPos = [], mushPos = [], lampPos = [], taxiPos = [], bridgePos = [], dashPos = [], parkBushPos = [], housePos = [], signPos = [];
   for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
     const tile = map[r][c];
-    if (tile === T.WATER || tile === T.RIVER) waterTiles.push({c, r, tile});
-  }
-  if (waterTiles.length > 0) {
-    // Merge into segments for performance
-    const waterGeo = new THREE.PlaneGeometry(1, 1, 4, 4);
-    const wMat = waterTiles[0].tile === T.RIVER ? MAT.river : MAT.water;
-    waterTiles.forEach(wt => {
-      const wm = new THREE.Mesh(waterGeo.clone(), wt.tile === T.RIVER ? MAT.river : MAT.water);
-      wm.rotation.x = -Math.PI / 2;
-      wm.position.set(wt.c + 0.5, 0.02, wt.r + 0.5);
-      wm.userData = {baseY: 0.02, col: wt.c, row: wt.r};
-      scene.add(wm);
-      sceneObjects.push(wm);
-      waterMeshes.push(wm);
-    });
+    if (tile === T.WATER) waterPos.push({c, r});
+    else if (tile === T.RIVER) riverPos.push({c, r});
+    else if (tile === T.FLOWER) flowerPos.push({c, r});
+    else if (tile === T.MUSH) mushPos.push({c, r});
+    else if (tile === T.LAMPPOST) lampPos.push({c, r});
+    else if (tile === T.TAXI) taxiPos.push({c, r});
+    else if (tile === T.BRIDGE) bridgePos.push({c, r});
+    else if (tile === T.HOUSE) housePos.push({c, r});
+    else if (tile === T.SIGN) signPos.push({c, r});
+    if (tile === T.ROAD && (c + r) % 3 === 0) dashPos.push({c, r});
+    if (tile === T.PARK && ((r*3+c*7)%5 === 0)) parkBushPos.push({c, r});
   }
 
-  // Flowers
-  const flowerTiles = [];
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.FLOWER) flowerTiles.push({c, r});
-  }
-  if (flowerTiles.length > 0) {
+  // --- Water & River (InstancedMesh, simple Y oscillation for animation) ---
+  const waterGeoIM = new THREE.PlaneGeometry(1, 1, 1, 1);
+  const rotQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2, 0, 0));
+  const sv1 = new THREE.Vector3(1,1,1);
+  [{tiles: waterPos, mat: MAT.water}, {tiles: riverPos, mat: MAT.river}].forEach(({tiles, mat}) => {
+    if (tiles.length === 0) return;
+    const wIM = new THREE.InstancedMesh(waterGeoIM, mat, tiles.length);
+    const m4 = new THREE.Matrix4();
+    tiles.forEach((wt, i) => {
+      m4.compose(new THREE.Vector3(wt.c + 0.5, 0.02, wt.r + 0.5), rotQ, sv1);
+      wIM.setMatrixAt(i, m4);
+    });
+    wIM.instanceMatrix.needsUpdate = true;
+    scene.add(wIM);
+    sceneObjects.push(wIM);
+    waterMeshes.push(wIM); // store for animation
+  });
+
+  // --- Flowers (5 color batches, InstancedMesh per color) ---
+  if (flowerPos.length > 0) {
     const flColors = [0xff69b4, 0xffeb3b, 0xff5722, 0x9c27b0, 0xe91e63];
-    flowerTiles.forEach(ft => {
+    const flMats = flColors.map(c => new THREE.MeshStandardMaterial({color:c, flatShading:true, emissive:c, emissiveIntensity:0.2}));
+    // Collect per-color instances (3 flowers per tile)
+    const colorBuckets = flColors.map(() => []);
+    flowerPos.forEach(ft => {
       for (let i = 0; i < 3; i++) {
-        const fm = new THREE.Mesh(GEO.sphere, new THREE.MeshStandardMaterial({
-          color: flColors[(ft.c * 3 + ft.r * 7 + i) % flColors.length], flatShading: true,
-          emissive: flColors[(ft.c * 3 + ft.r * 7 + i) % flColors.length], emissiveIntensity: 0.2
-        }));
-        fm.position.set(ft.c + 0.2 + i * 0.3, 0.1, ft.r + 0.3 + (i % 2) * 0.4);
-        fm.scale.set(3.0, 3.0, 3.0);
-        scene.add(fm);
-        sceneObjects.push(fm);
+        const ci = (ft.c * 3 + ft.r * 7 + i) % flColors.length;
+        colorBuckets[ci].push({x: ft.c + 0.2 + i * 0.3, z: ft.r + 0.3 + (i % 2) * 0.4});
       }
     });
+    const flGeo = new THREE.SphereGeometry(0.12, 4, 3); // slightly bigger geo, no per-mesh scale needed
+    colorBuckets.forEach((bucket, ci) => {
+      if (bucket.length === 0) return;
+      const fIM = new THREE.InstancedMesh(flGeo, flMats[ci], bucket.length);
+      const m4 = new THREE.Matrix4();
+      bucket.forEach((p, i) => {
+        m4.makeTranslation(p.x, 0.1, p.z);
+        fIM.setMatrixAt(i, m4);
+      });
+      fIM.instanceMatrix.needsUpdate = true;
+      scene.add(fIM);
+      sceneObjects.push(fIM);
+    });
   }
 
-  // Mushrooms
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.MUSH) {
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.16, 5), MAT.mushroomWhite);
-      stem.position.set(c + 0.5, 0.06, r + 0.5);
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 4, 0, Math.PI*2, 0, Math.PI/2), MAT.mushroom);
-      cap.position.set(c + 0.5, 0.13, r + 0.5);
-      scene.add(stem, cap);
-      sceneObjects.push(stem, cap);
-    }
+  // --- Mushrooms (2 InstancedMesh: stems + caps) ---
+  if (mushPos.length > 0) {
+    const stemGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.16, 5);
+    const capGeo = new THREE.SphereGeometry(0.12, 6, 4, 0, Math.PI*2, 0, Math.PI/2);
+    const stemIM = new THREE.InstancedMesh(stemGeo, MAT.mushroomWhite, mushPos.length);
+    const capIM = new THREE.InstancedMesh(capGeo, MAT.mushroom, mushPos.length);
+    const m4 = new THREE.Matrix4();
+    mushPos.forEach((mp, i) => {
+      m4.makeTranslation(mp.c + 0.5, 0.06, mp.r + 0.5);
+      stemIM.setMatrixAt(i, m4);
+      m4.makeTranslation(mp.c + 0.5, 0.13, mp.r + 0.5);
+      capIM.setMatrixAt(i, m4);
+    });
+    stemIM.instanceMatrix.needsUpdate = true;
+    capIM.instanceMatrix.needsUpdate = true;
+    scene.add(stemIM, capIM);
+    sceneObjects.push(stemIM, capIM);
   }
 
-  // Lampposts
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.LAMPPOST) {
-      const post = new THREE.Mesh(GEO.lampPost, MAT.dark);
-      post.position.set(c + 0.5, 0.4, r + 0.5);
-      const bulb = new THREE.Mesh(GEO.lampBulb, MAT.lampLight);
-      bulb.position.set(c + 0.5, 0.85, r + 0.5);
-      const light = new THREE.PointLight(0xffdd88, 0.5, 4);
-      light.position.set(c + 0.5, 0.9, r + 0.5);
-      scene.add(post, bulb, light);
-      sceneObjects.push(post, bulb, light);
-    }
+  // --- Lampposts (InstancedMesh posts + bulbs, NO PointLights) ---
+  if (lampPos.length > 0) {
+    const postIM = new THREE.InstancedMesh(GEO.lampPost, MAT.dark, lampPos.length);
+    const bulbIM = new THREE.InstancedMesh(GEO.lampBulb, MAT.lampLight, lampPos.length);
+    const m4 = new THREE.Matrix4();
+    lampPos.forEach((lp, i) => {
+      m4.makeTranslation(lp.c + 0.5, 0.4, lp.r + 0.5);
+      postIM.setMatrixAt(i, m4);
+      m4.makeTranslation(lp.c + 0.5, 0.85, lp.r + 0.5);
+      bulbIM.setMatrixAt(i, m4);
+    });
+    postIM.instanceMatrix.needsUpdate = true;
+    bulbIM.instanceMatrix.needsUpdate = true;
+    scene.add(postIM, bulbIM);
+    sceneObjects.push(postIM, bulbIM);
   }
 
-  // Taxis
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.TAXI) {
-      const taxi = new THREE.Mesh(GEO.taxiBody, MAT.taxi);
-      taxi.position.set(c + 0.5, 0.12, r + 0.5);
-      taxi.castShadow = true;
-      scene.add(taxi);
-      sceneObjects.push(taxi);
-    }
+  // --- Taxis (InstancedMesh, no castShadow) ---
+  if (taxiPos.length > 0) {
+    const taxiIM = new THREE.InstancedMesh(GEO.taxiBody, MAT.taxi, taxiPos.length);
+    const m4 = new THREE.Matrix4();
+    taxiPos.forEach((tp, i) => {
+      m4.makeTranslation(tp.c + 0.5, 0.12, tp.r + 0.5);
+      taxiIM.setMatrixAt(i, m4);
+    });
+    taxiIM.instanceMatrix.needsUpdate = true;
+    scene.add(taxiIM);
+    sceneObjects.push(taxiIM);
   }
 
-  // Bridge tiles (raised planks)
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.BRIDGE) {
-      const plank = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), MAT.bridge);
-      plank.position.set(c + 0.5, 0.05, r + 0.5);
-      plank.receiveShadow = true;
-      scene.add(plank);
-      sceneObjects.push(plank);
-    }
+  // --- Bridges (InstancedMesh) ---
+  if (bridgePos.length > 0) {
+    const bridgeGeo = new THREE.BoxGeometry(1, 0.06, 1);
+    const bridgeIM = new THREE.InstancedMesh(bridgeGeo, MAT.bridge, bridgePos.length);
+    const m4 = new THREE.Matrix4();
+    bridgePos.forEach((bp, i) => {
+      m4.makeTranslation(bp.c + 0.5, 0.05, bp.r + 0.5);
+      bridgeIM.setMatrixAt(i, m4);
+    });
+    bridgeIM.instanceMatrix.needsUpdate = true;
+    bridgeIM.receiveShadow = true;
+    scene.add(bridgeIM);
+    sceneObjects.push(bridgeIM);
   }
 
   // Start platform
@@ -2855,56 +2892,77 @@ function buildLevel3D(levelData) {
     sceneObjects.push(ep);
   }
 
-  // Road center lines
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.ROAD) {
-      // White center dash every other tile
-      if ((c + r) % 3 === 0) {
-        const dash = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.01, 0.3), MAT.white);
-        dash.position.set(c + 0.5, 0.01, r + 0.5);
-        scene.add(dash);
-        sceneObjects.push(dash);
-      }
-    }
+  // --- Road center dashes (InstancedMesh) ---
+  if (dashPos.length > 0) {
+    const dashGeo = new THREE.BoxGeometry(0.08, 0.01, 0.3);
+    const dashIM = new THREE.InstancedMesh(dashGeo, MAT.white, dashPos.length);
+    const m4 = new THREE.Matrix4();
+    dashPos.forEach((dp, i) => {
+      m4.makeTranslation(dp.c + 0.5, 0.01, dp.r + 0.5);
+      dashIM.setMatrixAt(i, m4);
+    });
+    dashIM.instanceMatrix.needsUpdate = true;
+    scene.add(dashIM);
+    sceneObjects.push(dashIM);
   }
 
-  // Park tiles get small bush decorations
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.PARK && ((r*3+c*7)%5 === 0)) {
-      const bush = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 3), MAT.canopyLight);
-      bush.position.set(c + 0.3 + Math.random()*0.4, 0.06, r + 0.3 + Math.random()*0.4);
-      scene.add(bush);
-      sceneObjects.push(bush);
-    }
+  // --- Park bush decorations (InstancedMesh) ---
+  if (parkBushPos.length > 0) {
+    const pbGeo = new THREE.SphereGeometry(0.08, 4, 3);
+    const pbIM = new THREE.InstancedMesh(pbGeo, MAT.canopyLight, parkBushPos.length);
+    const m4 = new THREE.Matrix4();
+    parkBushPos.forEach((pb, i) => {
+      const ox = ((pb.c * 7 + pb.r * 3) % 17) / 17 * 0.4; // deterministic pseudo-random
+      const oz = ((pb.c * 11 + pb.r * 5) % 13) / 13 * 0.4;
+      m4.makeTranslation(pb.c + 0.3 + ox, 0.06, pb.r + 0.3 + oz);
+      pbIM.setMatrixAt(i, m4);
+    });
+    pbIM.instanceMatrix.needsUpdate = true;
+    scene.add(pbIM);
+    sceneObjects.push(pbIM);
   }
 
-  // House tiles
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.HOUSE) {
-      const rng = ((r*5+c*11)%13)/13;
+  // --- Houses (InstancedMesh body + roof) ---
+  if (housePos.length > 0) {
+    const hMat = new THREE.MeshStandardMaterial({color:0x8d6e63, flatShading:true});
+    const rMat = new THREE.MeshStandardMaterial({color:0xc62828, flatShading:true});
+    const hGeo = new THREE.BoxGeometry(0.9, 1, 0.9);
+    const rGeo = new THREE.ConeGeometry(0.6, 0.4, 4);
+    const hIM = new THREE.InstancedMesh(hGeo, hMat, housePos.length);
+    const rIM = new THREE.InstancedMesh(rGeo, rMat, housePos.length);
+    hIM.castShadow = true;
+    const m4 = new THREE.Matrix4(), rq = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI/4, 0));
+    housePos.forEach((hp, i) => {
+      const rng = ((hp.r*5+hp.c*11)%13)/13;
       const h = 1.0 + rng * 0.5;
-      const house = new THREE.Mesh(new THREE.BoxGeometry(0.9, h, 0.9), new THREE.MeshStandardMaterial({color:0x8d6e63, flatShading:true}));
-      house.position.set(c+0.5, h/2, r+0.5);
-      house.castShadow = true;
-      // Roof (pyramid)
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.4, 4), new THREE.MeshStandardMaterial({color:0xc62828, flatShading:true}));
-      roof.position.set(c+0.5, h+0.2, r+0.5);
-      roof.rotation.y = Math.PI/4;
-      scene.add(house, roof);
-      sceneObjects.push(house, roof);
-    }
+      m4.makeScale(1, h, 1); m4.setPosition(hp.c+0.5, h/2, hp.r+0.5);
+      hIM.setMatrixAt(i, m4);
+      m4.compose(new THREE.Vector3(hp.c+0.5, h+0.2, hp.r+0.5), rq, sv1);
+      rIM.setMatrixAt(i, m4);
+    });
+    hIM.instanceMatrix.needsUpdate = true;
+    rIM.instanceMatrix.needsUpdate = true;
+    scene.add(hIM, rIM);
+    sceneObjects.push(hIM, rIM);
   }
 
-  // Sign tiles
-  for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
-    if (map[r][c] === T.SIGN) {
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 4), MAT.fence);
-      post.position.set(c+0.5, 0.25, r+0.5);
-      const sign = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.04), MAT.fence);
-      sign.position.set(c+0.5, 0.45, r+0.5);
-      scene.add(post, sign);
-      sceneObjects.push(post, sign);
-    }
+  // --- Signs (InstancedMesh posts + boards) ---
+  if (signPos.length > 0) {
+    const spGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 4);
+    const sbGeo = new THREE.BoxGeometry(0.3, 0.2, 0.04);
+    const spIM = new THREE.InstancedMesh(spGeo, MAT.fence, signPos.length);
+    const sbIM = new THREE.InstancedMesh(sbGeo, MAT.fence, signPos.length);
+    const m4 = new THREE.Matrix4();
+    signPos.forEach((sp, i) => {
+      m4.makeTranslation(sp.c+0.5, 0.25, sp.r+0.5);
+      spIM.setMatrixAt(i, m4);
+      m4.makeTranslation(sp.c+0.5, 0.45, sp.r+0.5);
+      sbIM.setMatrixAt(i, m4);
+    });
+    spIM.instanceMatrix.needsUpdate = true;
+    sbIM.instanceMatrix.needsUpdate = true;
+    scene.add(spIM, sbIM);
+    sceneObjects.push(spIM, sbIM);
   }
 }
 
@@ -4117,11 +4175,15 @@ function buildGate3D(isOpen = false) {
   ornament.position.set(0, 1.4, 0);
   group.add(ornament);
 
-  // ---- WARM GLOW (brighter) ----
-  const light = new THREE.PointLight(0xffaa33, 1.2, 4);
-  light.position.set(0, 1.3, 0);
-  group.add(light);
-  group.userData.light = light;
+  // ---- WARM GLOW (emissive orbs only, no PointLight for performance) ----
+  // Large center glow orb (replaces PointLight)
+  const centerGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 5, 4),
+    new THREE.MeshBasicMaterial({color: 0xffdd66, transparent: true, opacity: 0.7})
+  );
+  centerGlow.position.set(0, 1.15, 0);
+  group.add(centerGlow);
+  group.userData.light = centerGlow; // keep userData reference
 
   // Small glow orbs on pillar caps
   const glowMat = new THREE.MeshBasicMaterial({color: 0xffdd66, transparent: true, opacity: 0.6});
@@ -4931,23 +4993,10 @@ class Game{
       }
     });
 
-    // Water animation
+    // Water animation (InstancedMesh — simple Y oscillation of entire batch)
     const time = this.fc * 0.02;
     waterMeshes.forEach(wm => {
-      const pos = wm.geometry.attributes.position;
-      if (!wm.userData._origY) {
-        wm.userData._origY = Float32Array.from(pos.array);
-      }
-      const orig = wm.userData._origY;
-      for (let i = 0; i < pos.count; i++) {
-        // Y is the 3rd component (index 2) since plane is rotated
-        // Actually for a PlaneGeometry, y is at array[i*3+2] before rotation
-        // But we rotate the mesh, so we animate the local y (which becomes world y after rotation)
-        // Local PlaneGeometry: x, y in plane, z = 0. After rotation x = -PI/2, local z becomes world y.
-        const x = orig[i*3], y2 = orig[i*3+1];
-        pos.array[i*3+2] = Math.sin(time + x * 3 + y2 * 2 + wm.userData.col) * 0.02;
-      }
-      pos.needsUpdate = true;
+      wm.position.y = Math.sin(time * 0.8) * 0.015;
     });
 
     // Exit platform glow
