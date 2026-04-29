@@ -237,9 +237,9 @@ const T={GRASS:0,PATH:1,TREE:2,ROCK:3,WATER:4,FLOWER:5,GATE:6,BRIDGE:7,DOG:8,
 NPC_BUT:9,NPC_SQU:10,NPC_BEAR:11,NPC_BIRD:12,BUSH:13,DGRASS:14,TGRASS:15,
 MUSH:16,EXIT:17,START:18,FENCE:19,HOUSE:20,SIGN:21,DOG_GATE:22,
 ROAD:23,SIDEWALK:24,BUILDING:25,BLDG_WINDOW:26,BLDG_DOOR:27,PARK:28,LAMPPOST:29,TAXI:30,RIVER:31,
-PLATFORM:32,PLATFORM_HIGH:33,THORNS:34,BOUNCE_SHROOM:35,SPIDERWEB:36,MUD:37,HEART_PICKUP:38,SPRING_PAD:39};
+PLATFORM:32,PLATFORM_HIGH:33,THORNS:34,BOUNCE_SHROOM:35,SPIDERWEB:36,MUD:37,HEART_PICKUP:38,SPRING_PAD:39,GEM_PINK:40,GEM_BLUE:41,GEM_GOLD:42};
 const TS=1; // 3D: 1 unit per tile
-const WALKABLE=new Set([T.GRASS,T.PATH,T.FLOWER,T.DGRASS,T.TGRASS,T.MUSH,T.EXIT,T.START,T.BRIDGE,T.BUSH,T.SIDEWALK,T.PARK,T.BLDG_DOOR,T.ROAD,T.PLATFORM,T.PLATFORM_HIGH,T.THORNS,T.BOUNCE_SHROOM,T.SPIDERWEB,T.MUD,T.HEART_PICKUP,T.SPRING_PAD]);
+const WALKABLE=new Set([T.GRASS,T.PATH,T.FLOWER,T.DGRASS,T.TGRASS,T.MUSH,T.EXIT,T.START,T.BRIDGE,T.BUSH,T.SIDEWALK,T.PARK,T.BLDG_DOOR,T.ROAD,T.PLATFORM,T.PLATFORM_HIGH,T.THORNS,T.BOUNCE_SHROOM,T.SPIDERWEB,T.MUD,T.HEART_PICKUP,T.SPRING_PAD,T.GEM_PINK,T.GEM_BLUE,T.GEM_GOLD]);
 const INTERACT=new Set([T.NPC_BUT,T.NPC_SQU,T.NPC_BEAR,T.NPC_BIRD,T.SIGN]);
 
 const CHARS={
@@ -268,7 +268,12 @@ const TILE_COLORS={
 [T.ROAD]:[0x55,0x55,0x55],[T.SIDEWALK]:[0xcc,0xcc,0xcc],[T.PARK]:[0x66,0xbb,0x6a],
 [T.LAMPPOST]:[0xcc,0xcc,0xcc],[T.TAXI]:[0x55,0x55,0x55],
 [T.NPC_BUT]:[0x7c,0xb3,0x42],[T.NPC_SQU]:[0x7c,0xb3,0x42],[T.NPC_BEAR]:[0x7c,0xb3,0x42],[T.NPC_BIRD]:[0x7c,0xb3,0x42],
-[T.HOUSE]:[0x8d,0x6e,0x63],[T.SIGN]:[0xc4,0x95,0x63]
+[T.HOUSE]:[0x8d,0x6e,0x63],[T.SIGN]:[0xc4,0x95,0x63],
+[T.PLATFORM]:[0x8b,0x73,0x55],[T.PLATFORM_HIGH]:[0x8b,0x73,0x55],
+[T.THORNS]:[0x8b,0x00,0x00],[T.BOUNCE_SHROOM]:[0xff,0x6b,0x35],
+[T.SPIDERWEB]:[0xcc,0xcc,0xcc],[T.MUD]:[0x8b,0x73,0x55],
+[T.HEART_PICKUP]:[0xe9,0x1e,0x63],[T.SPRING_PAD]:[0x4c,0xaf,0x50],
+[T.GEM_PINK]:[0xff,0x69,0xb4],[T.GEM_BLUE]:[0x4f,0xc3,0xf7],[T.GEM_GOLD]:[0xff,0xd7,0x00]
 };
 
 // Tile height for 3D (wall tiles get height > 0)
@@ -1784,128 +1789,149 @@ function generateMap(w,h,biome,numGates,numDogs,numNpcs,seed){
     if (biome === 'forest' || biome === 'mountain') {
       const numZones = biome === 'mountain' ? 2 : 1;
       for (let zi = 0; zi < numZones; zi++) {
-        // Find a good spot between gate positions
         const gateIdx = Math.min(zi + 1, gatePositions.length - 1);
         const prevGate = gatePositions[Math.max(0, gateIdx - 1)];
         const nextGate = gatePositions[gateIdx];
         if (!prevGate || !nextGate) continue;
         
-        // Zone between two gates, offset to the side
         const zoneWidth = 8 + Math.floor(rng() * 4);
-        const zoneHeight = 6 + Math.floor(rng() * 3);
-        const zStartX = Math.max(3, Math.min(w - zoneWidth - 3, 
+        const zoneHeight = 7 + Math.floor(rng() * 3);
+        const zStartX = Math.max(3, Math.min(w - zoneWidth - 3,
           Math.floor((prevGate.x + nextGate.x) / 2) - Math.floor(zoneWidth / 2)));
         const zStartY = Math.max(3, Math.min(h - zoneHeight - 3,
           Math.floor((prevGate.y + nextGate.y) / 2) - Math.floor(zoneHeight / 2) + (zi === 0 ? -4 : 4)));
         
-        // Clear zone to water (the pit)
+        // GRASS BORDER around zone (2 tiles) — player can always walk around
+        for (let zy = zStartY - 2; zy < zStartY + zoneHeight + 2 && zy < h - 1; zy++) {
+          for (let zx = zStartX - 2; zx < zStartX + zoneWidth + 2 && zx < w - 1; zx++) {
+            if (zy < 1 || zx < 1) continue;
+            const inZone = zy >= zStartY && zy < zStartY + zoneHeight && zx >= zStartX && zx < zStartX + zoneWidth;
+            if (inZone) continue;
+            const et = map[zy][zx];
+            if (et === T.GATE || et === T.DOG_GATE || et === T.DOG || et === T.START || et === T.EXIT || et === T.FENCE) continue;
+            const occ = dogs.some(d => d.x === zx && d.y === zy) || gatePositions.some(g => g.x === zx && g.y === zy) || npcs.some(n => n.x === zx && n.y === zy);
+            if (occ) continue;
+            if (et === T.WATER || et === T.TREE || et === T.ROCK) { map[zy][zx] = T.PATH; heightMap[zy][zx] = 0; }
+          }
+        }
+        
+        // Clear zone interior to water
         for (let zy = zStartY; zy < zStartY + zoneHeight && zy < h - 1; zy++) {
           for (let zx = zStartX; zx < zStartX + zoneWidth && zx < w - 1; zx++) {
-            if (map[zy][zx] === T.GATE || map[zy][zx] === T.DOG_GATE || map[zy][zx] === T.DOG ||
-                map[zy][zx] === T.START || map[zy][zx] === T.EXIT) continue;
-            const occupied = dogs.some(d => d.x === zx && d.y === zy) ||
-                            gatePositions.some(g => g.x === zx && g.y === zy) ||
-                            npcs.some(n => n.x === zx && n.y === zy);
-            if (occupied) continue;
-            map[zy][zx] = T.WATER;
-            heightMap[zy][zx] = -0.3;
+            if (map[zy][zx] === T.GATE || map[zy][zx] === T.DOG_GATE || map[zy][zx] === T.DOG || map[zy][zx] === T.START || map[zy][zx] === T.EXIT) continue;
+            const occ = dogs.some(d => d.x === zx && d.y === zy) || gatePositions.some(g => g.x === zx && g.y === zy) || npcs.some(n => n.x === zx && n.y === zy);
+            if (occ) continue;
+            map[zy][zx] = T.WATER; heightMap[zy][zx] = -0.3;
           }
         }
         
-        // Create path of platforms through the zone
-        let px = zStartX + 1;
-        let py = zStartY + 1;
-        let curH = 0.3;
-        let platCount = 0;
-        const maxPlats = 12;
+        // Entry/exit corridors
+        const entryY = zStartY + Math.floor(zoneHeight / 2);
+        const exitPX = zStartX + zoneWidth - 1;
+        const exitPY = Math.max(zStartY + 1, Math.min(zStartY + zoneHeight - 2, entryY + (rng() > 0.5 ? 1 : -1)));
         
-        // Entry platform (connects to land)
-        if (py > 0 && py < h && px > 0 && px < w) {
-          map[py][px] = T.PLATFORM;
-          heightMap[py][px] = curH;
-          if (px + 1 < w) { map[py][px + 1] = T.PLATFORM; heightMap[py][px + 1] = curH; }
-          platCount++;
+        for (let ex = Math.max(1, zStartX - 3); ex <= zStartX; ex++) {
+          for (let dy2 = -1; dy2 <= 1; dy2++) {
+            const ey = entryY + dy2;
+            if (ey >= 0 && ey < h && ex >= 0 && ex < w) { map[ey][ex] = T.PATH; heightMap[ey][ex] = 0; }
+          }
+        }
+        for (let ex = exitPX; ex < Math.min(w - 1, exitPX + 4); ex++) {
+          for (let dy2 = -1; dy2 <= 1; dy2++) {
+            const ey = Math.max(1, Math.min(h - 2, exitPY)) + dy2;
+            if (ey >= 0 && ey < h && ex >= 0 && ex < w) { map[ey][ex] = T.PATH; heightMap[ey][ex] = 0; }
+          }
         }
         
-        while (platCount < maxPlats && py < zStartY + zoneHeight - 1 && px < zStartX + zoneWidth - 1) {
-          // Next platform: 1-2 tiles away
-          const goRight = rng() > 0.4;
-          const gap = rng() > 0.6 ? 2 : 1;
-          const heightUp = rng() > 0.65 ? 0.3 : 0;
+        // Generate platform stepping stones from entry to exit
+        const platforms = [];
+        let cx = zStartX + 1, cy = entryY, curH = 0.3;
+        
+        // First platform pair
+        platforms.push({x: cx, y: cy, h: curH, type: 'platform'});
+        if (cy + 1 < zStartY + zoneHeight) platforms.push({x: cx, y: cy + 1, h: curH, type: 'platform'});
+        
+        while (cx < exitPX - 1) {
+          const stepRight = 1 + (rng() > 0.7 ? 1 : 0);
+          const stepVert = rng() < 0.4 ? (rng() > 0.5 ? 1 : -1) : 0;
+          cx = Math.min(exitPX - 1, cx + stepRight);
+          cy = Math.max(zStartY + 1, Math.min(zStartY + zoneHeight - 2, cy + stepVert));
           
-          if (goRight && px + gap + 1 < zStartX + zoneWidth) {
-            px += gap;
-          } else if (py + gap + 1 < zStartY + zoneHeight) {
-            py += gap;
-          } else break;
+          const progress = (cx - zStartX) / zoneWidth;
+          if (progress < 0.5) { if (rng() > 0.5) curH = Math.min(0.9, curH + 0.3); }
+          else { if (rng() > 0.4) curH = Math.max(0.3, curH - 0.3); }
           
-          curH = Math.min(0.9, curH + heightUp);
-          if (py >= 0 && py < h && px >= 0 && px < w) {
-            // Place platform tile
-            const trapRoll = rng();
-            if (trapRoll < 0.12 && platCount > 2) {
-              map[py][px] = T.THORNS;
-              heightMap[py][px] = curH;
-            } else if (trapRoll < 0.20 && platCount > 1) {
-              map[py][px] = T.BOUNCE_SHROOM;
-              heightMap[py][px] = curH;
-            } else if (trapRoll < 0.26) {
-              map[py][px] = T.SPIDERWEB;
-              heightMap[py][px] = curH;
-            } else {
-              map[py][px] = T.PLATFORM;
-              heightMap[py][px] = curH;
-            }
-            // Sometimes wider platform
-            if (rng() > 0.5 && px + 1 < w) {
-              map[py][px + 1] = T.PLATFORM;
-              heightMap[py][px + 1] = curH;
-            }
-            platCount++;
+          const trapRoll = rng();
+          let type = 'platform';
+          if (trapRoll < 0.08 && platforms.length > 3) type = 'thorns';
+          else if (trapRoll < 0.14 && platforms.length > 2) type = 'bounce';
+          else if (trapRoll < 0.18) type = 'web';
+          
+          platforms.push({x: cx, y: cy, h: curH, type});
+          if (rng() > 0.4 && cy + 1 < zStartY + zoneHeight)
+            platforms.push({x: cx, y: cy + 1, h: curH, type: 'platform'});
+        }
+        
+        // Final platform connecting to exit
+        platforms.push({x: exitPX, y: Math.max(1, Math.min(h - 2, exitPY)), h: 0.3, type: 'platform'});
+        if (exitPY + 1 < h) platforms.push({x: exitPX, y: exitPY + 1, h: 0.3, type: 'platform'});
+        
+        // Write platforms to map
+        const normalPlats = [];
+        for (const plat of platforms) {
+          if (plat.x < 0 || plat.x >= w || plat.y < 0 || plat.y >= h) continue;
+          switch (plat.type) {
+            case 'thorns': map[plat.y][plat.x] = T.THORNS; break;
+            case 'bounce': map[plat.y][plat.x] = T.BOUNCE_SHROOM; break;
+            case 'web': map[plat.y][plat.x] = T.SPIDERWEB; break;
+            default: map[plat.y][plat.x] = T.PLATFORM; normalPlats.push(plat); break;
+          }
+          heightMap[plat.y][plat.x] = plat.h;
+        }
+        
+        // Place gems on ~40% of normal platforms
+        let highestH = 0, highestPlat = null;
+        normalPlats.forEach(p => { if (p.h > highestH) { highestH = p.h; highestPlat = p; } });
+        let goldPlaced = false;
+        for (const plat of normalPlats) {
+          if (plat.x < 0 || plat.x >= w || plat.y < 0 || plat.y >= h) continue;
+          if (map[plat.y][plat.x] !== T.PLATFORM) continue;
+          if (!goldPlaced && plat === highestPlat && plat.h >= 0.6) {
+            map[plat.y][plat.x] = T.GEM_GOLD; heightMap[plat.y][plat.x] = plat.h; goldPlaced = true; continue;
+          }
+          const gemRoll = rng();
+          if (gemRoll < 0.2 && plat.h >= 0.5) { map[plat.y][plat.x] = T.GEM_BLUE; heightMap[plat.y][plat.x] = plat.h; }
+          else if (gemRoll < 0.4) { map[plat.y][plat.x] = T.GEM_PINK; heightMap[plat.y][plat.x] = plat.h; }
+        }
+        
+        // Stepping stone hints between platforms
+        for (let i = 0; i < platforms.length - 1; i++) {
+          const a = platforms[i], b = platforms[i + 1];
+          const midX = Math.round((a.x + b.x) / 2), midY = Math.round((a.y + b.y) / 2);
+          if (midX >= 0 && midX < w && midY >= 0 && midY < h && map[midY][midX] === T.WATER)
+            heightMap[midY][midX] = -0.15;
+        }
+        
+        // Heart pickup in longer zones
+        if (normalPlats.length > 6) {
+          const midPlat = normalPlats[Math.floor(normalPlats.length / 2)];
+          if (midPlat && midPlat.x >= 0 && midPlat.x < w && midPlat.y >= 0 && midPlat.y < h && map[midPlat.y][midPlat.x] === T.PLATFORM) {
+            map[midPlat.y][midPlat.x] = T.HEART_PICKUP; heightMap[midPlat.y][midPlat.x] = midPlat.h;
           }
         }
         
-        // Exit platform
-        if (py >= 0 && py < h && px >= 0 && px < w) {
-          map[py][px] = T.PLATFORM;
-          heightMap[py][px] = Math.max(0, curH - 0.3);
-          // Connect exit back to land
-          for (let ex = px + 1; ex < Math.min(w - 1, px + 3); ex++) {
-            if (map[py][ex] === T.WATER) {
-              map[py][ex] = T.PATH;
-              heightMap[py][ex] = 0;
+        // Ensure first platform connects to entry
+        if (platforms.length > 0) {
+          const fp = platforms[0];
+          let connected = false;
+          for (let dy2 = -1; dy2 <= 1; dy2++) {
+            const ey = entryY + dy2;
+            if (ey >= 0 && ey < h && zStartX >= 0 && zStartX < w && (map[ey][zStartX] === T.PATH || map[ey][zStartX] === T.GRASS)) {
+              if (Math.abs(zStartX - fp.x) + Math.abs(ey - fp.y) <= 2) connected = true;
             }
           }
-        }
-        
-        // Connect entry to land
-        for (let enx = zStartX - 1; enx >= Math.max(1, zStartX - 3); enx--) {
-          if (py >= 0 && py < h && enx >= 0 && enx < w) {
-            if (!WALKABLE.has(map[zStartY + 1][enx]) && map[zStartY + 1][enx] !== T.WATER) break;
-            if (map[zStartY + 1][enx] === T.WATER) {
-              map[zStartY + 1][enx] = T.PATH;
-              heightMap[zStartY + 1][enx] = 0;
-            }
-          }
-        }
-        
-        // Add heart pickup in the middle of tough sections
-        if (platCount > 5) {
-          const heartY = zStartY + Math.floor(zoneHeight / 2);
-          const heartX = zStartX + Math.floor(zoneWidth / 2);
-          if (heartY >= 0 && heartY < h && heartX >= 0 && heartX < w && 
-              (map[heartY][heartX] === T.PLATFORM || map[heartY][heartX] === T.WATER)) {
-            map[heartY][heartX] = T.HEART_PICKUP;
-            heightMap[heartY][heartX] = 0.5;
-          }
-        }
-        
-        // Scatter a few mud tiles on the approach paths
-        for (let mi = 0; mi < 3; mi++) {
-          const mx = zStartX + Math.floor(rng() * zoneWidth);
-          const my = zStartY + Math.floor(rng() * zoneHeight);
-          if (my >= 0 && my < h && mx >= 0 && mx < w && map[my][mx] === T.PLATFORM) {
-            if (rng() < 0.3) { map[my][mx] = T.MUD; heightMap[my][mx] = heightMap[my][mx]; }
+          if (!connected && fp.y >= 0 && fp.y < h && zStartX >= 0 && zStartX < w) {
+            map[fp.y][zStartX] = T.PATH; heightMap[fp.y][zStartX] = 0;
           }
         }
       }
@@ -2510,6 +2536,7 @@ function sfxHurt(){playNote(200,0.15,'sawtooth',0.15);setTimeout(()=>playNote(15
 function sfxBounce(){playNote(300,0.1,'sine',0.12);setTimeout(()=>playNote(500,0.08,'sine',0.1),60);setTimeout(()=>playNote(700,0.06,'sine',0.08),120)}
 function sfxWeb(){playNote(100,0.2,'triangle',0.06)}
 function sfxMud(){playNote(80,0.15,'triangle',0.08)}
+function sfxGem(){playNote(800,0.08,'sine',0.1);setTimeout(()=>playNote(1200,0.08,'sine',0.1),60);setTimeout(()=>playNote(1600,0.1,'sine',0.12),120);setTimeout(()=>playNote(2000,0.06,'sine',0.08),180)}
 function sfxSpring(){playNote(300,0.05,'square',0.1);setTimeout(()=>playNote(500,0.05,'square',0.08),40);setTimeout(()=>playNote(800,0.08,'square',0.12),80)}
 function sfxHeart(){playNote(523,0.1,'sine',0.12);setTimeout(()=>playNote(659,0.1,'sine',0.12),100);setTimeout(()=>playNote(784,0.15,'sine',0.15),200)}
 function sfxGameOver(){playNote(400,0.15,'sawtooth',0.15);setTimeout(()=>playNote(300,0.15,'sawtooth',0.12),200);setTimeout(()=>playNote(200,0.3,'sawtooth',0.1),400)}
@@ -2762,6 +2789,11 @@ const MAT = {
   acUnit: new THREE.MeshStandardMaterial({color:0x888888,flatShading:true}),
   chimney: new THREE.MeshStandardMaterial({color:0x6B4226,flatShading:true}),
   baseTrim: new THREE.MeshStandardMaterial({color:0x5C4033,flatShading:true}),
+  gemPink: new THREE.MeshStandardMaterial({color:0xFF69B4,emissive:0xFF69B4,emissiveIntensity:0.5,flatShading:true,metalness:0.4,roughness:0.3}),
+  gemBlue: new THREE.MeshStandardMaterial({color:0x4FC3F7,emissive:0x4FC3F7,emissiveIntensity:0.5,flatShading:true,metalness:0.4,roughness:0.3}),
+  gemGold: new THREE.MeshStandardMaterial({color:0xFFD700,emissive:0xFFD700,emissiveIntensity:0.7,flatShading:true,metalness:0.6,roughness:0.2}),
+  platformStone: new THREE.MeshStandardMaterial({color:0x8E8E7A,flatShading:true}),
+  platformTopMoss: new THREE.MeshStandardMaterial({color:0x7AA07A,flatShading:true}),
   platform: new THREE.MeshStandardMaterial({color:0x8B7355,flatShading:true}),
   platformTop: new THREE.MeshStandardMaterial({color:0xa08660,flatShading:true}),
   thorns: new THREE.MeshStandardMaterial({color:0x5c1a1a,flatShading:true}),
@@ -3319,7 +3351,7 @@ function buildLevel3D(levelData) {
   if (hm) {
     for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
       const tile = map[r][c];
-      if (tile === T.PLATFORM || tile === T.PLATFORM_HIGH) platTiles.push({r, c, h: hm[r][c]});
+      if (tile === T.PLATFORM || tile === T.PLATFORM_HIGH || tile === T.GEM_PINK || tile === T.GEM_BLUE || tile === T.GEM_GOLD) platTiles.push({r, c, h: hm[r][c]});
       else if (tile === T.THORNS) thornTiles.push({r, c, h: hm[r][c]});
       else if (tile === T.BOUNCE_SHROOM) bounceTiles.push({r, c, h: hm[r][c]});
       else if (tile === T.SPIDERWEB) webTiles.push({r, c, h: hm[r][c]});
@@ -3328,30 +3360,79 @@ function buildLevel3D(levelData) {
       else if (tile === T.SPRING_PAD) springTiles.push({r, c, h: hm[r][c]});
     }
   }
-  // Platform boxes
+  // Platform boxes — wood & stone mix with plank detail
   if (platTiles.length > 0) {
     const pGeo = new THREE.BoxGeometry(0.95, 0.15, 0.95);
-    const pIM = new THREE.InstancedMesh(pGeo, MAT.platform, platTiles.length);
-    pIM.castShadow = true; pIM.receiveShadow = true;
     const pm = new THREE.Matrix4();
-    platTiles.forEach((p, i) => {
-      pm.makeTranslation(p.c + 0.5, p.h, p.r + 0.5);
-      pIM.setMatrixAt(i, pm);
-      const cv = new THREE.Color(0x8B7355).offsetHSL(0, 0, ((p.r*3+p.c*7)%11)/55 - 0.1);
-      pIM.setColorAt(i, cv);
-    });
-    pIM.instanceMatrix.needsUpdate = true;
-    if (pIM.instanceColor) pIM.instanceColor.needsUpdate = true;
-    scene.add(pIM); sceneObjects.push(pIM);
-    // Plank marks on top
-    const topGeo = new THREE.BoxGeometry(0.85, 0.02, 0.85);
-    const topIM = new THREE.InstancedMesh(topGeo, MAT.platformTop, platTiles.length);
-    platTiles.forEach((p, i) => {
-      pm.makeTranslation(p.c + 0.5, p.h + 0.08, p.r + 0.5);
-      topIM.setMatrixAt(i, pm);
-    });
-    topIM.instanceMatrix.needsUpdate = true;
-    scene.add(topIM); sceneObjects.push(topIM);
+    // Split into wood and mossy stone
+    const woodP = [], stoneP = [];
+    platTiles.forEach(p => ((p.r*5+p.c*3)%3===0) ? stoneP.push(p) : woodP.push(p));
+    // Wood platforms
+    if (woodP.length > 0) {
+      const wIM = new THREE.InstancedMesh(pGeo, MAT.platform, woodP.length);
+      wIM.castShadow = true; wIM.receiveShadow = true;
+      woodP.forEach((p, i) => {
+        pm.makeTranslation(p.c+0.5, p.h, p.r+0.5);
+        wIM.setMatrixAt(i, pm);
+        const cv = new THREE.Color(0x8B7355).offsetHSL(0, 0, ((p.r*3+p.c*7)%11)/55-0.1);
+        wIM.setColorAt(i, cv);
+      });
+      wIM.instanceMatrix.needsUpdate = true;
+      if (wIM.instanceColor) wIM.instanceColor.needsUpdate = true;
+      scene.add(wIM); sceneObjects.push(wIM);
+      // Plank lines
+      const plankGeo = new THREE.BoxGeometry(0.85, 0.025, 0.14);
+      const plankIM = new THREE.InstancedMesh(plankGeo, MAT.platformTop, woodP.length*3);
+      let pli = 0;
+      woodP.forEach(p => {
+        for (const dz of [-0.28, 0, 0.28]) {
+          pm.makeTranslation(p.c+0.5, p.h+0.08, p.r+0.5+dz);
+          plankIM.setMatrixAt(pli++, pm);
+        }
+      });
+      plankIM.count = pli; plankIM.instanceMatrix.needsUpdate = true;
+      scene.add(plankIM); sceneObjects.push(plankIM);
+    }
+    // Stone/moss platforms
+    if (stoneP.length > 0) {
+      const sIM = new THREE.InstancedMesh(pGeo, MAT.platformStone, stoneP.length);
+      sIM.castShadow = true; sIM.receiveShadow = true;
+      stoneP.forEach((p, i) => {
+        pm.makeTranslation(p.c+0.5, p.h, p.r+0.5);
+        sIM.setMatrixAt(i, pm);
+        const cv2 = new THREE.Color(0x7A8A6A).offsetHSL(0, 0, ((p.r*5+p.c*3)%9)/45-0.1);
+        sIM.setColorAt(i, cv2);
+      });
+      sIM.instanceMatrix.needsUpdate = true;
+      if (sIM.instanceColor) sIM.instanceColor.needsUpdate = true;
+      scene.add(sIM); sceneObjects.push(sIM);
+      // Moss patches
+      const mossGeo = new THREE.BoxGeometry(0.5, 0.025, 0.5);
+      const mossIM = new THREE.InstancedMesh(mossGeo, MAT.platformTopMoss, stoneP.length);
+      stoneP.forEach((p, i) => {
+        pm.makeTranslation(p.c+0.5+((p.r*3)%5-2)*0.05, p.h+0.08, p.r+0.5+((p.c*7)%5-2)*0.05);
+        mossIM.setMatrixAt(i, pm);
+      });
+      mossIM.instanceMatrix.needsUpdate = true;
+      scene.add(mossIM); sceneObjects.push(mossIM);
+    }
+    // Small flowers on ~20% of platforms
+    const flowerPlats = platTiles.filter(p => ((p.r*7+p.c*11)%5)===0 && p.h >= 0.3);
+    if (flowerPlats.length > 0) {
+      const flGeo = new THREE.SphereGeometry(0.05, 5, 4);
+      const flMat = new THREE.MeshStandardMaterial({color:0xFF69B4, emissive:0xFF69B4, emissiveIntensity:0.2, flatShading:true});
+      const flIM = new THREE.InstancedMesh(flGeo, flMat, flowerPlats.length);
+      flowerPlats.forEach((p, i) => {
+        const ox = ((p.r*3)%7-3)*0.05, oz = ((p.c*5)%7-3)*0.05;
+        pm.makeTranslation(p.c+0.5+ox, p.h+0.13, p.r+0.5+oz);
+        flIM.setMatrixAt(i, pm);
+        const fc2 = new THREE.Color(((p.r+p.c)%3===0)?0xFF69B4:((p.r+p.c)%3===1)?0xFFEB3B:0xB39DDB);
+        flIM.setColorAt(i, fc2);
+      });
+      flIM.instanceMatrix.needsUpdate = true;
+      if (flIM.instanceColor) flIM.instanceColor.needsUpdate = true;
+      scene.add(flIM); sceneObjects.push(flIM);
+    }
     // Support posts under platforms
     const postGeo = new THREE.CylinderGeometry(0.04, 0.06, 1, 4);
     const postCount = platTiles.filter(p => p.h > 0.15).length * 4;
@@ -3460,6 +3541,62 @@ function buildLevel3D(levelData) {
     scene.add(hIM); sceneObjects.push(hIM);
     levelData._heartMesh = hIM;
     levelData._heartTiles = heartTiles;
+  }
+  // ===== GEM COLLECTIBLES 3D =====
+  const gemTiles = [];
+  if (hm) {
+    for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
+      const tile = map[r][c];
+      if (tile === T.GEM_PINK || tile === T.GEM_BLUE || tile === T.GEM_GOLD)
+        gemTiles.push({r, c, h: hm[r][c], type: tile});
+    }
+  }
+  if (gemTiles.length > 0) {
+    const gemGeo = new THREE.OctahedronGeometry(0.18, 0);
+    const gemGeoLg = new THREE.OctahedronGeometry(0.22, 0);
+    const pinkG = gemTiles.filter(g => g.type === T.GEM_PINK);
+    const blueG = gemTiles.filter(g => g.type === T.GEM_BLUE);
+    const goldG = gemTiles.filter(g => g.type === T.GEM_GOLD);
+    const gm2 = new THREE.Matrix4();
+    if (pinkG.length > 0) {
+      const pgIM = new THREE.InstancedMesh(gemGeo, MAT.gemPink, pinkG.length);
+      pinkG.forEach((g, i) => { gm2.makeTranslation(g.c+0.5, g.h+0.4, g.r+0.5); pgIM.setMatrixAt(i, gm2); });
+      pgIM.instanceMatrix.needsUpdate = true; scene.add(pgIM); sceneObjects.push(pgIM);
+      levelData._gemPinkIM = pgIM; levelData._gemPinkTiles = pinkG;
+    }
+    if (blueG.length > 0) {
+      const bgIM = new THREE.InstancedMesh(gemGeo, MAT.gemBlue, blueG.length);
+      blueG.forEach((g, i) => { gm2.makeTranslation(g.c+0.5, g.h+0.4, g.r+0.5); bgIM.setMatrixAt(i, gm2); });
+      bgIM.instanceMatrix.needsUpdate = true; scene.add(bgIM); sceneObjects.push(bgIM);
+      levelData._gemBlueIM = bgIM; levelData._gemBlueTiles = blueG;
+    }
+    if (goldG.length > 0) {
+      const ggIM = new THREE.InstancedMesh(gemGeoLg, MAT.gemGold, goldG.length);
+      goldG.forEach((g, i) => { gm2.makeTranslation(g.c+0.5, g.h+0.45, g.r+0.5); ggIM.setMatrixAt(i, gm2); });
+      ggIM.instanceMatrix.needsUpdate = true; scene.add(ggIM); sceneObjects.push(ggIM);
+      levelData._gemGoldIM = ggIM; levelData._gemGoldTiles = goldG;
+    }
+    levelData._allGemTiles = gemTiles;
+  }
+  // Stepping stone hints in water
+  const stoneHints = [];
+  if (hm) {
+    for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
+      if (map[r][c] === T.WATER && hm[r][c] > -0.25 && hm[r][c] < 0)
+        stoneHints.push({r, c});
+    }
+  }
+  if (stoneHints.length > 0) {
+    const stoneGeo = new THREE.SphereGeometry(0.15, 5, 4);
+    const stoneMat = new THREE.MeshStandardMaterial({color: 0x888877, flatShading: true});
+    const stIM = new THREE.InstancedMesh(stoneGeo, stoneMat, stoneHints.length);
+    const stm = new THREE.Matrix4();
+    stoneHints.forEach((s, i) => {
+      stm.makeScale(1+((s.r*3+s.c*5)%5)*0.1, 0.6, 1+((s.r*7+s.c*3)%5)*0.1);
+      stm.setPosition(s.c+0.5, -0.08, s.r+0.5);
+      stIM.setMatrixAt(i, stm);
+    });
+    stIM.instanceMatrix.needsUpdate = true; scene.add(stIM); sceneObjects.push(stIM);
   }
   // Spring pads
   if (springTiles.length > 0) {
@@ -5432,6 +5569,19 @@ class Game{
         setTimeout(()=>coinEl.parentElement.classList.remove('coin-pop'),300);}
       // Floating +1
       showFlash('🪙 +1','#FFD700');
+    // Gem pickup (walking)
+    const gemTile=this.map[ny]?.[nx];
+    if(gemTile===T.GEM_PINK||gemTile===T.GEM_BLUE||gemTile===T.GEM_GOLD){
+      const gval=gemTile===T.GEM_GOLD?10:gemTile===T.GEM_BLUE?5:3;
+      const gcol=gemTile===T.GEM_GOLD?'#FFD700':gemTile===T.GEM_BLUE?'#4FC3F7':'#FF69B4';
+      this.coinsCollected+=gval;sfxGem();
+      this.addBurst(nx+0.5,(this.heightMap[ny]?.[nx]||0)+0.5,ny+0.5,15,gcol);
+      showFlash('💎 +'+gval,gcol);
+      const coinEl3=document.getElementById('hud-coins');
+      if(coinEl3){coinEl3.textContent=this.coinsCollected;coinEl3.parentElement.classList.add('coin-pop');
+        setTimeout(()=>coinEl3.parentElement.classList.remove('coin-pop'),300);}
+      this.map[ny][nx]=T.PLATFORM;
+    }
     }
     // Check speed boost pickup
     const bi=this.speedBoosts.findIndex(b=>b.x===nx&&b.y===ny&&!b.collected);
@@ -5560,6 +5710,19 @@ class Game{
           break;
         }
       }
+      return;
+    }
+    // Gem pickup via trap check
+    if(tile===T.GEM_PINK||tile===T.GEM_BLUE||tile===T.GEM_GOLD){
+      const gval3=tile===T.GEM_GOLD?10:tile===T.GEM_BLUE?5:3;
+      const gcol3=tile===T.GEM_GOLD?'#FFD700':tile===T.GEM_BLUE?'#4FC3F7':'#FF69B4';
+      this.coinsCollected+=gval3;sfxGem();
+      this.addBurst(x+0.5,(this.heightMap[y]?.[x]||0)+0.5,y+0.5,15,gcol3);
+      showFlash('💎 +'+gval3,gcol3);
+      const coinEl5=document.getElementById('hud-coins');
+      if(coinEl5){coinEl5.textContent=this.coinsCollected;coinEl5.parentElement.classList.add('coin-pop');
+        setTimeout(()=>coinEl5.parentElement.classList.remove('coin-pop'),300);}
+      this.map[y][x]=T.PLATFORM;
       return;
     }
     // Check water/fall
@@ -5820,6 +5983,19 @@ class Game{
           if(coinEl2){coinEl2.textContent=this.coinsCollected;coinEl2.parentElement.classList.add('coin-pop');
             setTimeout(()=>coinEl2.parentElement.classList.remove('coin-pop'),300);}
           showFlash('🪙 +1','#FFD700');
+        // Gem pickup (jump landing)
+        const gemTile2=this.map[this.p.y]?.[this.p.x];
+        if(gemTile2===T.GEM_PINK||gemTile2===T.GEM_BLUE||gemTile2===T.GEM_GOLD){
+          const gv2=gemTile2===T.GEM_GOLD?10:gemTile2===T.GEM_BLUE?5:3;
+          const gc2=gemTile2===T.GEM_GOLD?'#FFD700':gemTile2===T.GEM_BLUE?'#4FC3F7':'#FF69B4';
+          this.coinsCollected+=gv2;sfxGem();
+          this.addBurst(this.p.x+0.5,this.p.elevation+0.5,this.p.y+0.5,15,gc2);
+          showFlash('💎 +'+gv2,gc2);
+          const coinEl4=document.getElementById('hud-coins');
+          if(coinEl4){coinEl4.textContent=this.coinsCollected;coinEl4.parentElement.classList.add('coin-pop');
+            setTimeout(()=>coinEl4.parentElement.classList.remove('coin-pop'),300);}
+          this.map[this.p.y][this.p.x]=T.PLATFORM;
+        }
         }
         // Safe position
         const landTile=this.map[this.p.y]?this.map[this.p.y][this.p.x]:T.GRASS;
@@ -5834,6 +6010,15 @@ class Game{
       }
     }
     // Smooth elevation for walking
+    // Safety: respawn if on water without jumping
+    if(!this.p.jumping&&!this.p.moving){
+      const curTile2=this.map[this.p.y]?.[this.p.x];
+      if(curTile2===T.WATER||curTile2===T.RIVER){
+        this.takeDamage('fall');
+        this.addBurst(this.p.px+0.5,0,this.p.py+0.5,10,'#2196F3');
+        showFlash('💦 Splash!','#2196F3');
+      }
+    }
     if(!this.p.jumping&&Math.abs(this.p.elevation-this.p.targetElevation)>0.01){
       this.p.elevation+=(this.p.targetElevation-this.p.elevation)*0.15;
     }
@@ -5903,6 +6088,36 @@ class Game{
       });
       him.instanceMatrix.needsUpdate=true;
     }
+    // Gem float + rotate animation
+    const gemRotY = this.fc * 0.04;
+    const gemTypes = [
+      {im: this.ld._gemPinkIM, tiles: this.ld._gemPinkTiles, baseY: 0.4},
+      {im: this.ld._gemBlueIM, tiles: this.ld._gemBlueTiles, baseY: 0.4},
+      {im: this.ld._gemGoldIM, tiles: this.ld._gemGoldTiles, baseY: 0.45},
+    ];
+    const gm4 = new THREE.Matrix4();
+    const gq = new THREE.Quaternion();
+    const gv = new THREE.Vector3();
+    const gs = new THREE.Vector3(1,1,1);
+    for (const gt of gemTypes) {
+      if (!gt.im || !gt.tiles) continue;
+      let changed = false;
+      gt.tiles.forEach((g, i) => {
+        const gTile = this.map[g.r]?.[g.c];
+        if (gTile !== T.GEM_PINK && gTile !== T.GEM_BLUE && gTile !== T.GEM_GOLD) {
+          gm4.makeScale(0,0,0); gm4.setPosition(0,-10,0);
+        } else {
+          const bob2 = Math.sin(this.fc * 0.05 + i * 2.5) * 0.08;
+          gq.setFromEuler(new THREE.Euler(0, gemRotY + i * 0.7, 0));
+          gv.set(g.c + 0.5, g.h + gt.baseY + bob2, g.r + 0.5);
+          gm4.compose(gv, gq, gs);
+        }
+        gt.im.setMatrixAt(i, gm4);
+        changed = true;
+      });
+      if (changed) gt.im.instanceMatrix.needsUpdate = true;
+    }
+
 
     // Dog following
     let prevX=this.p.px,prevY=this.p.py;
