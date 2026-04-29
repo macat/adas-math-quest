@@ -2431,6 +2431,17 @@ const MAT = {
   exit: new THREE.MeshStandardMaterial({color:0x4CAF50,flatShading:true,emissive:0x4CAF50,emissiveIntensity:0.5,transparent:true,opacity:0.8}),
   start: new THREE.MeshStandardMaterial({color:0x64b5f6,flatShading:true,emissive:0x2196f3,emissiveIntensity:0.3,transparent:true,opacity:0.7}),
   window: new THREE.MeshStandardMaterial({color:0xffeb3b,flatShading:true,emissive:0xffeb3b,emissiveIntensity:0.8}),
+  // City building materials
+  windowLit: new THREE.MeshStandardMaterial({color:0xFFE4B5,flatShading:true,emissive:0xFFE4B5,emissiveIntensity:0.7}),
+  windowDark: new THREE.MeshStandardMaterial({color:0x1a1a3a,flatShading:true,emissive:0x0a0a1a,emissiveIntensity:0.1}),
+  doorCity: new THREE.MeshStandardMaterial({color:0x3E2723,flatShading:true}),
+  doorWindow: new THREE.MeshStandardMaterial({color:0xFFE0B2,flatShading:true,emissive:0xFFE0B2,emissiveIntensity:0.4}),
+  awning: new THREE.MeshStandardMaterial({color:0x8B0000,flatShading:true}),
+  cornice: new THREE.MeshStandardMaterial({color:0x999999,flatShading:true}),
+  waterTank: new THREE.MeshStandardMaterial({color:0x8B7355,flatShading:true}),
+  acUnit: new THREE.MeshStandardMaterial({color:0x888888,flatShading:true}),
+  chimney: new THREE.MeshStandardMaterial({color:0x6B4226,flatShading:true}),
+  baseTrim: new THREE.MeshStandardMaterial({color:0x5C4033,flatShading:true}),
   lampLight: new THREE.MeshStandardMaterial({color:0xffeb3b,flatShading:true,emissive:0xffeb3b,emissiveIntensity:1.0}),
   taxi: new THREE.MeshStandardMaterial({color:0xfdd835,flatShading:true}),
   white: new THREE.MeshStandardMaterial({color:0xffffff,flatShading:true}),
@@ -2621,34 +2632,174 @@ function buildLevel3D(levelData) {
     sceneObjects.push(rockIM);
   }
 
-  // Build buildings (BUILDING, BLDG_WINDOW, BLDG_DOOR)
+  // Build buildings (BUILDING, BLDG_WINDOW, BLDG_DOOR) — city-aware
   const bldTypes = [T.BUILDING, T.BLDG_WINDOW, T.BLDG_DOOR];
   const bldCount = bldTypes.reduce((s, t2) => s + (counts[t2] || 0), 0);
   if (bldCount > 0) {
-    // Varying heights
+    const isCity = biome.startsWith('city');
+    const isBudapest = biome === 'city_budapest';
+    const isNYC = biome === 'city_nyc';
+
+    // City color palettes
+    const nycPalette = [0x8B4513,0xA0522D,0xCD853F,0x8B3A3A,0xA52A2A,0xB22222,0xD2B48C,0xC4A882,0xDEB887,0x808080,0x696969,0x778899,0x4682B4,0x5F9EA0,0x708090];
+    const budapestPalette = [0xE8C547,0xD4A84B,0xC5993A,0xE8D5B7,0xD4C5A9,0xF5E6CC,0x5B8C5A,0x4A7B8C,0xC8BFA9,0xB5A88A,0xDEB887,0xC4A882];
+
+    // Height map: store per-tile for later window placement
+    const bldHeights = {};
+    // Block ID for consistent coloring across adjacent tiles
+    function blockId(r,c){ return Math.floor(r/4)*10000+Math.floor(c/4); }
+
     const bldGeo = new THREE.BoxGeometry(0.95, 1, 0.95);
     const bldIM = new THREE.InstancedMesh(bldGeo, MAT.building, bldCount);
     bldIM.castShadow = true;
     let bii = 0;
     const m4 = new THREE.Matrix4();
-    // Window planes
-    const windowPositions = [];
-    // Door indicators
-    const doorPositions = [];
+
+    // Track exposed faces for window grids, doors, cornices, rooftops
+    const litWindows = [];
+    const darkWindows = [];
+    const doorData = [];
+    const corniceData = [];
+    const rooftopItems = []; // {type:'tank'|'ac'|'chimney', x, z, h}
+    const awningData = [];
+    const baseTrimData = [];
+    // Non-building tile set for face exposure check
+    const nonBld = new Set();
+    for (const t2 of [T.ROAD,T.SIDEWALK,T.PARK,T.GRASS,T.DGRASS,T.PATH,T.WATER,T.RIVER,T.BRIDGE,T.FLOWER,T.TGRASS,T.MUSH,T.BUSH,T.LAMPPOST,T.TAXI,T.START,T.EXIT,T.GATE,T.DOG_GATE,T.DOG,T.FENCE]) nonBld.add(t2);
+
     for (let r = 0; r < mh; r++) for (let c = 0; c < mw; c++) {
       const tile = map[r][c];
-      if (bldTypes.includes(tile)) {
-        const rng = ((r * 5 + c * 11) % 13) / 13;
-        const h = 1.5 + rng * 1.5;
-        m4.makeScale(1, h, 1);
-        m4.setPosition(c + 0.5, h / 2, r + 0.5);
-        bldIM.setMatrixAt(bii, m4);
-        // Vary color per building
-        const colorVar = new THREE.Color(0x8d4e3a).offsetHSL(0, 0, rng * 0.1 - 0.05);
-        bldIM.setColorAt(bii, colorVar);
-        bii++;
-        if (tile === T.BLDG_WINDOW) windowPositions.push({x:c+0.5, y:h*0.6, z:r+0.5, h});
-        if (tile === T.BLDG_DOOR) doorPositions.push({x:c+0.5, y:0.25, z:r+0.99});
+      if (!bldTypes.includes(tile)) continue;
+      const rng = ((r * 5 + c * 11) % 13) / 13;
+      // NYC: dramatic skyline with occasional skyscrapers; Budapest: medium-height Habsburg blocks
+      const rng2 = ((r * 3 + c * 7) % 17) / 17;
+      let h;
+      if (isNYC) {
+        h = rng2 < 0.08 ? (4.5 + rng * 2.5) : // ~8% skyscrapers (4.5-7.0)
+            rng2 < 0.3 ? (3.0 + rng * 1.5) :   // ~22% tall (3.0-4.5)
+            (1.8 + rng * 1.5);                    // ~70% regular (1.8-3.3)
+      } else if (isBudapest) {
+        h = rng2 < 0.05 ? (3.5 + rng * 1.5) :  // ~5% tall (Parliament etc.)
+            (2.0 + rng * 1.5);                    // regular Habsburg (2.0-3.5)
+      } else {
+        h = 1.5 + rng * 1.5;                      // non-city default
+      }
+      bldHeights[r+','+c] = h;
+
+      m4.makeScale(1, h, 1);
+      m4.setPosition(c + 0.5, h / 2, r + 0.5);
+      bldIM.setMatrixAt(bii, m4);
+
+      // Color per block
+      let bldColor;
+      if (isCity) {
+        const bid = blockId(r,c);
+        const palette = isBudapest ? budapestPalette : nycPalette;
+        const ci = ((bid * 7 + 3) % palette.length);
+        bldColor = new THREE.Color(palette[ci]);
+        // Slight per-tile variation within block
+        bldColor.offsetHSL(0, 0, (rng * 0.06 - 0.03));
+      } else {
+        bldColor = new THREE.Color(0x8d4e3a).offsetHSL(0, 0, rng * 0.1 - 0.05);
+      }
+      bldIM.setColorAt(bii, bldColor);
+      bii++;
+
+      // Detect exposed faces and generate window grids (city only)
+      if (isCity) {
+        // Face directions: [dx, dz, rotY]  (dx/dz in map coords; rotY = rotation for window plane)
+        const faces = [
+          [0, -1, 0],          // North face (row-1): plane faces +Z (rotY=0)
+          [0, 1, Math.PI],     // South face (row+1): plane faces -Z
+          [-1, 0, Math.PI/2],  // West face (col-1): plane faces +X
+          [1, 0, -Math.PI/2],  // East face (col+1): plane faces -X
+        ];
+        for (const [dc, dr, rotY] of faces) {
+          const nr = r + dr, nc = c + dc;
+          const neighborTile = (nr >= 0 && nr < mh && nc >= 0 && nc < mw) ? map[nr][nc] : -1;
+          if (neighborTile < 0 || nonBld.has(neighborTile)) {
+            // This face is exposed — add window grid
+            const winCols = 3; // 3 windows across
+            const floorH = 0.45; // floor-to-floor height
+            const winFloors = Math.max(1, Math.floor((h - 0.3) / floorH));
+            const winW = 0.13, winH = 0.17;
+
+            for (let fy = 0; fy < winFloors; fy++) {
+              for (let wx = 0; wx < winCols; wx++) {
+                const localX = (wx - 1) * 0.25; // -0.25, 0, 0.25
+                const localY = 0.25 + fy * floorH;
+                if (localY + winH/2 > h - 0.1) continue; // don't go above roofline
+
+                // World position: offset from tile center along face normal
+                let wpx = c + 0.5, wpz = r + 0.5, wpy = localY;
+                if (dc === 0 && dr === -1) { wpz -= 0.476; wpx += localX; }
+                else if (dc === 0 && dr === 1) { wpz += 0.476; wpx += localX; }
+                else if (dc === -1 && dr === 0) { wpx -= 0.476; wpz += localX; }
+                else if (dc === 1 && dr === 0) { wpx += 0.476; wpz += localX; }
+
+                // Deterministic lit/unlit — ~65% lit
+                const litHash = ((r*17+c*31+fy*7+wx*13)%20);
+                if (litHash < 13) {
+                  litWindows.push({x:wpx, y:wpy, z:wpz, rotY});
+                } else {
+                  darkWindows.push({x:wpx, y:wpy, z:wpz, rotY});
+                }
+              }
+            }
+
+            // Base trim on ground-level exposed faces
+            if (dr === 1 || (dr === 0 && dc === 1)) { // south or east only to avoid doubling
+              baseTrimData.push({x: c + 0.5, z: r + 0.5, rotY, dc, dr});
+            }
+          }
+        }
+
+        // Door handling
+        if (tile === T.BLDG_DOOR) {
+          // Find which face to put the door on (prefer south, then any exposed face)
+          let doorRotY = 0, doorX = c + 0.5, doorZ = r + 0.5 + 0.476;
+          const southTile = (r+1 < mh) ? map[r+1][c] : -1;
+          const northTile = (r-1 >= 0) ? map[r-1][c] : -1;
+          const eastTile = (c+1 < mw) ? map[r][c+1] : -1;
+          const westTile = (c-1 >= 0) ? map[r][c-1] : -1;
+          if (nonBld.has(southTile) || southTile < 0) {
+            doorRotY = Math.PI; doorX = c+0.5; doorZ = r+0.5+0.476;
+          } else if (nonBld.has(northTile) || northTile < 0) {
+            doorRotY = 0; doorX = c+0.5; doorZ = r+0.5-0.476;
+          } else if (nonBld.has(eastTile) || eastTile < 0) {
+            doorRotY = -Math.PI/2; doorX = c+0.5+0.476; doorZ = r+0.5;
+          } else if (nonBld.has(westTile) || westTile < 0) {
+            doorRotY = Math.PI/2; doorX = c+0.5-0.476; doorZ = r+0.5;
+          }
+          doorData.push({x:doorX, z:doorZ, rotY:doorRotY});
+          // Awning above some doors (30%)
+          if (((r*13+c*7)%10) < 3) {
+            awningData.push({x:doorX, z:doorZ, rotY:doorRotY});
+          }
+        }
+
+        // Cornice at rooftop on exposed faces
+        const aboveTile = (r-1 >= 0) ? map[r-1][c] : -1;
+        const isTopOfBuilding = !bldTypes.includes(aboveTile) || r === 0;
+        // Check if visually at top (simplified: check N/S/E/W for non-building at same height)
+        if (isTopOfBuilding || ((r*3+c*5)%7 === 0)) {
+          corniceData.push({x: c+0.5, z: r+0.5, h});
+        }
+
+        // Rooftop items
+        const roofHash = (r*11+c*23)%100;
+        if (isNYC && roofHash < 12) {
+          rooftopItems.push({type:'tank', x:c+0.5, z:r+0.5, h});
+        } else if (isNYC && roofHash < 28) {
+          rooftopItems.push({type:'ac', x:c+0.5, z:r+0.5, h});
+        } else if (isBudapest && roofHash < 18) {
+          rooftopItems.push({type:'chimney', x:c+0.5, z:r+0.5, h});
+        }
+
+      } else {
+        // Non-city: keep old simple window/door logic
+        if (tile === T.BLDG_WINDOW) litWindows.push({x:c+0.5, y:h*0.6, z:r+0.5+0.48, rotY:0});
+        if (tile === T.BLDG_DOOR) doorData.push({x:c+0.5, z:r+0.5+0.476, rotY:0});
       }
     }
     bldIM.instanceMatrix.needsUpdate = true;
@@ -2656,33 +2807,163 @@ function buildLevel3D(levelData) {
     scene.add(bldIM);
     sceneObjects.push(bldIM);
 
-    // Add window planes
-    if (windowPositions.length > 0) {
-      const wGeo = new THREE.PlaneGeometry(0.15, 0.15);
-      const wIM = new THREE.InstancedMesh(wGeo, MAT.window, windowPositions.length);
-      windowPositions.forEach((wp, i) => {
-        const m = new THREE.Matrix4();
-        m.makeTranslation(wp.x, wp.y, wp.z + 0.48);
-        wIM.setMatrixAt(i, m);
+    // === LIT WINDOWS InstancedMesh ===
+    if (litWindows.length > 0) {
+      const wGeo = new THREE.PlaneGeometry(0.12, 0.16);
+      const wIM = new THREE.InstancedMesh(wGeo, MAT.windowLit, litWindows.length);
+      const wm = new THREE.Matrix4(), wq = new THREE.Quaternion(), wv = new THREE.Vector3(), ws = new THREE.Vector3(1,1,1);
+      litWindows.forEach((wp, i) => {
+        wq.setFromEuler(new THREE.Euler(0, wp.rotY, 0));
+        wv.set(wp.x, wp.y, wp.z);
+        wm.compose(wv, wq, ws);
+        wIM.setMatrixAt(i, wm);
       });
       wIM.instanceMatrix.needsUpdate = true;
       scene.add(wIM);
       sceneObjects.push(wIM);
     }
 
-    // Door panels
-    if (doorPositions.length > 0) {
-      const dGeo = new THREE.PlaneGeometry(0.2, 0.35);
-      const dMat = new THREE.MeshStandardMaterial({color:0x3e2723, flatShading:true});
-      const dIM = new THREE.InstancedMesh(dGeo, dMat, doorPositions.length);
-      doorPositions.forEach((dp, i) => {
-        const m = new THREE.Matrix4();
-        m.makeTranslation(dp.x, dp.y, dp.z);
-        dIM.setMatrixAt(i, m);
+    // === DARK WINDOWS InstancedMesh ===
+    if (darkWindows.length > 0) {
+      const wGeo = new THREE.PlaneGeometry(0.12, 0.16);
+      const wIM = new THREE.InstancedMesh(wGeo, MAT.windowDark, darkWindows.length);
+      const wm = new THREE.Matrix4(), wq = new THREE.Quaternion(), wv = new THREE.Vector3(), ws = new THREE.Vector3(1,1,1);
+      darkWindows.forEach((wp, i) => {
+        wq.setFromEuler(new THREE.Euler(0, wp.rotY, 0));
+        wv.set(wp.x, wp.y, wp.z);
+        wm.compose(wv, wq, ws);
+        wIM.setMatrixAt(i, wm);
+      });
+      wIM.instanceMatrix.needsUpdate = true;
+      scene.add(wIM);
+      sceneObjects.push(wIM);
+    }
+
+    // === DOORS InstancedMesh ===
+    if (doorData.length > 0) {
+      const dGeo = new THREE.PlaneGeometry(0.22, 0.42);
+      const dIM = new THREE.InstancedMesh(dGeo, MAT.doorCity, doorData.length);
+      const dm4 = new THREE.Matrix4(), dq = new THREE.Quaternion(), dv = new THREE.Vector3(), ds = new THREE.Vector3(1,1,1);
+      doorData.forEach((dp, i) => {
+        dq.setFromEuler(new THREE.Euler(0, dp.rotY, 0));
+        dv.set(dp.x, 0.22, dp.z);
+        dm4.compose(dv, dq, ds);
+        dIM.setMatrixAt(i, dm4);
       });
       dIM.instanceMatrix.needsUpdate = true;
       scene.add(dIM);
       sceneObjects.push(dIM);
+
+      // Door window (small bright rectangle at top of door)
+      const dwGeo = new THREE.PlaneGeometry(0.10, 0.08);
+      const dwIM = new THREE.InstancedMesh(dwGeo, MAT.doorWindow, doorData.length);
+      doorData.forEach((dp, i) => {
+        dq.setFromEuler(new THREE.Euler(0, dp.rotY, 0));
+        // slightly in front of door and at top
+        const offX = Math.sin(dp.rotY) * 0.002;
+        const offZ = Math.cos(dp.rotY) * 0.002;
+        dv.set(dp.x + offX, 0.38, dp.z + offZ);
+        dm4.compose(dv, dq, ds);
+        dwIM.setMatrixAt(i, dm4);
+      });
+      dwIM.instanceMatrix.needsUpdate = true;
+      scene.add(dwIM);
+      sceneObjects.push(dwIM);
+    }
+
+    // === AWNINGS InstancedMesh ===
+    if (awningData.length > 0) {
+      const aGeo = new THREE.BoxGeometry(0.35, 0.03, 0.15);
+      const aIM = new THREE.InstancedMesh(aGeo, MAT.awning, awningData.length);
+      const am = new THREE.Matrix4(), aq = new THREE.Quaternion(), av = new THREE.Vector3(), as2 = new THREE.Vector3(1,1,1);
+      awningData.forEach((aw, i) => {
+        aq.setFromEuler(new THREE.Euler(0, aw.rotY, 0));
+        // Awning sticks out from wall above door
+        const outX = -Math.sin(aw.rotY) * 0.08;
+        const outZ = -Math.cos(aw.rotY) * 0.08;
+        av.set(aw.x + outX, 0.50, aw.z + outZ);
+        am.compose(av, aq, as2);
+        aIM.setMatrixAt(i, am);
+      });
+      aIM.instanceMatrix.needsUpdate = true;
+      scene.add(aIM);
+      sceneObjects.push(aIM);
+    }
+
+    // === CORNICES (top ledge) InstancedMesh ===
+    if (corniceData.length > 0) {
+      const cGeo = new THREE.BoxGeometry(0.98, 0.06, 0.98);
+      const cIM = new THREE.InstancedMesh(cGeo, MAT.cornice, corniceData.length);
+      const cm = new THREE.Matrix4();
+      corniceData.forEach((co, i) => {
+        cm.makeTranslation(co.x, co.h + 0.02, co.z);
+        cIM.setMatrixAt(i, cm);
+      });
+      cIM.instanceMatrix.needsUpdate = true;
+      scene.add(cIM);
+      sceneObjects.push(cIM);
+    }
+
+    // === ROOFTOP ITEMS InstancedMesh ===
+    // Water tanks (NYC)
+    const tanks = rooftopItems.filter(r2=>r2.type==='tank');
+    if (tanks.length > 0) {
+      const tGeo = new THREE.CylinderGeometry(0.10, 0.12, 0.25, 6);
+      const tIM = new THREE.InstancedMesh(tGeo, MAT.waterTank, tanks.length);
+      const tm = new THREE.Matrix4();
+      tanks.forEach((tk, i) => {
+        tm.makeTranslation(tk.x + 0.15, tk.h + 0.17, tk.z - 0.1);
+        tIM.setMatrixAt(i, tm);
+      });
+      tIM.instanceMatrix.needsUpdate = true;
+      scene.add(tIM);
+      sceneObjects.push(tIM);
+
+      // Tank legs (thin cylinders under each tank)
+      const legGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.12, 3);
+      const legIM = new THREE.InstancedMesh(legGeo, MAT.dark, tanks.length * 4);
+      let li = 0;
+      const lm = new THREE.Matrix4();
+      tanks.forEach(tk => {
+        const bx = tk.x + 0.15, bz = tk.z - 0.1, by = tk.h + 0.06;
+        for (const [ox,oz] of [[-0.06,-0.06],[0.06,-0.06],[-0.06,0.06],[0.06,0.06]]) {
+          lm.makeTranslation(bx+ox, by, bz+oz);
+          legIM.setMatrixAt(li++, lm);
+        }
+      });
+      legIM.instanceMatrix.needsUpdate = true;
+      scene.add(legIM);
+      sceneObjects.push(legIM);
+    }
+
+    // AC units (NYC)
+    const acs = rooftopItems.filter(r2=>r2.type==='ac');
+    if (acs.length > 0) {
+      const acGeo = new THREE.BoxGeometry(0.18, 0.10, 0.14);
+      const acIM = new THREE.InstancedMesh(acGeo, MAT.acUnit, acs.length);
+      const am = new THREE.Matrix4();
+      acs.forEach((ac, i) => {
+        am.makeTranslation(ac.x - 0.2, ac.h + 0.06, ac.z + 0.15);
+        acIM.setMatrixAt(i, am);
+      });
+      acIM.instanceMatrix.needsUpdate = true;
+      scene.add(acIM);
+      sceneObjects.push(acIM);
+    }
+
+    // Chimneys (Budapest)
+    const chimneys = rooftopItems.filter(r2=>r2.type==='chimney');
+    if (chimneys.length > 0) {
+      const chGeo = new THREE.BoxGeometry(0.10, 0.30, 0.10);
+      const chIM = new THREE.InstancedMesh(chGeo, MAT.chimney, chimneys.length);
+      const cm2 = new THREE.Matrix4();
+      chimneys.forEach((ch, i) => {
+        cm2.makeTranslation(ch.x + 0.2, ch.h + 0.14, ch.z - 0.2);
+        chIM.setMatrixAt(i, cm2);
+      });
+      chIM.instanceMatrix.needsUpdate = true;
+      scene.add(chIM);
+      sceneObjects.push(chIM);
     }
   }
 
