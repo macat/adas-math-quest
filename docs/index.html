@@ -2371,6 +2371,22 @@ let cameraHeight = 10; // camera height above player
 let cameraDistance = 12; // horizontal distance from player (adjustable via scroll)
 let cameraOrbitDrag = false;
 let cameraOrbitLastX = 0;
+
+// Remap screen-relative direction to grid direction based on camera angle
+function screenToGridDir(screenDir) {
+  // Normalize angle to [0, 2π)
+  let a = ((cameraAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  // Quantize to nearest 90° rotation (0,1,2,3 quarter turns)
+  const q = Math.round(a / (Math.PI / 2)) % 4;
+  // q=0: camera south (default), q=1: camera east, q=2: camera north, q=3: camera west
+  const remap = [
+    {up:'up',down:'down',left:'left',right:'right'},    // q=0: no rotation
+    {up:'left',down:'right',left:'down',right:'up'},     // q=1: camera east, screen-up = grid-left
+    {up:'down',down:'up',left:'right',right:'left'},     // q=2: camera north, everything flipped
+    {up:'right',down:'left',left:'up',right:'down'},     // q=3: camera west, screen-up = grid-right
+  ];
+  return remap[q][screenDir] || screenDir;
+}
 let waterMeshes = []; // for animation
 let particleMeshes = []; // 3D particle system
 let playerMesh = null, playerGroup = null;
@@ -5491,10 +5507,11 @@ function initTitle(){
 async function showLevelSelect(){
   showScreen('level-screen');const grid=document.getElementById('level-grid');
   const recs=await getRecords();
+  const devMode=new URLSearchParams(window.location.search).has('dev');
   grid.innerHTML='';
   LEVELS.forEach((lv,i)=>{
     const card=document.createElement('div');card.className='level-card';
-    const rec=recs[i];const unlocked=i===0||recs[i-1];
+    const rec=recs[i];const unlocked=devMode||i===0||recs[i-1];
     if(!unlocked)card.classList.add('locked');if(rec)card.classList.add('completed');
     const c=document.createElement('canvas');
     const pw=Math.min(lv.mw||lv.map[0].length,60),ph=Math.min(lv.mh||lv.map.length,40);
@@ -5651,7 +5668,7 @@ function startLevel(idx){
 document.addEventListener('keydown',e=>{
   if(e.repeat)return;initAudio();
   const dm={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
-  if(dm[e.key]&&game){e.preventDefault();game.moveDir=dm[e.key];game.moveHeld=true;game.tryMove(dm[e.key])}
+  if(dm[e.key]&&game){e.preventDefault();const gdir=screenToGridDir(dm[e.key]);game.moveDir=gdir;game.moveHeld=true;game.tryMove(gdir)}
   if((e.key===' '||e.key==='Enter')&&game&&!game.activeQuest){
     const bb=document.getElementById('speech-bubble');
     if(bb.style.display==='block'){bb.style.display='none'}
@@ -5670,12 +5687,12 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{
   const dm={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
-  if(dm[e.key]&&game&&game.moveDir===dm[e.key])game.moveHeld=false;
+  if(dm[e.key]&&game){const gdir=screenToGridDir(dm[e.key]);if(game.moveDir===gdir)game.moveHeld=false}
 });
 
 document.querySelectorAll('.dpad-btn[data-dir]').forEach(btn=>{const dir=btn.dataset.dir;
-  function start(e){e.preventDefault();initAudio();if(game){game.moveDir=dir;game.moveHeld=true;game.tryMove(dir)}}
-  function stop(e){e.preventDefault();if(game&&game.moveDir===dir)game.moveHeld=false}
+  function start(e){e.preventDefault();initAudio();if(game){const gdir=screenToGridDir(dir);game.moveDir=gdir;game.moveHeld=true;game.tryMove(gdir)}}
+  function stop(e){e.preventDefault();if(game){const gdir=screenToGridDir(dir);if(game.moveDir===gdir)game.moveHeld=false}}
   btn.addEventListener('touchstart',start,{passive:false});btn.addEventListener('mousedown',start);
   btn.addEventListener('touchend',stop,{passive:false});btn.addEventListener('mouseup',stop);btn.addEventListener('mouseleave',stop)});
 
@@ -5778,6 +5795,17 @@ async function init(){
     localStorage.removeItem('amq-intro-seen');storyState.introSeen=false;
     showFlash('Story reset! Click Play to see the intro again.','#FF9800')});
   updateI18N();initTitle();
+
+  // Dev cheat: ?level=N jumps straight to that level (0-indexed), ?dev unlocks all
+  const params=new URLSearchParams(window.location.search);
+  if(params.has('level')){
+    const li=parseInt(params.get('level'));
+    if(li>=0&&li<LEVELS.length){
+      initAudio();playerName=document.getElementById('player-name').value||'Ada';
+      localStorage.setItem('amq-name',playerName);
+      startLevel(li);
+    }
+  }
 }
 
 function updateI18N(){document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n)});
